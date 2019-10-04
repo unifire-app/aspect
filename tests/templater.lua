@@ -141,9 +141,17 @@ TestTemplate.templates["tpl_41"] = {
         {% endset %}
         var_2: {{ var_2 }}
     {% endset %}
-    {{ var_1 }}, {{ var_2 }}
+    {{ var_1 }} and {{ var_2 }}
     ]],
-    "var_2: variable 2 ,"
+    "var_2: variable 2 and"
+}
+
+TestTemplate.templates["tpl_50"] = {
+    [[
+    {% set var = false %}
+    {% include 'tpl_00' %}
+    ]],
+    TestTemplate.templates["tpl_00"][2]
 }
 --TestTemplate.templates["hello"] = [[
 --{% if user and not user.deleted %}

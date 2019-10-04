@@ -97,7 +97,7 @@ end
 --- @return aspect.render
 --- @return aspect.error
 function template:load(name)
-    local bytecode, luacode, source, build, ok, err
+    local bytecode, luacode, source, build, ok, err, func
     if self.bytecode_loader then
         bytecode = self:bytecode_loader(name)
         if bytecode then
@@ -119,7 +119,10 @@ function template:load(name)
                 self:luacode_dumper(name, build:get_code())
             end
             print(build:get_code())
-            local func = loadstring(build:get_code(), name .. ".lua")
+            func, err = loadstring(build:get_code(), name .. ".lua")
+            if not func then
+                return nil, err
+            end
             if self.bytecode_dumper then
                 self:bytecode_dumper(name, string.dump(func))
             end

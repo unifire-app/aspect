@@ -13,6 +13,8 @@ local strlen = string.len
 local tokenizer = {}
 local mt = {__index = tokenizer}
 
+--- Start the tokenizer
+--- @return aspect.tokenizer
 function tokenizer.new(s)
     local tok = lexer.tokenize(s)
     local itself = setmetatable({
@@ -24,10 +26,14 @@ function tokenizer.new(s)
     return itself:next()
 end
 
+--- Returns the token value
+--- @return string
 function tokenizer:get_token()
     return self.token
 end
 
+--- Returns the token type
+--- @return string
 function tokenizer:get_token_type()
     return self.typ
 end
@@ -57,10 +63,14 @@ function tokenizer:next()
     return self
 end
 
+--- Checks the token value
+--- @return boolean
 function tokenizer:is(token)
     return self.token == token
 end
 
+--- Checks the token value and if token value incorrect throw an error
+--- @return aspect.tokenizer
 function tokenizer:require(token)
     if self.token ~= token then
         compiler_error(self, "syntax", "expecting '" .. token .. "'")
@@ -68,27 +78,38 @@ function tokenizer:require(token)
     return self
 end
 
+--- Checks if the  token is keyword
+--- @return boolean
 function tokenizer:is_keyword()
     return self.typ == "keyword"
 end
 
+--- Checks if the token is simple word
+--- @return boolean
 function tokenizer:is_word()
     return self.typ == "iden"
 end
 
---- @return string
+--- Checks if the token is scalar value
+--- @return boolean
 function tokenizer:is_value()
     return self.typ == "string" or self.typ == "number"
 end
 
+--- Checks if the token is string
+--- @return boolean
 function tokenizer:is_string()
     return self.typ == "string"
 end
 
+--- Checks if the token is number
+--- @return boolean
 function tokenizer:is_number()
     return self.typ == "number"
 end
 
+--- Checks if the token is valid (stream not finished)
+--- @return boolean
 function tokenizer:is_valid()
     return self.typ and self.typ ~= "stop"
 end

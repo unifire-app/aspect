@@ -92,10 +92,11 @@ function compiler.new(aspect, name)
         code = {},
         macros = {},
         blocks = {},
-        var_names = {},
+        vars = {},
         deps = {},
         tags = {},
-        idx  = 0
+        idx  = 0,
+        use_vars = {}
     }, mt)
 end
 
@@ -120,7 +121,7 @@ function compiler:get_code()
         "\ttostring = tostring,",
         "\tconcat = table.concat,",
         "\tinsert = table.insert,",
-        "\te = function (v) return v end,",
+        "\tsetmetatable = setmetatable,",
         "}",
         ""
     }
@@ -131,6 +132,7 @@ function compiler:get_code()
         for _, v in ipairs(self.body) do
             insert(code, "\t" .. v)
         end
+        insert(code, "\n_context = nil\n")
         insert(code, "end\n")
     end
 
@@ -141,6 +143,7 @@ function compiler:get_code()
             for _, v in ipairs(b) do
                 insert(code, "\t" .. v)
             end
+            insert(code, "\n_context = nil\n")
             insert(code, "end\n")
         end
     end
@@ -175,7 +178,7 @@ function compiler:parse(source)
         local t, p = sub(source, s + 1, s + 1), s + 2
         if t == "{" then -- '{{'
             local tok = tokenizer.new(sub(source, s + 2))
-            self:append_expr(self:parse_expresion(tok))
+            self:append_expr(self:parse_expression(tok))
             if tok:is_valid() then
                 compiler_error(tok, "syntax", "expecting end of tag")
             end
@@ -207,6 +210,21 @@ function compiler:parse(source)
     self:append_text(sub(source, l))
 end
 
+function compiler:parse_var_name(tok, opts)
+    opts = opts or {}
+    opts.var_system = false
+    if tok:is_word() then
+        local var = tok:get_token()
+        if var == "_context" or var == "__" or var == "_self" then
+            opts.var_system = true
+        end
+        tok:next()
+        return var
+    else
+        compiler_error(tok, "syntax", "expecting variable name")
+    end
+end
+
 --- Parse basic variable name like:
 --- one
 --- one.two
@@ -217,16 +235,15 @@ function compiler:parse_variable(tok)
         --if remember and not self.var_names[tok:get_token()] then
         --    self.var_names[tok:get_token()] = remember
         --end
-        local var = {tok:get_token()}
-        tok:next()
+        local var = {self:parse_var_name(tok)}
         while tok:is(".") or tok:is("[") do
             local mode = tok:get_token()
             tok:next()
             if tok:is_word() then
-                insert(var, '["' .. tok:get_token() .. '"]')
+                insert(var, '"' .. tok:get_token() .. '"')
                 tok:next()
             elseif tok:is_string() then
-                insert(var, '[' .. tok:get_token() .. ']')
+                insert(var, tok:get_token())
                 tok:next()
                 if mode == "[" then
                     tok:require("]"):next()
@@ -235,7 +252,11 @@ function compiler:parse_variable(tok)
                 compiler_error(tok, "syntax", "expecting word or quoted string")
             end
         end
-        return concat(var)
+        if #var == 1 then
+            return var[1]
+        else
+            return "__.v(" .. concat(var, ", ") .. ")"
+        end
     else
         compiler_error(tok, "syntax", "expecting variable name")
     end
@@ -253,7 +274,7 @@ function compiler:parse_array(tok)
             return "{}"
         end
         while true do
-            insert(vals, self:parse_expresion(tok))
+            insert(vals, self:parse_expression(tok))
             if tok:is(",") then
                 tok:next()
             elseif tok:is(":") then
@@ -277,9 +298,9 @@ function compiler:parse_array(tok)
                 key = tok:get_token()
                 tok:next()
             elseif tok:is("(") then
-                key = self:parse_expresion(tok)
+                key = self:parse_expression(tok)
             end
-            insert(vals, "[" .. key .. "] = " .. self:parse_expresion(tok:require(":"):next()))
+            insert(vals, "[" .. key .. "] = " .. self:parse_expression(tok:require(":"):next()))
             if tok:is(",") then
                 tok:next()
             else
@@ -311,18 +332,18 @@ function compiler:parse_filters(tok, var)
                     if tok:is_word() then
                         key = tok:get_token()
                         tok:next():require("="):next()
-                        args[key] = self:parse_expresion(tok)
+                        args[key] = self:parse_expression(tok)
                     else
-                        args[no] = self:parse_expresion(tok)
+                        args[no] = self:parse_expression(tok)
                     end
                     no = no + 1
                 end
                 tok:next()
             end
             if args then
-                var = "_self.f['" .. filter .. "'](" .. var .. ", " .. concat(args, ", ") .. ")"
+                var = "__:f['" .. filter .. "'](" .. var .. ", " .. concat(args, ", ") .. ")"
             else
-                var = "_self.f['" .. filter .. "'](" .. var .. ")"
+                var = "__:f['" .. filter .. "'](" .. var .. ")"
             end
         else
             compiler_error(tok, "syntax", "expecting filter name")
@@ -342,7 +363,7 @@ function compiler:parse_value(tok, remember)
     elseif tok:is("[") or tok:is("{") then -- is list or hash
         var = self:parse_array(tok)
     elseif tok:is("(") then -- is expression
-        var = self:parse_expresion(tok)
+        var = self:parse_expression(tok)
     elseif tok:is("true") or tok:is("false") or tok:is("nil") then -- is regular true/false/nil
         var = tok:get_token()
         tok:next()
@@ -361,7 +382,7 @@ end
 --- Parse any expression (math, logic, string e.g.)
 --- @param tok aspect.tokenizer
 --- @param stats table|nil
-function compiler:parse_expresion(tok, stats)
+function compiler:parse_expression(tok, stats)
     stats = stats or {}
     stats.bools = stats.bools or 0
     local elems = {}
@@ -378,7 +399,7 @@ function compiler:parse_expresion(tok, stats)
         end
         -- 2. parse value
         if tok:is("(") then
-            element = "(" .. self:parse_expresion(tok:next()) .. ")"
+            element = "(" .. self:parse_expression(tok:next()) .. ")"
             tok:require(")"):next()
         else
             element = self:parse_value(tok)
@@ -389,7 +410,7 @@ function compiler:parse_expresion(tok, stats)
                 insert(elems, "not")
             end
             tok:require("in"):next()
-            element = "_self.f['in'](" .. element .. ", " ..  self:parse_expresion(tok) .. ")"
+            element = "_self.f['in'](" .. element .. ", " ..  self:parse_expression(tok) .. ")"
         elseif tok:is("is") then
             element = self:parse_test(tok, element)
         end
@@ -474,7 +495,7 @@ function compiler:append_expr(lua)
     if tag and tag.append_expr then
         insert(code, tag.append_expr(tag, lua))
     else
-        insert(code, "__(_self.e(" .. lua .. "))")
+        insert(code, "__:e(" .. lua .. ")")
     end
 end
 
@@ -536,13 +557,13 @@ function compiler:tag_for(tok)
         end
     end
 
-    from = self:parse_expresion(tok:require("in"):next())
+    from = self:parse_expression(tok:require("in"):next())
     local tag = self:push_tag('for')
 
     if tok:is('if') then
         tok:next()
         local info = {}
-        cond =  self:parse_expresion(tok, info)
+        cond =  self:parse_expression(tok, info)
         if info.bools == info.count then
             return "if __.b(" .. cond .. ") then"
         end
@@ -576,7 +597,7 @@ end
 function compiler:tag_if(tok)
     self:push_tag('if')
     local stats = {}
-    local exp =  self:parse_expresion(tok, stats)
+    local exp =  self:parse_expression(tok, stats)
     if stats.bools == stats.count then
         return "if " .. exp .. " then"
     else
@@ -588,7 +609,7 @@ end
 --- @param tok aspect.tokenizer
 --- @return string
 function compiler:tag_elseif(tok)
-    return "elseif " .. self:parse_expresion(tok) .. " then"
+    return "elseif " .. self:parse_expression(tok) .. " then"
 end
 
 --- ELIF aka ELSEIF
@@ -617,7 +638,11 @@ end
 --- @param tok aspect.tokenizer
 --- @return string
 function compiler:tag_set(tok)
-    local var = self:parse_variable(tok)
+    local opts = {}
+    local var = self:parse_var_name(tok, opts)
+    if opts.var_system then
+        compiler_error(tok, "syntax", "the system variable can not be changed")
+    end
     if tok:is("|") or not tok:is_valid() then
         local tag = self:push_tag("set")
         local id = tag.id
@@ -639,17 +664,23 @@ function compiler:tag_set(tok)
             "local _" .. tag.id .. " = {}"
         }
     elseif tok:is("=") then
-        return var .. ' = ' .. self:parse_expresion(tok:next())
+        self:push_var(var)
+        return 'local ' .. var .. ' = ' .. self:parse_expression(tok:next())
     end
 end
 
 function compiler:tag_endset(tok)
     tok:next()
     local tag = self:pop_tag("set")
+    self:push_var(tag.var)
     return {
         tag.var .. " = " .. tag.final,
         "end"
     }
+end
+
+function compiler:tag_extends(tok)
+
 end
 
 --- @param tok aspect.tokenizer
@@ -690,7 +721,7 @@ function compiler:tag_macro(tok)
             tok:next()
             if tok:is("=") then
                 tok:next()
-                self:append_code(arg .. self:parse_expresion(tok))
+                self:append_code(arg .. self:parse_expression(tok))
             else
                 self:append_code(arg .. " nil")
             end
@@ -702,6 +733,110 @@ end
 
 function compiler:tag_endmacro()
     self:pop_tag("macro")
+end
+
+--- {% include {'tpl_1', 'tpl_2'} ignore missing only with {foo = 1} with context with vars %}
+--- @param tok aspect.tokenizer
+function compiler:tag_include(tok)
+    local with_vars, with_context, with =  true, true, false
+    local vars = self:get_defined_vars()
+    local inc = {
+        [1] = self:parse_expression(tok),
+        [2] = "false",
+        [3] = "_context"
+    }
+    if tok:is('ignore') then
+        tok:next():require('missing'):next()
+        inc[2] = 'true'
+    end
+    if tok:is("only") then
+        with_context = false
+        with_vars = false
+        tok:next()
+    end
+    while tok:is_valid() and tok:is('with') or tok:is('without') do
+        local w = false
+        if tok:is('with') then
+            w = true
+        end
+        tok:next()
+        if tok:is('context') then
+            tok:next()
+            with_context = w
+        elseif tok:is('vars') then
+            tok:next()
+            with_vars = w
+        elseif tok:is('{') then
+            if not w then
+                compiler_error(tok, "syntax", "'without' operator cannot be applied to variables")
+            end
+            with = self:parse_array(tok)
+        else
+            compiler_error(tok, "syntax", "expecting 'context', 'vars' or variables")
+        end
+    end
+    if with_vars and #vars then
+        local list = {}
+        for _,v in ipairs(vars) do
+            list[#list + 1] = "['" .. v .. "'] = " .. v
+            return '_self.include(__, ' .. from .. ', false , _self.setmetatable({' .. concat(list, ", ") .. '}, { __index = _context }))'
+        end
+    else
+        return '__:include(' .. from .. ', _context)'
+    end
+end
+
+function compiler:tag_import(tok)
+    local from = self:parse_expression(tok)
+    tok:require("as"):next()
+    local name = self:parse_var_name(tok)
+    return 'local ' .. name .. ' = __.import(' .. from .. ')'
+end
+
+function compiler:tag_from(tok)
+    local from = self:parse_expression(tok)
+    tok:require("import"):next()
+    local name = self:parse_var_name(tok)
+    return 'local ' .. name .. ' = __.import(' .. from .. ')'
+end
+
+--- Add variable name to scope (used for includes and blocks)
+--- @param name string
+function compiler:push_var(name)
+    if #self.tags > 0 then
+        local tag = self.tags[#self.tags]
+        if not tag.vars then
+            tag.vars = {name = true}
+        else
+            tag.vars[name] = true
+        end
+    else
+        self.vars[name] = true
+    end
+end
+
+--- Returns all variables name defined in the scope
+--- @return table list of variables
+function compiler:get_defined_vars()
+    local vars = {}
+    local unques = {}
+    for k, _ in pairs(self.vars) do
+        if not unques[k] then
+            vars[#vars + 1] = k
+            unques[k] = true
+        end
+    end
+    for _, tag in ipairs(self.tags) do
+        if tag.vars then
+            for k, _ in pairs(self.vars) do
+                if not unques[k] then
+                    vars[#vars + 1] = k
+                    unques[k] = true
+                end
+            end
+        end
+    end
+    return vars
 end
 
 --- Push the tag in tag's stacks

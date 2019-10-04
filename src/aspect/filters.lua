@@ -19,11 +19,6 @@ function filters.batch(v)
 
 end
 
---- https://twig.symfony.com/doc/2.x/filters/capitalize.html
-function filters.capitalize(v)
-
-end
-
 --- https://twig.symfony.com/doc/2.x/filters/column.html
 function filters.column(v, column)
     return array2d.column(v, column)

@@ -1,4 +1,4 @@
-Spector Lua Template
+Aspect Lua Template
 ===================
 
 Features
@@ -21,11 +21,11 @@ Basic
 Tags
 ----
 
-* set
-* if, elseif, elif, else
-* for, else
+* [set](./docs/tags/set.md) — assign values to variables
+* [if, elseif, elif, else](./docs/tags/if.md) — conditional statement
+* [for, else](./docs/tags/for.md) — loop over each item in a sequence.
 * macro, import, from
-* include
+* [include](./docs/tags/include.md) — includes a template and returns the rendered content
 * block, extends
 * apply
 
@@ -33,8 +33,7 @@ Filters
 -------
 
 * abs
-* batch
-* capitalize
+* batch(size)
 * column(column)
 * date(format)
 * date_modify(offset)

@@ -4,8 +4,8 @@ source = {
     url = "https://github.com/unifire-app/aspect/-/archive/master/aspect-master.zip"
 }
 description = {
-    summary = "Great template for lua",
-    description = [[
+    summary = "Great template engine for lua",
+    detailed = [[
         * Syntax: Twig and Jija2
         * OpenResty compatible
         *
@@ -25,5 +25,6 @@ build = {
         ["aspect.lexer"]  = "src/aspect/lexer.lua",
         ["aspect.render"]  = "src/aspect/render.lua",
         ["aspect.tokenizer"]  = "src/aspect/tokenizer.lua",
+        ["aspect.output"]  = "src/aspect/output.lua",
     }
 }

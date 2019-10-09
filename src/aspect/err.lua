@@ -8,10 +8,11 @@ local traceback = debug.traceback
 --- @field line number
 --- @field name string
 --- @field message string
+--- @field callstack string
 --- @field traceback string
 --- @field context string
 local err = {
-    _ = "error"
+    _NAME = "error"
 }
 
 --- @param e aspect.error
@@ -25,8 +26,11 @@ local function to_string(e)
     if e.context then
         msg = msg .. "\nContext: " .. e.context .. " <-- there"
     end
+    if e.callstack then
+        msg = msg .. "\nCallstack:\n" .. e.callstack
+    end
     if e.traceback then
-        msg = msg .. "\n" .. e.traceback
+        msg = msg .. "\nLua " .. e.traceback
     end
     return msg
 end
@@ -57,28 +61,53 @@ function err.compiler_error(tok, code, message)
     error(fields)
 end
 
-function err.new(fields)
-    if type(fields) == 'string' then
-        fields = {
-            message = fields,
+--- @param __ aspect.output
+--- @param message string|aspect.error
+function err.runtime_error(__, message)
+    local e = err.new(message)
+        :set_code("runtime")
+        :set_name(__.name, __.line, __:get_callstack())
+    error(e)
+end
+
+function err.is(wtf)
+    return type(wtf) == "table" and wtf._NAME == "error"
+end
+
+function err.new(e)
+    if type(e) ~= 'table' then
+        e = {
+            message = tostring(e),
         }
+    elseif e._NAME == "error" then
+        return e
     end
 
+
     return setmetatable({
-        code = fields.code or "internal",
-        line = fields.line or 0,
-        name = fields.name or "runtime",
-        message = fields.message,
-        traceback = fields.traceback or traceback(),
-        context = fields.context,
+        code = e.code or "internal",
+        line = e.line or 0,
+        name = e.name or "runtime",
+        message = e.message,
+        callstack = nil,
+        traceback = e.traceback or traceback(),
+        context = e.context,
     }, mt)
 end
 
-function err:set_name(name, line)
-    self.name = name
-    self.line = line
+function err:set_code(code)
+    self.code = code
     return self
 end
+
+function err:set_name(name, line, callstack)
+    self.name = name
+    self.line = line
+    self.callstack = callstack
+    return self
+end
+
+
 
 
 return err

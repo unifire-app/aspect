@@ -145,13 +145,70 @@ TestTemplate.templates["tpl_41"] = {
     ]],
     "var_2: variable 2 and"
 }
-
 TestTemplate.templates["tpl_50"] = {
     [[
-    {% set var = false %}
+    {% set integer_1 = 42 %}
     {% include 'tpl_00' %}
     ]],
-    TestTemplate.templates["tpl_00"][2]
+    "42 and 2 and string and 17"
+}
+TestTemplate.templates["tpl_51"] = {
+    [[
+    {% set integer_1 = 42 %}
+    {% include 'tpl_00' only %}
+    ]],
+    "and and string and 17"
+}
+TestTemplate.templates["tpl_52"] = {
+    [[
+    {% set integer_1 = 42 %}
+    {% include 'tpl_00' only with context %}
+    ]],
+    "1 and 2 and string and 17"
+}
+TestTemplate.templates["tpl_53"] = {
+    [[
+    {% set integer_1 = 42 %}
+    {% include 'tpl_00' only with vars %}
+    ]],
+    "42 and and string and 17"
+}
+TestTemplate.templates["tpl_54"] = {
+    [[
+    {% set integer_1 = 42 %}
+    {% include 'tpl_00' only with vars with context with {integer_1: 4} %}
+    ]],
+    "4 and 2 and string and 17"
+}
+TestTemplate.templates["tpl_55"] = {
+    [[
+    {% set integer_1 = 42 %}
+    {% include 'tpl_none' %}
+    ]],
+    nil,
+    "Template(s) not found. Trying tpl_none"
+}
+TestTemplate.templates["tpl_56"] = {
+    [[
+    {% set integer_1 = 42 %}
+    {% include 'tpl_none' ignore missing %}
+    ]],
+    ""
+}
+TestTemplate.templates["tpl_57"] = {
+    [[
+    {% set integer_1 = 42 %}
+    {% include ['tpl_none', 'tpl_none2'] %}
+    ]],
+    nil,
+    "Template(s) not found. Trying tpl_none, tpl_none2"
+}
+TestTemplate.templates["tpl_58"] = {
+    [[
+    {% set integer_1 = 42 %}
+    {% include ['tpl_none', 'tpl_none2'] ignore missing %}
+    ]],
+    ""
 }
 --TestTemplate.templates["hello"] = [[
 --{% if user and not user.deleted %}
@@ -192,7 +249,7 @@ end
 function TestTemplate:test_01_tokenize()
     local tok = tokenizer.new("for i,j in vers|select('this', \"oh\") %}")
     lu.assertIs(tok:get_token(), "for")
-    lu.assertIsTrue(tok:is_keyword())
+    lu.assertIsTrue(tok:is_word())
 
     tok:next() -- i
     lu.assertIs(tok:get_token(), "i")
@@ -206,7 +263,7 @@ function TestTemplate:test_01_tokenize()
     tok:next() -- in
 
     lu.assertIs(tok:get_token(), "in")
-    lu.assertIsTrue(tok:is_keyword())
+    lu.assertIsTrue(tok:is_word())
 
     tok:next() -- vers
     tok:next() -- |
@@ -317,17 +374,19 @@ end
 function TestTemplate:test_template_body()
     local template = aspect.new()
     template.loader = function(tpl, name)
-        return TestTemplate.templates[name][1]
+        if TestTemplate.templates[name] then
+            return TestTemplate.templates[name][1]
+        else
+            return nil
+        end
     end
     for k, v in tablex.sort(TestTemplate.templates) do
-        local tpl, err = template:load(k)
-        if not tpl then
-            lu.fail(tostring(err) .. "\n\nTest template ".. k ..":\n" .. v[1])
-        end
-        local result, err = tpl:fetch(TestTemplate.vars)
+        local result, err = template:fetch(k, TestTemplate.vars)
         if result then
             result = string.gsub(result, "%s+", " ")
             lu.assertIs(strip(result), v[2], "Test template ".. k ..":\n" .. v[1])
+        elseif not v[2] and v[3] then
+            lu.assertIs(err.message, v[3])
         else
             lu.fail(tostring(err) .. "\n\nTest template ".. k ..":\n" .. v[1])
         end

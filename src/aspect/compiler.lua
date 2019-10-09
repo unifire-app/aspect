@@ -1,11 +1,11 @@
 local setmetatable = setmetatable
 local pairs = pairs
+local type = type
 local ipairs = ipairs
 local find = string.find
 local insert = table.insert
 local remove = table.remove
 local concat = table.concat
-local render = require("aspect.render")
 local tokenizer = require("aspect.tokenizer")
 local err = require("aspect.err")
 local dump = require("pl.pretty").dump
@@ -15,65 +15,22 @@ local compiler_error = err.compiler_error
 local sub = string.sub
 local strlen = string.len
 local pcall = pcall
+local reserved_words = require("aspect.config").compiler.reserved_words
+local reserved_vars = require("aspect.config").compiler.reserved_vars
+local math_ops = require("aspect.config").compiler.math_ops
+local comparison_ops = require("aspect.config").compiler.comparison_ops
+local logic_ops = require("aspect.config").compiler.logic_ops
 
 --- @class aspect.compiler
 --- @field includes
 --- @field macros
---- @field extends
+--- @field parent
 --- @field imports
 --- @field render aspect.render
 --- @field line number
 --- @field tok aspect.tokenizer
 local compiler = {
-    OPS = {
-        ["+"] = "+",
-        ["-"] = "-",
-        ["/"] = "/",
-        ["*"] = "*",
-        ["%"] = "%",
-        ["**"] = "^",
-    },
-    COMPARISON_OP = {
-        ["=="] = "==",
-        ["!="] = "~=",
-        [">="] = ">=",
-        ["<="] = "<=",
-        ["<"]  = "<",
-        [">"]  = ">",
-    },
-    LOGIC_OP = {
-        ["and"] = "and",
-        ["or"] = "or"
-    },
-    RESERVED_VARS = {
-        _self = true,
-        _context = true,
-        _charset = true,
-        __ = true
-    },
-    RESERVED_WORDS = {
-        ["and"] = true,
-        ["break"] = true,
-        ["do"] = true,
-        ["else"] = true,
-        ["elseif"] = true,
-        ["end"] = true,
-        ["false"] = true,
-        ["for"] = true,
-        ["function"] = true,
-        ["if"] = true,
-        ["in"] = true,
-        ["local"] = true,
-        ["nil"] = true,
-        ["not"] = true,
-        ["or"] = true,
-        ["repeat"] = true,
-        ["return"] = true,
-        ["then"] = true,
-        ["true"] = true,
-        ["until"] = true,
-        ["while"] = true,
-    }
+    version = 1,
 }
 
 
@@ -91,6 +48,7 @@ function compiler.new(aspect, name)
         body = {},
         code = {},
         macros = {},
+        extends = nil,
         blocks = {},
         vars = {},
         deps = {},
@@ -100,7 +58,10 @@ function compiler.new(aspect, name)
     }, mt)
 end
 
-
+--- Start compiler
+--- @param source string source code of the template
+--- @return boolean ok or not ok
+--- @return aspect.error if not ok returns error
 function compiler:run(source)
     local ok, e = pcall(self.parse, self, source)
     if ok then
@@ -111,21 +72,19 @@ function compiler:run(source)
 end
 
 function compiler:get_code()
+
     local code = {
         "local _self = {",
+        "\tv = " .. self.version .. ",",
         "\tname = " .. quote_string(self.name) .. ",",
         "\tblocks = {},",
         "\tmacros = {},",
-        "\tpairs = pairs,",
-        "\tipairs = ipairs,",
-        "\ttostring = tostring,",
-        "\tconcat = table.concat,",
-        "\tinsert = table.insert,",
-        "\tsetmetatable = setmetatable,",
-        "}",
-        ""
+        "\tvars = {},",
     }
-
+    if self.parent then
+        insert(code,"\textends = " .. quote_string(self.parent))
+    end
+    insert(code, "}\n")
     if #self.body then
         insert(code, "function _self.body(__, ...)")
         insert(code, "\t_context = ...")
@@ -266,7 +225,8 @@ end
 --- [1,2,3]
 --- {"one": 1, "two": 2}
 --- @param tok aspect.tokenizer
-function compiler:parse_array(tok)
+--- @param plain boolean return table without brackets
+function compiler:parse_array(tok, plain)
     local vals = {}
     if tok:is("[") then
         tok:next()
@@ -311,7 +271,11 @@ function compiler:parse_array(tok)
     else
         compiler_error(tok, "syntax", "expecting list or hash")
     end
-    return "{" .. concat(vals, ", ") .. "}"
+    if plain then
+        return concat(vals, ", ")
+    else
+        return "{" .. concat(vals, ", ") .. "}"
+    end
 end
 
 --- @param tok aspect.tokenizer
@@ -410,7 +374,7 @@ function compiler:parse_expression(tok, stats)
                 insert(elems, "not")
             end
             tok:require("in"):next()
-            element = "_self.f['in'](" .. element .. ", " ..  self:parse_expression(tok) .. ")"
+            element = "__.f['in'](" .. element .. ", " ..  self:parse_expression(tok) .. ")"
         elseif tok:is("is") then
             element = self:parse_test(tok, element)
         end
@@ -418,32 +382,32 @@ function compiler:parse_expression(tok, stats)
             stats.bools  = stats.bools + 1
             insert(elems, not_op .. "__.b(" .. element .. ")")
         else
-            insert(elems, not_op ..element)
+            insert(elems, not_op .. element)
         end
         local op = false
         comp_op = false
 
         -- 4. checks and parse math/logic/comparison/concat operator
-        if self.OPS[tok:get_token()] then -- math
-            insert(elems, self.OPS[tok:get_token()])
+        if math_ops[tok:get_token()] then -- math
+            insert(elems, math_ops[tok:get_token()])
             tok:next()
             op = true
             logic_op = false
-        elseif self.COMPARISON_OP[tok:get_token()] then -- comparison
+        elseif comparison_ops[tok:get_token()] then -- comparison
             if comp_op then
                 compiler_error(tok, "syntax", "only one comparison operator may be in the expression")
             end
-            insert(elems, self.COMPARISON_OP[tok:get_token()])
+            insert(elems, comparison_ops[tok:get_token()])
             tok:next()
             op = true
             comp_op = true
             logic_op = false
-        elseif self.LOGIC_OP[tok:get_token()] then -- logic
+        elseif logic_ops[tok:get_token()] then -- logic
             if not logic_op then
                 stats.bools  = stats.bools + 1
                 elems[#elems] = "__.b(" .. elems[#elems] .. ")"
             end
-            insert(elems, self.LOGIC_OP[tok:get_token()])
+            insert(elems, logic_ops[tok:get_token()])
             tok:next()
             op = true
             comp_op = false
@@ -539,7 +503,7 @@ function compiler:tag_for(tok)
 
     if tok:is_word() then
         value = tok:get_token()
-        if self.RESERVED_WORDS[value] then
+        if reserved_words[value] then
             compiler_error(tok, "syntax", "reserved words can not be used as variable name")
         end
         tok:next()
@@ -571,9 +535,9 @@ function compiler:tag_for(tok)
     end
     local lua = {}
     if key then
-        insert(lua, 'for ' .. key .. ', ' .. value .. ' in _self.pairs(' .. from .. ') do')
+        insert(lua, 'for ' .. key .. ', ' .. value .. ' in __.pairs(' .. from .. ') do')
     else
-        insert(lua, 'for _, ' .. value .. ' in _self.ipairs(' .. from .. ') do')
+        insert(lua, 'for _, ' .. value .. ' in __.ipairs(' .. from .. ') do')
     end
     if cond then
         insert(lua, 'if __.b(' .. cond .. ') then')
@@ -648,9 +612,9 @@ function compiler:tag_set(tok)
         local id = tag.id
         tag.var = var
         if tok:is("|") then
-            tag.final = self:parse_filters(tok, '_self.concat(_' .. tag.id .. ')')
+            tag.final = self:parse_filters(tok, '__.concat(_' .. tag.id .. ')')
         else
-            tag.final = '_self.concat(_' .. tag.id .. ')'
+            tag.final = '__.concat(_' .. tag.id .. ')'
         end
         tag.append_text = function (tg, text)
             return '_' .. id .. '[#_'.. id .. ' + 1] = ' .. quote_string(text)
@@ -685,7 +649,7 @@ end
 
 --- @param tok aspect.tokenizer
 function compiler:tag_block(tok)
-    if not tok:is_word() and not tok:is_keyword() then
+    if not tok:is_word() then
         compiler_error(tok, "syntax", "expecting a valid block name")
     end
     local name = tok:get_token()
@@ -700,7 +664,7 @@ end
 
 --- @param tok aspect.tokenizer
 function compiler:tag_macro(tok)
-    if not tok:is_word() and not tok:is_keyword() then
+    if not tok:is_word() then
         compiler_error(tok, "syntax", "expecting a valid macro name")
     end
     local name = tok:get_token()
@@ -738,8 +702,7 @@ end
 --- {% include {'tpl_1', 'tpl_2'} ignore missing only with {foo = 1} with context with vars %}
 --- @param tok aspect.tokenizer
 function compiler:tag_include(tok)
-    local with_vars, with_context, with =  true, true, false
-    local vars = self:get_defined_vars()
+    local with_vars, with_context, with =  true, true, nil
     local inc = {
         [1] = self:parse_expression(tok),
         [2] = "false",
@@ -770,20 +733,37 @@ function compiler:tag_include(tok)
             if not w then
                 compiler_error(tok, "syntax", "'without' operator cannot be applied to variables")
             end
-            with = self:parse_array(tok)
+            with = self:parse_array(tok, true)
         else
             compiler_error(tok, "syntax", "expecting 'context', 'vars' or variables")
         end
     end
-    if with_vars and #vars then
-        local list = {}
-        for _,v in ipairs(vars) do
-            list[#list + 1] = "['" .. v .. "'] = " .. v
-            return '_self.include(__, ' .. from .. ', false , _self.setmetatable({' .. concat(list, ", ") .. '}, { __index = _context }))'
+    if with_vars then
+        local vars = self:get_defined_vars()
+        if #vars then
+            local list = {}
+            for _,v in ipairs(vars) do
+                list[#list + 1] = "[" .. quote_string(v) .. "] = " .. v
+            end
+            if with then
+                list[#list + 1] = with
+            end
+            with = concat(list, ", ")
         end
-    else
-        return '__:include(' .. from .. ', _context)'
     end
+
+    if with and with_context then
+        inc[3] = "__.setmetatable({" ..with .. "}, { __index = _context })"
+    elseif with and not with_context then
+        inc[3] = "{" ..with .. "}"
+    elseif not with and with_context then
+        inc[3] = "_context"
+    else -- not with and not with_context
+        inc[3] = "{}"
+    end
+
+    return '__:include(' .. inc[1] .. ', ' .. inc[2] .. ', ' .. inc[3] .. ')'
+
 end
 
 function compiler:tag_import(tok)
@@ -894,12 +874,20 @@ function compiler:pop_tag(name)
     end
 end
 
-function compiler:get_last_tag()
-    if #self.tags then
+--- Returns last tag from stack
+--- @param name string if set then returns last tag with this name
+--- @return table|nil
+function compiler:get_last_tag(name)
+    if name then
+        for i=#self.tags, 1 do
+            if self.tags[i].name == name then
+                return self.tags[i]
+            end
+        end
+    elseif #self.tags then
         return self.tags[#self.tags]
-    else
-        return nil
     end
+    return nil
 end
 
 return compiler

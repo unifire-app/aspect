@@ -68,3 +68,4 @@ The rules to determine if an expression is true or false are (edge cases):
 | yaml.null                | false              |
 | ngx.null                 | false              |
 
+Function `__toboolean()` should be in the metatable. 

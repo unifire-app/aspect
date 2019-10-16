@@ -64,8 +64,12 @@ The rules to determine if an expression is true or false are (edge cases):
 | non-empty table          | true               |
 | table with `__toboolean` | `__toboolean()`    |
 | cjson.null               | false              |
-| cbson.null               | false              |
+| cbson.null()             | false              |
+| lyaml.null               | false              |
 | yaml.null                | false              |
 | ngx.null                 | false              |
+| msgpack.null             | false              |
 
 Function `__toboolean()` should be in the metatable. 
+
+You can add your own [false-behaviour](./../api.md#condition-behaviour)

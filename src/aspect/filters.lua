@@ -1,11 +1,23 @@
 local type = type
 local math = math
+local strlen = string.len
+local format = string.format
 local concat = table.concat
-local has_utf8, utf8 = pcall(require, "utf8")
+local tostring = tostring
+local getmetatable = getmetatable
 local tablex = require("pl.tablex")
 local stringx = require("pl.stringx")
 local array2d = require("pl.array2d")
 local cjson = require("cjson.safe")
+local count = table.nkeys or tablex.size
+local upper = string.upper
+local lower = string.lower
+local has_utf8, utf8 = pcall(require, "lua-utf8")
+if has_utf8 then
+    strlen = utf8.len
+    upper = utf8.upper
+    lower = utf8.lower
+end
 
 local filters = {}
 
@@ -59,7 +71,7 @@ end
 
 --- https://twig.symfony.com/doc/2.x/filters/format.html
 function filters.format(v, ...)
-
+    return format(tostring(v), ...)
 end
 
 --- https://twig.symfony.com/doc/2.x/filters/last.html
@@ -93,17 +105,28 @@ end
 
 --- https://twig.symfony.com/doc/2.x/filters/length.html
 function filters.length(v)
-
+    local typ = type(v)
+    if typ == "table" then
+        if v.__count and getmetatable(v).__count then
+            return v:__count()
+        else
+            return count(v)
+        end
+    elseif typ == "string" then
+        return strlen(v)
+    else
+        return 0
+    end
 end
 
 --- https://twig.symfony.com/doc/2.x/filters/lower.html
 function filters.lower(v)
-
+    return lower(tostring(v))
 end
 
 --- https://twig.symfony.com/doc/2.x/filters/upper.html
 function filters.upper(v)
-
+    return upper(tostring(v))
 end
 
 --- https://twig.symfony.com/doc/2.x/filters/map.html

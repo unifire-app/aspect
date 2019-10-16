@@ -5,9 +5,15 @@ local factory = function ()
         macros = {},
         includes = {},
         imports = {},
-        _include = (...).include,
-        _fetch = (...).fetch,
-        _import = (...).fetch,
+        uses = {
+            {
+                from = "a.tpl",
+                blocks = {
+                    one = 'two',
+                    two = 'three'
+                }
+            }
+        }
     }
 
     function _self.body(__, ...)

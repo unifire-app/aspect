@@ -1,13 +1,10 @@
------------------------------
---- Internal configuration of
---- Aspect Template Engine.
---- Be careful.
------------------------------
-
 local pcall = pcall
 local require = require
 local getmetatable = getmetatable
 
+--- Internal configuration of
+--- Aspect Template Engine. Be careful.
+--- @class aspect.config
 local config = {}
 
 --- escape filter settings
@@ -34,9 +31,8 @@ config.is_empty_string = {
     [""] = true,
 }
 
+--- dynamically configure config.is_false and config.is_empty_string
 do
-    --- dynamically configure config.is_false and config.is_empty_string
-
     --- https://github.com/openresty/lua-nginx-module#core-constants
     local ngx = ngx or {}
     if ngx.null then

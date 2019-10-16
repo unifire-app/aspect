@@ -18,12 +18,12 @@ dependencies = {
 build = {
     type = "builtin",
     modules = {
+        ["aspect.config"]  = "src/aspect/config.lua",
         ["aspect.template"]  = "src/aspect/template.lua",
         ["aspect.compiler"]  = "src/aspect/compiler.lua",
+        ["aspect.tags"]  = "src/aspect/tags.lua",
         ["aspect.err"]  = "src/aspect/err.lua",
         ["aspect.filters"]  = "src/aspect/filters.lua",
-        ["aspect.lexer"]  = "src/aspect/lexer.lua",
-        ["aspect.render"]  = "src/aspect/render.lua",
         ["aspect.tokenizer"]  = "src/aspect/tokenizer.lua",
         ["aspect.output"]  = "src/aspect/output.lua",
     }

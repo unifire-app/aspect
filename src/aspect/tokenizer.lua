@@ -76,12 +76,17 @@ local matches = {
 function tokenizer.new(s)
     local tok = lexer.scan(s, matches, {space=true}, {number=true,string=false})
     local itself = setmetatable({
+        count = 0,
         path = {},
         tok = tok,
         token = nil,
         typ = nil
     }, mt)
     return itself:next()
+end
+
+function tokenizer:get_pos()
+    return #self.path
 end
 
 --- Returns the token value
@@ -114,7 +119,8 @@ function tokenizer:next()
             self.typ = "stop"
             break
         end
-        if not self.typ or self.typ ~= "space" then
+        if self.typ ~= "space" then
+            self.count = self.count + 1
             break
         end
     end

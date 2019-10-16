@@ -64,20 +64,28 @@ end
 --- @param __ aspect.output
 --- @param message string|aspect.error
 function err.runtime_error(__, message)
-    local e = err.new(message)
-        :set_code("runtime")
-        :set_name(__.name, __.line, __:get_callstack())
-    error(e)
+    error(err.new_runtime(__, message))
 end
 
 function err.is(wtf)
     return type(wtf) == "table" and wtf._NAME == "error"
 end
 
-function err.new(e)
+--- @param __ aspect.output
+--- @param e aspect.error|string|table
+function err.new_runtime(__, e)
+    if not err.is(e) then
+        e = err.new(e, "runtime")
+    end
+    e:set_name(__.name, __.line, __:get_callstack())
+    return e
+end
+
+function err.new(e, code)
     if type(e) ~= 'table' then
+        e = tostring(e)
         e = {
-            message = tostring(e),
+            message = e,
         }
     elseif e._NAME == "error" then
         return e
@@ -85,7 +93,7 @@ function err.new(e)
 
 
     return setmetatable({
-        code = e.code or "internal",
+        code = e.code or code or "internal",
         line = e.line or 0,
         name = e.name or "runtime",
         message = e.message,

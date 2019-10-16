@@ -210,6 +210,28 @@ TestTemplate.templates["tpl_58"] = {
     ]],
     ""
 }
+TestTemplate.templates["tpl_60"] = {
+    [[
+    {% block one %}
+        block one
+    {% endblock %}
+    [and]
+    {% block two %}
+        block two
+    {% endblock two %}
+    ]],
+    "block one [and] block two"
+}
+TestTemplate.templates["tpl_61"] = {
+    [[
+    {% extends "tpl_60" %}
+    {% block one %}
+        block one from tpl_61
+    {% endblock %}
+    invalid content
+    ]],
+    "block one from tpl_61 [and] block two"
+}
 --TestTemplate.templates["hello"] = [[
 --{% if user and not user.deleted %}
 --    hello, {{ user.name }}!

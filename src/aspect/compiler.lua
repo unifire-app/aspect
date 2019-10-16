@@ -7,6 +7,7 @@ local insert = table.insert
 local remove = table.remove
 local concat = table.concat
 local tokenizer = require("aspect.tokenizer")
+local tags = require("aspect.tags")
 local err = require("aspect.err")
 local dump = require("pl.pretty").dump
 local quote_string = require("pl.stringx").quote_string
@@ -22,17 +23,20 @@ local comparison_ops = require("aspect.config").compiler.comparison_ops
 local logic_ops = require("aspect.config").compiler.logic_ops
 
 --- @class aspect.compiler
---- @field includes
---- @field macros
---- @field parent
+--- @field macros table<table> table of macros with their code (witch array)
+--- @field extends string|fun
+--- @field extends_expr boolean
 --- @field imports
---- @field render aspect.render
 --- @field line number
 --- @field tok aspect.tokenizer
+--- @field utils aspect.compiler.utils
+--- @field code table stack of code. Each level is isolated code (block or macro). 0 level is body
 local compiler = {
     version = 1,
 }
 
+--- @class aspect.compiler.utils
+local utils = {}
 
 local mt = {__index = compiler}
 
@@ -44,12 +48,13 @@ function compiler.new(aspect, name)
         aspect = aspect,
         name = name,
         line = 1,
-        prev_line = 0,
+        prev_line = 1,
         body = {},
         code = {},
         macros = {},
         extends = nil,
         blocks = {},
+        uses = {},
         vars = {},
         deps = {},
         tags = {},
@@ -81,19 +86,29 @@ function compiler:get_code()
         "\tmacros = {},",
         "\tvars = {},",
     }
-    if self.parent then
-        insert(code,"\textends = " .. quote_string(self.parent))
+    if self.extends then
+        if self.extends.static then
+            insert(code,"\textends = " .. self.extends.value .. ",")
+        else
+            insert(code,"\textends = true")
+        end
     end
     insert(code, "}\n")
-    if #self.body then
-        insert(code, "function _self.body(__, ...)")
+
+    insert(code, "function _self.body(__, ...)")
+    if self.extends then
         insert(code, "\t_context = ...")
+        insert(code, "\treturn " .. self.extends.value)
+    elseif #self.body then
+        insert(code, "\t_context = ...")
+        insert(code, "\t__:push_state(_self.name, 1)")
         for _, v in ipairs(self.body) do
             insert(code, "\t" .. v)
         end
-        insert(code, "\n_context = nil\n")
-        insert(code, "end\n")
+        insert(code, "\t_context = nil")
+        insert(code, "\t__:pop_state()")
     end
+    insert(code, "end\n")
 
     if self.blocks then
         for n, b in pairs(self.blocks) do
@@ -102,7 +117,7 @@ function compiler:get_code()
             for _, v in ipairs(b) do
                 insert(code, "\t" .. v)
             end
-            insert(code, "\n_context = nil\n")
+            insert(code, "\t_context = nil")
             insert(code, "end\n")
         end
     end
@@ -147,9 +162,9 @@ function compiler:parse(source)
             tok = nil
         elseif t == "%" then -- '{%'
             local tok = tokenizer.new(sub(source, s + 2))
-            local parser = 'tag_' .. tok:get_token()
-            if self[parser] then
-                self:append_code(self[parser](self, tok:next())) -- call self:tag_{{ name }}
+            local tag_name = 'tag_' .. tok:get_token()
+            if tags[tag_name] then
+                self:append_code(tags[tag_name](self, tok:next())) -- call tags.tag_{{ name }}(compiler, tok)
                 if tok:is_valid() then
                     compiler_error(tok, "syntax", "expecting end of tag")
                 end
@@ -247,6 +262,7 @@ function compiler:parse_array(tok, plain)
     elseif tok:is("{") then
         tok:next()
         if tok:is("}") then
+            tok:next()
             return "{}"
         end
         while true do
@@ -276,6 +292,35 @@ function compiler:parse_array(tok, plain)
     else
         return "{" .. concat(vals, ", ") .. "}"
     end
+end
+
+--- @param tok aspect.tokenizer
+--- @return table
+function compiler:parse_hash(tok)
+    local hash = {}
+    tok:require('{'):next()
+    if tok:is("}") then
+        tok:next()
+        return hash
+    end
+    while true do
+        local key
+        if tok:is_word() then
+            key = tok:get_token()
+            tok:next()
+        else
+            compiler_error(tok, "syntax", "expecting hash key")
+        end
+
+        hash[key] = self:parse_expression(tok:require(":"):next())
+        if tok:is(",") then
+            tok:next()
+        else
+            break
+        end
+    end
+    tok:require("}"):next()
+    return hash
 end
 
 --- @param tok aspect.tokenizer
@@ -317,10 +362,11 @@ function compiler:parse_filters(tok, var)
 end
 
 --- @param tok aspect.tokenizer
-function compiler:parse_value(tok, remember)
+--- @param opts table
+function compiler:parse_value(tok)
     local var
     if tok:is_word() then -- is variable name
-        var = self:parse_variable(tok, remember)
+        var = self:parse_variable(tok)
     elseif tok:is_string() or tok:is_number() then -- is string or number
         var = tok:get_token()
         tok:next()
@@ -345,10 +391,10 @@ end
 
 --- Parse any expression (math, logic, string e.g.)
 --- @param tok aspect.tokenizer
---- @param stats table|nil
-function compiler:parse_expression(tok, stats)
-    stats = stats or {}
-    stats.bools = stats.bools or 0
+--- @param opts table|nil
+function compiler:parse_expression(tok, opts)
+    opts = opts or {}
+    opts.bools = opts.bools or 0
     local elems = {}
     local comp_op = false -- only one comparison may be in the expression
     local logic_op = false
@@ -379,7 +425,7 @@ function compiler:parse_expression(tok, stats)
             element = self:parse_test(tok, element)
         end
         if logic_op then
-            stats.bools  = stats.bools + 1
+            opts.bools  = opts.bools + 1
             insert(elems, not_op .. "__.b(" .. element .. ")")
         else
             insert(elems, not_op .. element)
@@ -404,7 +450,7 @@ function compiler:parse_expression(tok, stats)
             logic_op = false
         elseif logic_ops[tok:get_token()] then -- logic
             if not logic_op then
-                stats.bools  = stats.bools + 1
+                opts.bools  = opts.bools + 1
                 elems[#elems] = "__.b(" .. elems[#elems] .. ")"
             end
             insert(elems, logic_ops[tok:get_token()])
@@ -428,8 +474,8 @@ function compiler:parse_expression(tok, stats)
     if comp_op then -- comparison with nothing?
         compiler_error(tok, "syntax", "expecting expression statement")
     end
-    stats.count = (#elems + 1)/2
-    stats.all_bools = logic_op == stats.count -- all elements converted to boolean?
+    opts.count = (#elems + 1)/2
+    opts.all_bools = logic_op == opts.count -- all elements converted to boolean?
     return concat(elems, " ")
 end
 
@@ -456,10 +502,12 @@ function compiler:append_expr(lua)
     if line then
         insert(code, line)
     end
-    if tag and tag.append_expr then
-        insert(code, tag.append_expr(tag, lua))
-    else
-        insert(code, "__:e(" .. lua .. ")")
+    if lua then
+        if tag and tag.append_expr then
+            insert(code, tag.append_expr(tag, lua))
+        else
+            insert(code, "__:e(" .. lua .. ")")
+        end
     end
 end
 
@@ -478,7 +526,7 @@ function compiler:append_code(lua)
                 insert(code, l)
             end
         end
-    else
+    elseif lua then
         if tag and tag.append_code then
             insert(code, tag.append_code(tag, lua))
         else
@@ -496,291 +544,7 @@ function compiler:get_checkpoint()
     end
 end
 
-
---- @param tok aspect.tokenizer
-function compiler:tag_for(tok)
-    local key, value, from, cond
-
-    if tok:is_word() then
-        value = tok:get_token()
-        if reserved_words[value] then
-            compiler_error(tok, "syntax", "reserved words can not be used as variable name")
-        end
-        tok:next()
-    else
-        compiler_error(tok, "syntax", "expecting variable name")
-    end
-
-    if tok:is(",") then
-        key = value
-        if tok:next():is_word() then
-            value = tok:get_token()
-            tok:next()
-        else
-            compiler_error(tok, "syntax", "expecting variable name")
-        end
-    end
-
-    from = self:parse_expression(tok:require("in"):next())
-    local tag = self:push_tag('for')
-
-    if tok:is('if') then
-        tok:next()
-        local info = {}
-        cond =  self:parse_expression(tok, info)
-        if info.bools == info.count then
-            return "if __.b(" .. cond .. ") then"
-        end
-        tag.cond = true
-    end
-    local lua = {}
-    if key then
-        insert(lua, 'for ' .. key .. ', ' .. value .. ' in __.pairs(' .. from .. ') do')
-    else
-        insert(lua, 'for _, ' .. value .. ' in __.ipairs(' .. from .. ') do')
-    end
-    if cond then
-        insert(lua, 'if __.b(' .. cond .. ') then')
-    end
-
-    return concat(lua, " ")
-end
-
-function compiler:tag_endfor()
-    local tag = self:pop_tag('for')
-    if tag.cond then
-        return "end end"
-    else
-        return "end"
-    end
-end
-
---- IF
---- @param tok aspect.tokenizer
---- @return string
-function compiler:tag_if(tok)
-    self:push_tag('if')
-    local stats = {}
-    local exp =  self:parse_expression(tok, stats)
-    if stats.bools == stats.count then
-        return "if " .. exp .. " then"
-    else
-        return "if __.b(" .. exp .. ") then"
-    end
-end
-
---- ELSEIF
---- @param tok aspect.tokenizer
---- @return string
-function compiler:tag_elseif(tok)
-    return "elseif " .. self:parse_expression(tok) .. " then"
-end
-
---- ELIF aka ELSEIF
---- @param tok aspect.tokenizer
---- @return string
-function compiler:tag_elif(tok)
-    return self:tag_elseif(tok)
-end
-
---- ELSE
---- @param tok aspect.tokenizer
---- @return string
-function compiler:tag_else(tok)
-    return 'else'
-end
-
---- ENDIF
---- @param tok aspect.tokenizer
---- @return string
-function compiler:tag_endif(tok)
-    self:pop_tag('if')
-    return 'end'
-end
-
---- {% set %}
---- @param tok aspect.tokenizer
---- @return string
-function compiler:tag_set(tok)
-    local opts = {}
-    local var = self:parse_var_name(tok, opts)
-    if opts.var_system then
-        compiler_error(tok, "syntax", "the system variable can not be changed")
-    end
-    if tok:is("|") or not tok:is_valid() then
-        local tag = self:push_tag("set")
-        local id = tag.id
-        tag.var = var
-        if tok:is("|") then
-            tag.final = self:parse_filters(tok, '__.concat(_' .. tag.id .. ')')
-        else
-            tag.final = '__.concat(_' .. tag.id .. ')'
-        end
-        tag.append_text = function (tg, text)
-            return '_' .. id .. '[#_'.. id .. ' + 1] = ' .. quote_string(text)
-        end
-        tag.append_expr = function (tg, lua)
-            return '_' .. id .. '[#_'.. id .. ' + 1] = ' .. lua
-        end
-        return {
-            "local " .. tag.var,
-            "do",
-            "local _" .. tag.id .. " = {}"
-        }
-    elseif tok:is("=") then
-        self:push_var(var)
-        return 'local ' .. var .. ' = ' .. self:parse_expression(tok:next())
-    end
-end
-
-function compiler:tag_endset(tok)
-    tok:next()
-    local tag = self:pop_tag("set")
-    self:push_var(tag.var)
-    return {
-        tag.var .. " = " .. tag.final,
-        "end"
-    }
-end
-
-function compiler:tag_extends(tok)
-
-end
-
---- @param tok aspect.tokenizer
-function compiler:tag_block(tok)
-    if not tok:is_word() then
-        compiler_error(tok, "syntax", "expecting a valid block name")
-    end
-    local name = tok:get_token()
-    tok:next()
-    self.blocks[name] = {}
-    self:push_tag("block", self.blocks[name])
-end
-
-function compiler:tag_endblock()
-    self:pop_tag("block")
-end
-
---- @param tok aspect.tokenizer
-function compiler:tag_macro(tok)
-    if not tok:is_word() then
-        compiler_error(tok, "syntax", "expecting a valid macro name")
-    end
-    local name = tok:get_token()
-    self.macros[name] = {}
-    self:push_tag("macro", self.macros[name])
-    if tok:next():is("(") then
-        local no = 1
-        repeat
-            tok:next()
-            if tok:is(")") then
-                break
-            end
-            if not tok:is_word() then
-                compiler_error(tok, "syntax", "expecting argument name")
-            end
-            local key = tok:get_token()
-            local arg  = "local " .. key .. " = _context." .. key .. " or _context[" .. no .. "] or "
-            tok:next()
-            if tok:is("=") then
-                tok:next()
-                self:append_code(arg .. self:parse_expression(tok))
-            else
-                self:append_code(arg .. " nil")
-            end
-            no = no + 1
-        until not tok:is(",")
-        tok:require(")"):next()
-    end
-end
-
-function compiler:tag_endmacro()
-    self:pop_tag("macro")
-end
-
---- {% include {'tpl_1', 'tpl_2'} ignore missing only with {foo = 1} with context with vars %}
---- @param tok aspect.tokenizer
-function compiler:tag_include(tok)
-    local with_vars, with_context, with =  true, true, nil
-    local inc = {
-        [1] = self:parse_expression(tok),
-        [2] = "false",
-        [3] = "_context"
-    }
-    if tok:is('ignore') then
-        tok:next():require('missing'):next()
-        inc[2] = 'true'
-    end
-    if tok:is("only") then
-        with_context = false
-        with_vars = false
-        tok:next()
-    end
-    while tok:is_valid() and tok:is('with') or tok:is('without') do
-        local w = false
-        if tok:is('with') then
-            w = true
-        end
-        tok:next()
-        if tok:is('context') then
-            tok:next()
-            with_context = w
-        elseif tok:is('vars') then
-            tok:next()
-            with_vars = w
-        elseif tok:is('{') then
-            if not w then
-                compiler_error(tok, "syntax", "'without' operator cannot be applied to variables")
-            end
-            with = self:parse_array(tok, true)
-        else
-            compiler_error(tok, "syntax", "expecting 'context', 'vars' or variables")
-        end
-    end
-    if with_vars then
-        local vars = self:get_defined_vars()
-        if #vars then
-            local list = {}
-            for _,v in ipairs(vars) do
-                list[#list + 1] = "[" .. quote_string(v) .. "] = " .. v
-            end
-            if with then
-                list[#list + 1] = with
-            end
-            with = concat(list, ", ")
-        end
-    end
-
-    if with and with_context then
-        inc[3] = "__.setmetatable({" ..with .. "}, { __index = _context })"
-    elseif with and not with_context then
-        inc[3] = "{" ..with .. "}"
-    elseif not with and with_context then
-        inc[3] = "_context"
-    else -- not with and not with_context
-        inc[3] = "{}"
-    end
-
-    return '__:include(' .. inc[1] .. ', ' .. inc[2] .. ', ' .. inc[3] .. ')'
-
-end
-
-function compiler:tag_import(tok)
-    local from = self:parse_expression(tok)
-    tok:require("as"):next()
-    local name = self:parse_var_name(tok)
-    return 'local ' .. name .. ' = __.import(' .. from .. ')'
-end
-
-function compiler:tag_from(tok)
-    local from = self:parse_expression(tok)
-    tok:require("import"):next()
-    local name = self:parse_var_name(tok)
-    return 'local ' .. name .. ' = __.import(' .. from .. ')'
-end
-
---- Add variable name to scope (used for includes and blocks)
+--- Add local variable name to scope (used for includes and blocks)
 --- @param name string
 function compiler:push_var(name)
     if #self.tags > 0 then
@@ -795,38 +559,42 @@ function compiler:push_var(name)
     end
 end
 
---- Returns all variables name defined in the scope
---- @return table list of variables
-function compiler:get_defined_vars()
-    local vars = {}
-    local unques = {}
+--- Returns all variables name defined in the scope (without global)
+--- @return table|nil list of variables like ["variable"] = variable
+function compiler:get_local_vars()
+    local vars, c = {}, 0
     for k, _ in pairs(self.vars) do
-        if not unques[k] then
-            vars[#vars + 1] = k
-            unques[k] = true
-        end
+        vars[k] = k
+        c = c  + 1
     end
     for _, tag in ipairs(self.tags) do
         if tag.vars then
             for k, _ in pairs(self.vars) do
-                if not unques[k] then
-                    vars[#vars + 1] = k
-                    unques[k] = true
+                if not vars[k] then
+                    vars[k] = k
+                    c = c + 1
                 end
             end
         end
     end
-    return vars
+
+    if c > 0 then
+        return vars
+    else
+        return nil
+    end
 end
 
 --- Push the tag in tag's stacks
 --- @param name string the tag name
 --- @param code_space table|nil for lua code
-function compiler:push_tag(name, code_space)
+function compiler:push_tag(name, code_space, code_space_name)
     local code_space_id
     self.idx = self.idx + 1
     if code_space then
         insert(self.code, code_space)
+        code_space[#code_space + 1] = "__:push_state(_self.name, " .. self.line .. ", " .. quote_string(code_space_name) .. ")"
+        self.prev_line = self.line
         code_space_id = #self.code
     end
     local tag = {
@@ -861,7 +629,8 @@ function compiler:pop_tag(name)
                 if tag.code_space_no ~= #self.code then -- dummy protection
                     compiler_error(nil, "compiler", "invalid code space layer in the tag")
                 else
-                    remove(self.code)
+                    local prev = remove(self.code)
+                    prev[#prev + 1] = "__:pop_state()"
                 end
             end
             return remove(self.tags)
@@ -879,9 +648,11 @@ end
 --- @return table|nil
 function compiler:get_last_tag(name)
     if name then
-        for i=#self.tags, 1 do
-            if self.tags[i].name == name then
-                return self.tags[i]
+        if #self.tags > 0 then
+            for i=#self.tags, 1 do
+                if self.tags[i].name == name then
+                    return self.tags[i]
+                end
             end
         end
     elseif #self.tags then
@@ -889,5 +660,38 @@ function compiler:get_last_tag(name)
     end
     return nil
 end
+
+
+
+--- Merge two tables and returns lua representation. Value of table are expressions.
+--- @param t1 table|nil
+--- @param t2 table|nil
+--- @return string|nil
+function utils.implode_hashes(t1, t2)
+    local r = {}
+    if t1 then
+        for k,v in pairs(t1) do
+            r[#r + 1] = '["' .. k .. '"] = ' .. v
+        end
+        if t2 then
+            for k,v in pairs(t2) do
+                if not t1[k] then
+                    r[#r + 1] = '["' .. k .. '"] = ' .. v
+                end
+            end
+        end
+    elseif t2 then
+        for k,v in pairs(t2) do
+            r[#r + 1] = '["' .. k .. '"] = ' .. v
+        end
+    end
+    if #r > 0 then
+        return concat(r, ",")
+    else
+        return nil
+    end
+end
+
+compiler.utils = utils
 
 return compiler

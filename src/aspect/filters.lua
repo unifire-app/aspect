@@ -19,6 +19,10 @@ if has_utf8 then
     lower = utf8.lower
 end
 
+if table.nkeys then -- new luajit function
+    count = table.nkeys
+end
+
 local filters = {}
 
 --- https://twig.symfony.com/doc/2.x/filters/abs.html
@@ -37,7 +41,7 @@ function filters.column(v, column)
 end
 
 --- https://twig.symfony.com/doc/2.x/filters/date.html
-function filters.date(v, format)
+function filters.date(v, fmt)
 
 end
 
@@ -66,7 +70,12 @@ end
 
 --- https://twig.symfony.com/doc/2.x/filters/first.html
 function filters.first(v)
+    local typ = type(v)
+    if typ == "table" then
 
+    else
+        return nil
+    end
 end
 
 --- https://twig.symfony.com/doc/2.x/filters/format.html
@@ -100,7 +109,21 @@ end
 
 --- https://twig.symfony.com/doc/2.x/filters/keys.html
 function filters.keys(v)
-    return tablex.keys(v)
+    local typ = type(v)
+    if typ == "table" then
+        if v.__pairs and getmetatable(v).__pairs then
+            local keys, i = {}, 1
+            for k, _ in v:__pairs() do
+                keys[i] = k
+                i = i + 1
+            end
+            return keys
+        else
+            return tablex.keys(v)
+        end
+    else
+        return {}
+    end
 end
 
 --- https://twig.symfony.com/doc/2.x/filters/length.html
@@ -109,10 +132,12 @@ function filters.length(v)
     if typ == "table" then
         if v.__count and getmetatable(v).__count then
             return v:__count()
+        elseif v.__pairs and getmetatable(v).__pairs then -- has custom iterator. we don't know how much elements will be
+            return 0 -- may be return -1 ?
         else
             return count(v)
         end
-    elseif typ == "string" then
+    elseif typ == "string" or typ == "userdata" then
         return strlen(v)
     else
         return 0

@@ -17,14 +17,21 @@ local runtime_error = err.runtime_error
 local is_false = require("aspect.config").is_false
 local is_empty_string = require("aspect.config").is_empty_string
 local is_empty = table.isempty or function(v) return next(v) == nil end
+local insert = table.insert
 
+--- @class aspect.output.parent
+--- @field list table<aspect.template.block>
+--- @field pos number
+local _parents = {}
 
 --- Output handler
 --- @class aspect.output
 --- @field data table output fragments
 --- @field line number
---- @field name string
---- @field name string
+--- @field view aspect.view
+--- @field stack table<aspect.view,number,string>
+--- @field parents table<aspect.output.parent>
+--- @field blocks table
 local output = {
     ipairs = ipairs,
     pairs = pairs,
@@ -64,25 +71,27 @@ function output.new(opts, p, size)
     end
     return setmetatable({
         root = nil,
-        name = nil,
+        view = nil,
         line = 0,
         data = {},
         p = p,
         size = size,
         stack = {},
         opts = opts,
+        f = opts.f,
+        fn = opts.fn,
         blocks = {}
     }, mt_collect)
 end
 
-function output:push_state(name, line, scope_name)
+function output:push_state(view, line, scope_name)
     if #self.stack > self.opts.stack_size then
         runtime_error(self, "Call stack overflow (maximum " .. self.opts.stack_size .. ")")
     end
-    if self.name then
-        self.stack[#self.stack + 1] = {self.name, self.line, self.scope_name}
+    if self.view then
+        self.stack[#self.stack + 1] = {self.view, self.line, self.scope_name}
     end
-    self.name = name
+    self.view = view
     self.line = line
     self.scope_name = scope_name
     return self
@@ -91,26 +100,48 @@ end
 function output:pop_state()
     if #self.stack > 0 then
         local stack = remove(self.stack)
-        self.name = stack[1]
+        self.view = stack[1]
         self.line = stack[2]
         self.scope_name = stack[3]
     else
-        self.name = nil
+        self.view = nil
         self.line = 0
         self.scope_name = nil
     end
     return self
 end
 
+--- Add block to runtime scope
+--- @param view aspect.view
 function output:add_blocks(view)
     if view.has_blocks then
-        for n, f in pairs(view.blocks) do
+        for n, b in pairs(view.blocks) do
             if not self.blocks[n] then
-                self.blocks[n] = f
+                self.blocks[n] = b
+            elseif self.blocks[n].parent then
+                local p
+                if not self.parents then
+                    self.parents = {}
+                end
+                if not self.parents[n] then
+                    p = {
+                        pos = 1,
+                        list = {},
+                        closed = false
+                    }
+                    self.parents[n] = p
+                else
+                    p = self.parents[n]
+                end
+                if not p.closed then
+                    insert(p.list, b)
+                end
+                if not b.parent then -- if there is no parent () function in the parent block, stop collecting parent blocks
+                    p.closed = true
+                end
             end
         end
     end
-    return self
 end
 
 function output:get_callstack()
@@ -118,7 +149,7 @@ function output:get_callstack()
     for _, c in ipairs(self.stack) do
         callstack[#callstack + 1 ]= c[1] .. ":" .. c[2]
     end
-    callstack[#callstack + 1 ]= self.name .. ":" .. self.line
+    callstack[#callstack + 1 ]= (self.view.name or "<unnamed>") .. ":" .. self.line
     return "\t" .. concat(callstack, "\n\t")
 end
 
@@ -164,54 +195,21 @@ function output.v(v, ...)
 end
 
 function output:e(v)
-    if self.escape then
+    if v == nil then
+        return
+    end
+    if type(v) ~= "string" then
+        v = output.s(v)
+    end
+    if self.opts.escape then
         return self(gsub(v, e_pattern, e_replaces))
     else
         return self(v)
     end
 end
 
-local function join(t, delim)
-    if type(t) == "table" then
-        return concat(t, delim)
-    else
-        return tostring(t)
-    end
+function output:get_view(name)
+    return self.opts.get(name)
 end
-
-function output:include(names, ignore, context)
-    local view, error = self.opts.get(names)
-    if error then
-        runtime_error(self, error)
-    elseif not view then
-        if not ignore then
-            runtime_error(self, "Template(s) not found. Trying " .. join(names, ", "))
-        else
-            return
-        end
-    end
-    view.body(self:push_state(view.name), context)
-    self:pop_state()
-end
-
-
-function output:fetch(names, ignore, context)
-    local view, error = self.opts.get(names)
-    if error then
-        runtime_error(self, error)
-    elseif not view and not ignore then
-        runtime_error(self, "No one view (" .. join(names, ",") .. ") found")
-    end
-    view.body(self, context)
-    --self:pop_state()
-end
-
-function output:parent(block_name, vars)
-    for i=#self.tags, 1 do
-
-    end
-end
-
-
 
 return output

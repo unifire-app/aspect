@@ -1,8 +1,13 @@
 local err = require("aspect.err")
 local compiler_error = err.compiler_error
 local quote_string = require("pl.stringx").quote_string
+local dump = require("pl.pretty").dump
 local reserved_words = require("aspect.config").compiler.reserved_words
+local loop_keys = require("aspect.config").loop.keys
+local tag_type = require("aspect.config").compiler.tag_type
 local concat = table.concat
+local insert = table.insert
+local tostring = tostring
 
 local tags = {}
 
@@ -38,6 +43,7 @@ function tags.tag_set(compiler, tok)
         }
     elseif tok:is("=") then
         compiler:push_var(var)
+        compiler.tag_type = tag_type.EXPRESSION -- switch tag mode
         return 'local ' .. var .. ' = ' .. compiler:parse_expression(tok:next())
     end
 end
@@ -64,13 +70,9 @@ function tags.tag_extends(compiler, tok)
     if compiler.extends then
         compiler_error(tok, 'syntax', "Template already extended")
     end
-    if tok:is_string() then
-        local pos, expr = tok.count, compiler:parse_expression(tok)
-        if tok.count - pos == 1 then -- if only 1 token and it is string
-            compiler.extends = {value = expr, static = true}
-        else
-            compiler.extends = {value = expr, static = false}
-        end
+    if tok:is_string() and not tok:is_next_op() then
+        compiler.extends = {value = tok:get_token(), static = true}
+        tok:next()
     else
         compiler.extends = {value = compiler:parse_expression(tok), static = false}
     end
@@ -88,8 +90,18 @@ function tags.tag_block(compiler, tok)
     end
     local name = tok:get_token()
     tok:next()
-    compiler.blocks[name] = {}
-    local tag = compiler:push_tag("block", compiler.blocks[name], "block." .. name)
+    compiler.blocks[name] = {
+        code = {},
+        parent = false,
+        vars = {},
+        desc = nil
+    }
+    local tag_for, pos = compiler:get_last_tag("for") -- may be {{ loop }} used in the block (which may be replaced)
+    while tag_for do
+        tag_for.has_loop = true
+        tag_for, pos = compiler:get_last_tag("for", pos - 1)
+    end
+    local tag = compiler:push_tag("block", compiler.blocks[name].code, "block." .. name)
     tag.block_name = name
 end
 
@@ -105,28 +117,29 @@ function tags.tag_endblock(compiler, tok)
             compiler_error(tok, "syntax", "expecting block name " .. tag.block_name)
         end
     end
+    compiler.blocks[tag.block_name].parent = tag.parent
     local vars = compiler.utils.implode_hashes(compiler:get_local_vars())
     if vars then
-        return '__.blocks.' .. tag.block_name .. '(__, __.setmetatable({ ' .. vars .. '}, { __index = _context }))' ;
+        return '__.blocks.' .. tag.block_name .. '.body(__, __.setmetatable({ ' .. vars .. '}, { __index = _context }))' ;
     else
-        return '__.blocks.' .. tag.block_name .. '(__, _context)' ;
+        return '__.blocks.' .. tag.block_name .. '.body(__, _context)' ;
     end
 end
 
 --- {% parent %}
 --- @param compiler aspect.compiler
-function tags.tag_parent(compiler)
-    local tag = compiler:get_last_tag("block")
-    if not tag then
-        compiler_error(nil, "syntax", "{% parent %} should be called in the block")
-    end
-    local vars = compiler.utils.implode_hashes(compiler:get_local_vars())
-    if vars then
-        return '__:parent(' .. quote_string(tag.block_name) .. ', __.setmetatable({ ' .. vars .. '}, { __index = _context }))' ;
-    else
-        return '__:parent(' .. quote_string(tag.block_name) .. ', _context)' ;
-    end
-end
+--function tags.tag_parent(compiler)
+--    local tag = compiler:get_last_tag("block")
+--    if not tag then
+--        compiler_error(nil, "syntax", "{% parent %} should be called in the block")
+--    end
+--    local vars = compiler.utils.implode_hashes(compiler:get_local_vars())
+--    if vars then
+--        return '__:parent(' .. quote_string(tag.block_name) .. ', __.setmetatable({ ' .. vars .. '}, { __index = _context }))' ;
+--    else
+--        return '__:parent(' .. quote_string(tag.block_name) .. ', _context)' ;
+--    end
+--end
 
 --- {% use %}
 --- @param compiler aspect.compiler
@@ -178,22 +191,22 @@ function tags.tag_endmacro(compiler, tok)
 end
 
 --- {% include {'tpl_1', 'tpl_2'} ignore missing only with {foo = 1} with context with vars %}
+
 --- @param compiler aspect.compiler
 --- @param tok aspect.tokenizer
-function tags.tag_include(compiler, tok)
-    local with_vars, with_context, with =  true, true, nil
-    local inc = {
-        [1] = compiler:parse_expression(tok),
-        [2] = "false",
-        [3] = "_context"
+function tags.tag_include(compiler, tok, ...)
+    local args = {
+        name = compiler:parse_expression(tok),
+        with_vars = true,
+        with_context = true
     }
     if tok:is('ignore') then
         tok:next():require('missing'):next()
-        inc[2] = 'true'
+        args.ignore_missing = true
     end
     if tok:is("only") then
-        with_context = false
-        with_vars = false
+        args.with_context = false
+        args.with_vars = false
         tok:next()
     end
     while tok:is_valid() and tok:is('with') or tok:is('without') do
@@ -204,37 +217,55 @@ function tags.tag_include(compiler, tok)
         tok:next()
         if tok:is('context') then
             tok:next()
-            with_context = w
+            args.with_context = w
         elseif tok:is('vars') then
             tok:next()
-            with_vars = w
+            args.with_vars = w
         elseif tok:is('{') then
             if not w then
-                compiler_error(tok, "syntax", "'without' operator cannot be applied to variables")
+                compiler_error(tok, "syntax", "'without' operator cannot be to apply to variables")
             end
-            with = compiler:parse_hash(tok)
+            args.vars = compiler:parse_hash(tok)
         else
             compiler_error(tok, "syntax", "expecting 'context', 'vars' or variables")
         end
     end
 
-    if with_vars then
-        with = compiler.utils.implode_hashes(with, compiler:get_local_vars())
+    return tags.include(compiler, args)
+end
+
+---
+--- @param compiler aspect.compiler
+--- @param args table
+---   args.name - tpl_1 or {'tpl_1', 'tpl_2'}
+---   args.ignore - ignore missing
+---   args.vars — {foo = 1, bar = 2}
+---   args.with_context - with context
+---   args.with_vars - with vars
+function tags.include(compiler, args)
+    local vars, context = args.vars
+    if args.with_vars then
+        vars = compiler.utils.implode_hashes(vars, compiler:get_local_vars())
+        local tag, pos = compiler:get_last_tag("for") -- may be {{ loop }} used in included template
+        while tag do
+            tag.has_loop = true
+            tag, pos = compiler:get_last_tag("for", pos - 1)
+        end
     else
-        with = compiler.utils.implode_hashes(with)
+        vars = compiler.utils.implode_hashes(vars)
     end
 
-    if with and with_context then
-        inc[3] = "__.setmetatable({" ..with .. "}, { __index = _context })"
-    elseif with and not with_context then
-        inc[3] = "{" ..with .. "}"
-    elseif not with and with_context then
-        inc[3] = "_context"
+    if vars and args.with_context then
+        context = "__.setmetatable({" .. vars .. "}, { __index = _context })"
+    elseif vars and not args.with_context then
+        context = "{" .. vars .. "}"
+    elseif not vars and args.with_context then
+        context = "_context"
     else -- not with and not with_context
-        inc[3] = "{}"
+        context = "{}"
     end
 
-    return '__:include(' .. inc[1] .. ', ' .. inc[2] .. ', ' .. inc[3] .. ')'
+    return '__.fn.include(__, ' .. args.name .. ', ' .. tostring(args.ignore_missing) .. ', ' .. context .. ')'
 end
 
 --- {% import %}
@@ -282,41 +313,136 @@ function tags.tag_for(compiler, tok)
             compiler_error(tok, "syntax", "expecting variable name")
         end
     end
-
+    local tag = compiler:push_tag('for', {})
     from = compiler:parse_expression(tok:require("in"):next())
-    local tag = compiler:push_tag('for')
-
-    if tok:is('if') then
-        tok:next()
-        local info = {}
-        cond =  compiler:parse_expression(tok, info)
-        if info.bools == info.count then
-            return "if __.b(" .. cond .. ") then"
+    tag.has_loop = false
+    tag.from = from
+    tag.value = value
+    tag.key = key
+    while tok:is_valid() do
+        if tok:is('if') then
+            tok:next()
+            local info = {}
+            cond = compiler:parse_expression(tok, info)
+            if info.bools == info.count then
+                tag.cond = "if " .. cond .. " then"
+            else
+                tag.cond = "if __.b(" .. cond .. ") then"
+            end
+        elseif tok:is("recursive") then
+            if tag.nestedset then
+                compiler_error(tok, "syntax", "nestedset() already declared")
+            end
+            tok:require("("):next()
+            tag.recursive = compiler:parse_expression(tok:next())
+            tok:require(")"):next()
+        elseif tok:is("nestedset") then
+            if tag.recursive then
+                compiler_error(tok, "syntax", "recursive() already declared")
+            end
+            tok:require("(")
+            tag.nestedset = {
+                left = compiler:parse_expression(tok:next()),
+                right = compiler:parse_expression(tok:require(","):next()),
+                level = compiler:parse_expression(tok:require(","):next())
+            }
+            tok:require(")"):next()
+        else
+            break
         end
-        tag.cond = true
     end
-    local lua = {}
-    if key then
-        lua[#lua + 1] = 'for ' .. key .. ', ' .. value .. ' in __.pairs(' .. from .. ') do'
-    else
-        lua[#lua + 1] = 'for _, ' .. value .. ' in __.ipairs(' .. from .. ') do'
-    end
-    if cond then
-        lua[#lua + 1] ='if __.b(' .. cond .. ') then'
-    end
-
-    return concat(lua, " ")
 end
 
 --- {% endfor %}
 --- @param compiler aspect.compiler
 function tags.tag_endfor(compiler)
     local tag = compiler:pop_tag('for')
-    if tag.cond then
-        return "end end"
-    else
-        return "end"
+    local lua = tag.code_space
+    local before = {}
+    if tag.has_loop then
+        if tag.has_loop == true then -- use all keys of {{ loop }}
+            tag.has_loop = loop_keys
+        end
+        if tag.has_loop.revindex or tag.has_loop.revindex0 or tag.has_loop.last then
+            tag.has_loop.length = true
+        end
+        --- before for
+        before[#before + 1] = "do"
+        before[#before + 1] = "local loop = {"
+        if tag.has_loop.iteration then
+            before[#before + 1] = "\titeration = 1,"
+        end
+        if tag.has_loop.first then
+            before[#before + 1] = "\tfirst = true,"
+        end
+        if tag.has_loop.length or tag.has_loop.revindex or tag.has_loop.revindex0 or tag.has_loop.last then
+            before[#before + 1] = "\tlength = __.f.length(" .. tag.from .. "),"
+        end
+        if tag.has_loop.index or tag.has_loop.last then
+            before[#before + 1] = "\tindex = 1,"
+        end
+        if tag.has_loop.index0 then
+            before[#before + 1] = "\tindex0 = 0,"
+        end
+        before[#before + 1] = "}"
+        if tag.has_loop.revindex then
+            before[#before + 1] = "loop.revindex = loop.length - 1"
+        end
+        if tag.has_loop.revindex0 then
+            before[#before + 1] = "loop.revindex0 = loop.length"
+        end
+        if tag.has_loop.last then
+            before[#before + 1] = "loop.last = (length == 1)"
+        end
     end
+
+    if tag.key then -- start of 'for'
+        before[#before + 1] = 'for ' .. tag.key .. ', ' .. tag.value .. ' in __.pairs(' .. tag.from .. ') do'
+    else
+        before[#before + 1] = 'for _, ' .. tag.value .. ' in __.pairs(' .. tag.from .. ') do'
+    end
+    if tag.cond then -- start of 'if'
+        before[#before + 1] = tag.cond
+    end
+
+    if tag.has_loop then
+        if tag.has_loop.iteration then
+            lua[#lua + 1] = "loop.iteration = loop.iteration + 1"
+        end
+        if tag.has_loop.prev_item then
+            lua[#lua + 1] = "loop.prev_item = " .. tag.value
+        end
+    end
+    if tag.cond then -- end of 'if'
+        lua[#lua + 1] = "end"
+    end
+    if tag.has_loop then -- after for body
+        if tag.has_loop.first then
+            lua[#lua + 1] = "if loop.first then loop.first = false end"
+        end
+        if tag.cond then -- end of 'if'
+            lua[#lua + 1] = "end"
+        end
+        if tag.has_loop.index or tag.has_loop.last then
+            lua[#lua + 1] = "loop.index = loop.index + 1"
+        end
+        if tag.has_loop.index0 then
+            lua[#lua + 1] = "loop.index0 = loop.index0 + 1"
+        end
+        if tag.has_loop.revindex then
+            lua[#lua + 1] = "loop.revindex = loop.revindex - 1"
+        end
+        if tag.has_loop.revindex0 then
+            lua[#lua + 1] = "loop.revindex0 = loop.revindex0 - 1"
+        end
+        if tag.has_loop.last then
+            lua[#lua + 1] = "if loop.length == loop.index then loop.last = true end"
+        end
+        lua[#lua + 1] = "end" -- end of 'do'
+    end
+    lua[#lua + 1] = "end" -- end if 'for'
+    compiler.utils.prepend_table(before, lua)
+    return lua
 end
 
 --- {% if %}

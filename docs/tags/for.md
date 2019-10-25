@@ -73,18 +73,20 @@ Inside of a `for` loop block you can access some special variables:
 | loop.last         | True if last iteration |
 | loop.length       | The number of items in the sequence |
 | loop.parent       | The parent context |
-| loop.prev_item    |  |
+| loop.prev_item    | |
+| loop.next_item    | |
 
 Behavior
 --------
 
 | Value                    | action               |
 |--------------------------|----------------------|
-| empty string             | not iterate          |
-| numeric zero             | not iterate          |
+| string                   | not iterate          |
 | empty table              | not iterate          |
-| nil/null                 | not iterate          |
+| number                   | not iterate          |
+| nil                      | not iterate          |
+| true/false               | not iterate          |
 | userdata                 | not iterate          |
-| table with `__ipairs`    | iterate `__ipairs()` |
-| table with `__pairs`     | iterate `__pairs()`  |
-| table                    | iterate              |
+| userdata with `__pairs`  | iterate with `__pairs()` |
+| table                    | iterate with `pairs()` |
+| table with `__pairs`     | iterate with `__pairs()` instead of `pairs()` |

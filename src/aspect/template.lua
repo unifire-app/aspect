@@ -1,6 +1,8 @@
 local setmetatable = setmetatable
+local pretty = require("pl.pretty")
 local compiler = require("aspect.compiler")
 local output = require("aspect.output")
+local funcs = require("aspect.funcs")
 local filters = require("aspect.filters")
 local err = require("aspect.err")
 local loadcode
@@ -15,38 +17,38 @@ local pcall = pcall
 local setfenv = setfenv
 local ngx = ngx
 local jit = jit
-local var
 
-local _VERSION = _VERSION
 
 --- View
 --- @class aspect.view
 --- @field name string
 --- @field body fun
---- @field macros table<fun>
---- @field blocks table<fun>
+--- @field macros table<fun(__: aspect.output, context: table)>
+--- @field blocks table<aspect.template.block>
 --- @field vars table<string>
 --- @field uses table<string>
---- @field extends string|fun
+--- @field extends string|boolean
 --- @field cached string (dynamic)
 --- @field has_blocs boolean (dynamic)
 --- @field has_macros boolean (dynamic)
 local _view = {}
 
---- @class aspect.provider
---- @field load function(aspect.provider p, string name):string,tag template source code loader
---- @field luacode_load function(aspect.provider p, string name):string
---- @field luacode_save function(aspect.provider p, aspect.view view)
---- @field bytecode_load function(aspect.provider p, string name):string
---- @field bytecode_save function(aspect.provider p, aspect.view view)
-local _cacher = {}
+--- @class aspect.template.block
+--- @field desc string block description
+--- @field body fun(__: aspect.output, context: table) block's code
+--- @field vars table used context variables
+--- @field parent boolean use parent() function inside
+local _block = {}
+
 
 --- @class aspect.template
 --- @field compiler aspect.compiler
---- @field provider aspect.provider
---- @field loader function (string name) template source code loader
---- @field bytecode_loader function (string name) Returns raw byte code
---- @field bytecode_dumper function (string bytecode) Returns raw byte code
+--- @field cache boolean|table enable or disable in-memory cache. by default: false. set table (as container) for enable cache.
+--- @field loader fun(name: string):string,string template source code loader with etag (optionally)
+--- @field luacode_load fun(tpl: aspect.template, name: string):string
+--- @field luacode_save fun(tpl: aspect.template, name: string, luacode: string)
+--- @field bytecode_load fun(tpl: aspect.template, name: string):string
+--- @field bytecode_save fun(tpl: aspect.template, name: string, bytecode: string)
 local template = {
     _VERSION = "0.1"
 }
@@ -74,7 +76,7 @@ do
         setfenv(view.body, setmetatable({}, context))
         for _, b in pairs(view.blocks) do
             c = c + 1
-            setfenv(b, setmetatable({}, context))
+            setfenv(b.body, setmetatable({}, context))
         end
         if c > 0 then
             view.has_blocks = true
@@ -98,14 +100,13 @@ function template.new(options)
         compiler = compiler,
         loader = nil,
         cacher = nil,
-        filters = {},
-        filters_args = {},
     }, mt)
     tpl.opts = {
         escape = false,
         strip = false,
         stack_size = 20,
-        f = setmetatable(filters, { __index = function (v) return v end })
+        f = setmetatable(filters, { __index = function (v) return v end }),
+        fn = setmetatable(funcs.fn, { __index = function () end })
     }
     --- @param names table|string
     tpl.opts.get = function(names)
@@ -168,17 +169,17 @@ end
 --- @return aspect.view|nil
 --- @return aspect.error|nil
 function template:load(name)
-    local bytecode, luacode, source, build, ok, error, func
-    if self.cacher and self.cacher.binary_load then
-        bytecode, error = self.cacher:binary_load(name)
+    local bytecode, luacode, source, build, ok, error, f
+    if self.binary_load then
+        bytecode, error = self:binary_load(name)
         if bytecode then
             return loadcode(self, bytecode, name .. ".lua")
         elseif error then
             return nil, err.new(error)
         end
     end
-    if self.cacher and self.cacher.luacode_load then
-        luacode, error = self.cacher:luacode_loader(name)
+    if self.luacode_load then
+        luacode, error = self:luacode_load(name)
         if luacode then
             return loadcode(self, luacode, name .. ".lua")
         end
@@ -189,16 +190,15 @@ function template:load(name)
         ok, error = build:run(source)
         if ok then
             luacode = build:get_code()
-            if self.cacher and self.cacher.luacode_save then
-                self.cacher:luacode_save(name, luacode)
+            if self.luacode_save then
+                self:luacode_save(name, luacode)
             end
-            print(luacode)
-            if self.cacher and self.cacher.binary_save then
-                func, error = loadstring(luacode, name .. ".lua")
-                if not func then
+            if self.binary_save then
+                f, error = loadstring(luacode, name .. ".lua")
+                if not f then
                     return nil, err.new(error)
                 end
-                self.cacher:binary_save(name, dump(func))
+                self:binary_save(name, dump(f))
             end
             return loadcode(self, luacode, name .. ".lua")
         else
@@ -230,10 +230,11 @@ function template:fetch(name, vars)
     while view.extends do
         if view.extends == true then -- dynamic extends
         else -- static extends
-            view, error = self:get_view(view.extends)
-            if not view then
-                return nil, err.new(error or "Template '" .. view.extends .. "' not found while extending " .. name)
+            local v, e = self:get_view(view.extends)
+            if not v then
+                return nil, err.new(e or "Template '" .. view.extends .. "' not found while extending " .. name)
             end
+            view = v
         end
         out:add_blocks(view)
     end
@@ -259,7 +260,7 @@ end
 --- @return string macro result
 --- @return aspect.error if error occur
 function template:fetch_macro(name, macro_name, arguments)
-    local out, ok = output.new(self.opts, name), nil
+    local out, ok = output.new(self.opts), nil
     local view, error = self:get_view(name)
     if not view then
         return nil, err.new(error or "Template '" .. tostring(name) .. "' not found")
@@ -286,7 +287,7 @@ end
 --- @return string block result
 --- @return aspect.error if error occur
 function template:fetch_block(name, block_name, vars)
-    local out, ok = output.new(self.opts, name), nil
+    local out, ok = output.new(self.opts), nil
     local view, error = self:get_view(name)
     if not view then
         return nil, err.new(error or "Template '" .. tostring(name) .. "' not found")

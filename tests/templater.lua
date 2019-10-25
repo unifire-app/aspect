@@ -1,3 +1,4 @@
+package.path = "./src/?.lua;" .. package.path
 local lu = require('luaunit')
 local aspect = require("aspect.template")
 local tokenizer = require("aspect.tokenizer")
@@ -106,6 +107,14 @@ TestTemplate.templates["tpl_21"] = {
     ]],
     "1: item1 3: item3"
 }
+TestTemplate.templates["tpl_22"] = {
+    [[
+        {% for k, v in list_1 %}
+            {{ loop.index }}: {{ v }} {% if not loop.last %}|{% endif %}
+        {% endfor %}
+    ]],
+    "1: item1 | 2: item2 | 3: item3"
+}
 TestTemplate.templates["tpl_30"] = {
     [[{{ table_1.integer_value }} and {{ table_1.float_value }} and {{ table_1.string_value }}]],
     "7 and 2.1 and is table value"
@@ -210,7 +219,7 @@ TestTemplate.templates["tpl_58"] = {
     ]],
     ""
 }
-TestTemplate.templates["tpl_60"] = {
+TestTemplate.templates["extends_01"] = {
     [[
     {% block one %}
         block one
@@ -222,15 +231,67 @@ TestTemplate.templates["tpl_60"] = {
     ]],
     "block one [and] block two"
 }
-TestTemplate.templates["tpl_61"] = {
+TestTemplate.templates["extends_02"] = {
     [[
-    {% extends "tpl_60" %}
+    {% extends "extends_01" %}
     {% block one %}
-        block one from tpl_61
+        block one from extends_02
     {% endblock %}
     invalid content
     ]],
-    "block one from tpl_61 [and] block two"
+    "block one from extends_02 [and] block two"
+}
+TestTemplate.templates["extends_03"] = {
+    [[
+    {% block one %}
+        block one from extends_03
+    {% endblock %}
+    {% if block("one") %}
+        has block one
+    {% endif %}
+    ]],
+    "block one from extends_03 has block one"
+}
+
+TestTemplate.templates["extends_03"] = {
+    [[
+    {% set var = 1 %}
+    {% block one %}
+        var: {{ var }}
+    {% endblock %}
+    {% set var = 2 %}
+    {{ block("one") }}
+    ]],
+    "var: 1 var: 2"
+}
+
+TestTemplate.templates["extends_04"] = {
+    [[
+    {% extends "extends_01" %}
+    {% block one %}
+        block one from extends_02 [and] {{ parent() }}
+    {% endblock %}
+    invalid content
+    ]],
+    "block one from extends_02 [and] block one [and] block two"
+}
+
+TestTemplate.templates["range_01"] = {
+    [[
+    {% for k,v in range(1,3) %}
+        {{ k }}: {{ v }},
+    {% endfor %}
+    ]],
+    "1: 1, 2: 2, 3: 3,"
+}
+
+TestTemplate.templates["range_02"] = {
+    [[
+    {% for k,v in range(step=-2, from=5, to=0) %}
+        {{ k }}: {{ v }},
+    {% endfor %}
+    ]],
+    "1: 5, 2: 3, 3: 1,"
 }
 --TestTemplate.templates["hello"] = [[
 --{% if user and not user.deleted %}
@@ -269,7 +330,8 @@ function TestTemplate:run_parser(tests, callback)
 end
 
 function TestTemplate:test_01_tokenize()
-    local tok = tokenizer.new("for i,j in vers|select('this', \"oh\") %}")
+    local str = "for i,j in vers|select('this', \"oh\") %}"
+    local tok = tokenizer.new(str)
     lu.assertIs(tok:get_token(), "for")
     lu.assertIsTrue(tok:is_word())
 
@@ -312,13 +374,15 @@ function TestTemplate:test_01_tokenize()
     tok:next() -- %}
 
     lu.assertIsFalse(tok:is_valid())
-    lu.assertIs(tok:get_token(), "%}")
-    lu.assertIs(tok:get_token_type(), "stop")
+    lu.assertIs(tok:get_token(), nil)
+    lu.assertIs(tok:get_token_type(), nil)
 
     tok:next() -- %}
 
     lu.assertIsFalse(tok:is_valid())
-    lu.assertIs(tok:get_token(), "%}")
+    lu.assertIs(tok:get_token(), nil)
+
+    lu.assertIs(tok:get_path_as_string() .. "%}", str)
 end
 
 function TestTemplate:provider_values()
@@ -393,7 +457,7 @@ function TestTemplate:_test_03_expression()
     self:run_parser(self:provider_expression(), 'parse_expresion')
 end
 
-function TestTemplate:test_template_body()
+function TestTemplate:test_02_templates()
     local template = aspect.new()
     template.loader = function(tpl, name)
         if TestTemplate.templates[name] then
@@ -402,15 +466,21 @@ function TestTemplate:test_template_body()
             return nil
         end
     end
+    local compiled = {}
+    template.luacode_save = function (tpl, name, code)
+        compiled[#compiled + 1] = "\n==== Compiled template " .. name .. ":\n" .. code
+    end
+
     for k, v in tablex.sort(TestTemplate.templates) do
+        compiled = {}
         local result, err = template:fetch(k, TestTemplate.vars)
         if result then
             result = string.gsub(result, "%s+", " ")
-            lu.assertIs(strip(result), v[2], "Test template ".. k ..":\n" .. v[1])
+            lu.assertIs(strip(result), v[2], "Test template ".. k ..":\n" .. v[1] .. "\nCompiled template:\n" .. table.concat(compiled))
         elseif not v[2] and v[3] then
             lu.assertIs(err.message, v[3])
         else
-            lu.fail(tostring(err) .. "\n\nTest template ".. k ..":\n" .. v[1])
+            lu.fail(tostring(err) .. "\n\nTest template ".. k ..":\n" .. v[1] .. "\nCompiled template:\n" .. table.concat(compiled))
         end
     end
             --.render:fetch({

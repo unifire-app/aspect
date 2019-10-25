@@ -26,7 +26,7 @@ config.is_false = {
     [0] = true,
 }
 
---- empty string variants (alse see bellow)
+--- empty string variants (also see bellow)
 config.is_empty_string = {
     [""] = true,
 }
@@ -126,6 +126,14 @@ config.compiler = {
         ["and"] = "and",
         ["or"] = "or"
     },
+    other_ops = {
+        ["~"] = true,
+        ["|"] = true,
+        ["."] = true,
+        ["["] = true,
+        ["]"] = true,
+        [","] = true
+    },
     --- reserved variables names
     reserved_vars = {
         _self = true,
@@ -133,11 +141,17 @@ config.compiler = {
         _charset = true,
         __ = true
     },
+
+    tag_type = {
+        EXPRESSION = 1,
+        CONTROL = 2,
+        COMMENT = 3,
+    }
 }
 
 config.tokenizer = {
     patterns = {
-        NUMBER1 = '^[%+%-]?%d+%.?%d*[eE][%+%-]?%d+',
+        NUMBER1 = '^[%+%-]?%d+%.?%d*[eE][%+%-]?%d+', -- 123.45e-32
         NUMBER2 = '^[%+%-]?%d+%.?%d*',
         NUMBER3 = '^0x[%da-fA-F]+',
         NUMBER4 = '^%d+%.?%d*[eE][%+%-]?%d+',
@@ -153,5 +167,28 @@ config.tokenizer = {
         PREPRO = '^#.-[^\\]\n',
     }
 }
+
+config.loop = {
+    keys = {
+        parent = true,
+        iteration = true,
+        index = true,
+        index0 = true,
+        revindex = true,
+        revindex0 = true,
+        first = true,
+        last = true,
+        length = true,
+        prev_item = true,
+        next_item = true,
+
+        --- trees
+        depth = true,
+        depth0 = true,
+        first_child = true,
+        last_child = true
+    }
+}
+
 
 return config

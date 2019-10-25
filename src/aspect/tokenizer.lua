@@ -9,6 +9,7 @@ local lexer = require("pl.lexer")
 local yield = coroutine.yield
 local tonumber = tonumber
 local patterns = require("aspect.config").tokenizer.patterns
+local compiler = require("aspect.config").compiler
 
 --- @class aspect.tokenizer
 --- @field tok function
@@ -49,6 +50,12 @@ local function tstop(tok)
     return yield("stop",tok)
 end
 
+local straight = {
+    "iden",
+    "string",
+    "number"
+}
+
 local matches = {
     {patterns.WSPACE,wsdump},
     {patterns.NUMBER3,ndump},
@@ -65,8 +72,6 @@ local matches = {
     {'^<=',tdump},
     {'^>=',tdump},
     {'^%*%*',tdump},
-    {'^%.%.%.',tdump},
-    {'^%.%.',tdump},
     {'^.',tdump}
 }
 
@@ -74,19 +79,41 @@ local matches = {
 --- Start the tokenizer
 --- @return aspect.tokenizer
 function tokenizer.new(s)
+    local tokens = {}
+    local indent
+    local parsed_len = 0
+    local finished_token
     local tok = lexer.scan(s, matches, {space=true}, {number=true,string=false})
-    local itself = setmetatable({
-        count = 0,
-        path = {},
-        tok = tok,
-        token = nil,
-        typ = nil
+    for tok_type, token in tok do
+        if tok_type == "stop" then
+            parsed_len = parsed_len + strlen(token)
+            finished_token = token
+            break
+        end
+        if tok_type == "space" then
+            if tokens[#tokens] then
+                tokens[#tokens][3] = token
+            else
+                indent = token
+            end
+        else
+            parsed_len = parsed_len + strlen(token)
+            tokens[#tokens + 1] = {tok_type, token}
+        end
+    end
+    return setmetatable({
+        tokens = tokens,
+        i = 1,
+        token = tokens[1][2],
+        typ = tokens[1][1],
+        finished_token = finished_token,
+        parsed_len = parsed_len,
+        indent = indent
     }, mt)
-    return itself:next()
 end
 
 function tokenizer:get_pos()
-    return #self.path
+    return #self.i
 end
 
 --- Returns the token value
@@ -95,34 +122,52 @@ function tokenizer:get_token()
     return self.token
 end
 
+--- Returns the next token value
+--- @return string
+function tokenizer:get_next_token()
+    if self.tokens[self.i + 1] then
+        return self.tokens[self.i + 1][2]
+    end
+end
+
 --- Returns the token type
 --- @return string
 function tokenizer:get_token_type()
     return self.typ
 end
 
---- Returns tokenized fragments as string
+--- Returns the next token type
+--- @return string
+function tokenizer:get_next_token_type()
+    if self.tokens[self.i + 1] then
+        return self.tokens[self.i + 1][1]
+    end
+end
+
+--- Returns done tokens as string
 --- @return string
 function tokenizer:get_path_as_string()
-    return concat(self.path)
+    local path = {self.indent}
+    for i = 1, self.i do
+        if self.tokens[i] then
+            path[#path + 1] = self.tokens[i][2] .. (self.tokens[i][3] or "")
+        end
+    end
+    return concat(path)
 end
 
 --- @return aspect.tokenizer
 function tokenizer:next()
-    while true do
-        if self.typ == "stop" then
-            break
-        end
-        self.typ, self.token = self.tok()
-        insert(self.path, self.token)
-        if not self.typ then
-            self.typ = "stop"
-            break
-        end
-        if self.typ ~= "space" then
-            self.count = self.count + 1
-            break
-        end
+    if not self.tokens[self.i] then
+        return self
+    end
+    self.i = self.i + 1
+    if self.tokens[self.i] then
+        self.token = self.tokens[self.i][2]
+        self.typ = self.tokens[self.i][1]
+    else
+        self.token = nil
+        self.typ = nil
     end
     return self
 end
@@ -131,6 +176,12 @@ end
 --- @return boolean
 function tokenizer:is(token)
     return self.token == token
+end
+
+--- Checks the next token value
+--- @return boolean
+function tokenizer:is_next(token)
+    return self:get_next_token() == token
 end
 
 --- Checks the token value and if token value incorrect throw an error
@@ -148,10 +199,23 @@ function tokenizer:is_word()
     return self.typ == "iden"
 end
 
+--- Checks if the next token is simple word
+--- @return boolean
+function tokenizer:is_next_word()
+    return self:get_next_token_type() == "iden"
+end
+
 --- Checks if the token is scalar value
 --- @return boolean
 function tokenizer:is_value()
     return self.typ == "string" or self.typ == "number"
+end
+
+--- Checks if the next token is scalar value
+--- @return boolean
+function tokenizer:is_next_value()
+    local typ = self:get_next_token_type()
+    return typ == "string" or typ == "number"
 end
 
 --- Checks if the token is string
@@ -160,16 +224,36 @@ function tokenizer:is_string()
     return self.typ == "string"
 end
 
+--- Checks if the next token is string
+--- @return boolean
+function tokenizer:is_next_string()
+    return self:get_next_token_type() == "string"
+end
+
 --- Checks if the token is number
 --- @return boolean
 function tokenizer:is_number()
     return self.typ == "number"
 end
 
+--- Checks if the next token is number
+--- @return boolean
+function tokenizer:is_next_number()
+    return self:get_next_token_type() == "number"
+end
+
+function tokenizer:is_op()
+    return self.typ and not straight[self.typ]
+end
+
+function tokenizer:is_next_op()
+    return self.tokens[self.i + 1] and not straight[self.tokens[self.i + 1][1]]
+end
+
 --- Checks if the token is valid (stream not finished)
 --- @return boolean
 function tokenizer:is_valid()
-    return self.typ and self.typ ~= "stop"
+    return self.typ ~= nil
 end
 
 return tokenizer

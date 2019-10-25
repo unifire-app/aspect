@@ -123,7 +123,7 @@ A block provides a way to change how a certain part of a template is rendered bu
 Let's take the following example to illustrate how a block works and more importantly, how it does not work:
 
 ```twig
-{# base.twig #}
+{# base.tpl #}
 
 {% for post in posts %}
     {% block post %}
@@ -137,7 +137,7 @@ If you render this template, the result would be exactly the same with or withou
 The `block` inside the `for` loop is just a way to make it overridable by a child template:
 
 ```twig
-{# child.twig #}
+{# child.tpl #}
 
 {% extends "base.twig" %}
 

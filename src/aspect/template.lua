@@ -105,8 +105,8 @@ function template.new(options)
         escape = false,
         strip = false,
         stack_size = 20,
-        f = setmetatable(filters, { __index = function (v) return v end }),
-        fn = setmetatable(funcs.fn, { __index = function () end })
+        f = filters,
+        fn = funcs.fn
     }
     --- @param names table|string
     tpl.opts.get = function(names)
@@ -115,7 +115,7 @@ function template.new(options)
             for _, n in ipairs(names) do
                 view, error = tpl:get_view(n)
                 if error then
-                    return error
+                    return nil, error
                 elseif view then
                     return view
                 end
@@ -123,7 +123,7 @@ function template.new(options)
         else
             view, error = tpl:get_view(names)
             if error then
-                return error
+                return nil, error
             elseif view then
                 return view
             end

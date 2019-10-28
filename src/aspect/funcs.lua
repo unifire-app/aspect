@@ -1,3 +1,4 @@
+local unpack = unpack
 local err = require("aspect.err")
 local compiler_error = err.compiler_error
 local runtime_error = err.runtime_error
@@ -177,6 +178,32 @@ function func.fn.range(__, args)
         t[#t+1] = i
     end
     return t
+end
+
+--- @param __ aspect.output
+--- @param from string
+--- @param names table
+function func.fn.import(__, from, names)
+    if not from then
+        runtime_error(__, "import(): requires 'from' argument")
+    end
+    local view, error = __.opts.get(from)
+    if not view then
+        runtime_error(__, error)
+    end
+    if names then
+        local macros = {}
+        for i = 1, #names do
+            local macro =  view.macros[ names[i] ]
+            if not macro then
+                runtime_error(__, "import(): macro '".. names[i] .. "' doesn't exists in the template " .. view.name)
+            end
+            macros[#macros + 1] = macro
+        end
+        return unpack(macros)
+    else
+        return view.macros or {}
+    end
 end
 
 return func

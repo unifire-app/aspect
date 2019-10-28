@@ -8,10 +8,16 @@ local getmetatable = getmetatable
 local tablex = require("pl.tablex")
 local stringx = require("pl.stringx")
 local array2d = require("pl.array2d")
+local date = require("pl.Date")
 local cjson = require("cjson.safe")
 local count = table.nkeys or tablex.size
 local upper = string.upper
 local lower = string.lower
+local gsub = string.gsub
+local config = require("aspect.config")
+local e_pattern = config.escape.pattern
+local e_replaces = config.escape.replaces
+local escapers = config.escapers
 local has_utf8, utf8 = pcall(require, "lua-utf8")
 if has_utf8 then
     strlen = utf8.len
@@ -42,7 +48,16 @@ end
 
 --- https://twig.symfony.com/doc/2.x/filters/date.html
 function filters.date(v, fmt)
-
+    fmt = fmt or "yyyy-mm-dd HH:MM:SS"
+    local typ = type(v)
+    if typ == "numeric" or typ == "table" then -- timestamp or table with year, month, etc
+        date:Date(v)
+    elseif type == "string" then -- parsing
+        date.Format:parse(v)
+    elseif type == "userdata" then -- cmodule data
+    else
+        return ""
+    end
 end
 
 --- https://twig.symfony.com/doc/2.x/filters/date_modify.html
@@ -56,7 +71,14 @@ function filters.escape(v, typ)
 end
 
 function filters.e(v, typ)
-
+    v = tostring(v)
+    if not typ or typ == "html" then
+        gsub(v, e_pattern, e_replaces)
+    elseif typ == "js" then
+        return cjson.encode(v)
+    elseif escapers[typ] then
+        return escapers(v)
+    end
 end
 
 --- https://twig.symfony.com/doc/2.x/filters/default.html

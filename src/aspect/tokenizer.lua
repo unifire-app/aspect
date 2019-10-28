@@ -43,7 +43,7 @@ local function wsdump (tok)
 end
 
 local function tpl_vdump(tok)
-    return yield("iden",tok)
+    return yield("word",tok)
 end
 
 local function tstop(tok)
@@ -51,7 +51,7 @@ local function tstop(tok)
 end
 
 local straight = {
-    "iden",
+    "word",
     "string",
     "number"
 }
@@ -59,7 +59,7 @@ local straight = {
 local matches = {
     {patterns.WSPACE,wsdump},
     {patterns.NUMBER3,ndump},
-    {patterns.IDEN,tpl_vdump},
+    { patterns.WORD, tpl_vdump},
     {patterns.NUMBER4,ndump},
     {patterns.NUMBER5,ndump},
     {patterns.STRING1,sdump},
@@ -113,7 +113,7 @@ function tokenizer.new(s)
 end
 
 function tokenizer:get_pos()
-    return #self.i
+    return self.i
 end
 
 --- Returns the token value
@@ -184,6 +184,22 @@ function tokenizer:is_next(token)
     return self:get_next_token() == token
 end
 
+--- Checks sequence of tokens (current token - start of the sequence)
+--- @param seq table
+--- @return boolean
+--- @return string name of sequence there failed
+function tokenizer:is_seq(seq)
+    for i=0,#seq-1 do
+        if not self.tokens[self.i + i] then
+            return false, seq[i + 1]
+        end
+        if self.tokens[self.i + i][1] ~= seq[i + 1] then
+            return false, seq[i + 1]
+        end
+    end
+    return true
+end
+
 --- Checks the token value and if token value incorrect throw an error
 --- @return aspect.tokenizer
 function tokenizer:require(token)
@@ -196,13 +212,13 @@ end
 --- Checks if the token is simple word
 --- @return boolean
 function tokenizer:is_word()
-    return self.typ == "iden"
+    return self.typ == "word"
 end
 
 --- Checks if the next token is simple word
 --- @return boolean
 function tokenizer:is_next_word()
-    return self:get_next_token_type() == "iden"
+    return self:get_next_token_type() == "word"
 end
 
 --- Checks if the token is scalar value

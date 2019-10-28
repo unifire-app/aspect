@@ -156,7 +156,7 @@ config.tokenizer = {
         NUMBER3 = '^0x[%da-fA-F]+',
         NUMBER4 = '^%d+%.?%d*[eE][%+%-]?%d+',
         NUMBER5 = '^%d+%.?%d*',
-        IDEN = '^[%a_][%w_]*',
+        WORD = '^[%a_][%w_]*',
         WSPACE = '^%s+',
         STRING1 = "^(['\"])%1", -- empty string
         STRING2 = [[^(['"])(\*)%2%1]],
@@ -186,9 +186,18 @@ config.loop = {
         depth = true,
         depth0 = true,
         first_child = true,
-        last_child = true
+        last_child = true,
+        trace = true
     }
 }
 
+config.macro = {
+    import_type = {
+        GROUP = 1,
+        SINGLE = 2
+    }
+}
+
+config.escapers = {}
 
 return config

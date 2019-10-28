@@ -1,8 +1,6 @@
 Tag `for`
 =========
 
-[[_TOC_]]
-
 Loop over each item in a sequence. 
 For example, to display a list of users provided in a variable called `users`:
 

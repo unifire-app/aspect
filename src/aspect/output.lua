@@ -32,6 +32,7 @@ local _parents = {}
 --- @field stack table<aspect.view,number,string>
 --- @field parents table<aspect.output.parent>
 --- @field blocks table
+--- @field opts table template options and helpers
 local output = {
     ipairs = ipairs,
     pairs = pairs,

@@ -20,6 +20,7 @@ local sub = string.sub
 local strlen = string.len
 local pcall = pcall
 local config = require("aspect.config")
+local import_type = config.macro.import_type
 local reserved_words = config.compiler.reserved_words
 local reserved_vars = config.compiler.reserved_vars
 local math_ops = config.compiler.math_ops
@@ -32,10 +33,11 @@ local func = require("aspect.funcs")
 
 --- @class aspect.compiler
 --- @field aspect aspect.template
+--- @field name string
 --- @field macros table<table> table of macros with their code (witch array)
 --- @field extends string|fun
 --- @field extends_expr boolean
---- @field imports
+--- @field import table
 --- @field line number
 --- @field tok aspect.tokenizer
 --- @field utils aspect.compiler.utils
@@ -70,6 +72,7 @@ function compiler.new(aspect, name)
         idx  = 0,
         use_vars = {},
         tag_type = nil,
+        import = {}
     }, mt)
 end
 
@@ -209,6 +212,8 @@ function compiler:parse_var_name(tok, opts)
         local var = tok:get_token()
         if var == "_context" or var == "__" or var == "_self" then
             opts.var_system = true
+        else
+            opts.var_system = false
         end
         tok:next()
         return var
@@ -245,9 +250,9 @@ function compiler:parse_variable(tok)
                     end
                 end
                 tok:next()
-            --else
-            --    tok:next()
-            --    var = {"loop"}
+                --else
+                --    tok:next()
+                --    var = {"loop"}
             end
         elseif tok:is("_context") then -- magick variable name {{ _context }}
             tok:next()
@@ -339,6 +344,74 @@ function compiler:parse_function(tok)
     else
         return "__.fn." .. name .. "(__, {" .. compiler.utils.implode_hashes(args) .. "})"
     end
+end
+
+--- @param tok aspect.tokenizer
+function compiler:parse_macro(tok)
+    if tok:is("_self") then
+        local name = tok:next():require("."):next():get_token()
+        if not self.macros[name] then
+            compiler_error(tok, "syntax", "Macro " .. name .. " not defined in this (" .. self.name .. ") template")
+        end
+        return "_self.macros." .. name .."(__, " .. self:parse_macro_args(tok:next():require("(")) .. ")", false
+    elseif tok:is_word() then
+        if tok:is_next(".") then
+            local var = tok:get_token()
+            if self.import[var] ~= import_type.GROUP then
+                compiler_error(tok, "syntax", "Macro " .. var .. " not imported")
+            end
+            local name = tok:next():require("."):next():get_token()
+            return "(" .. var .. "." .. name .. " and "
+                    .. var .. "." .. name .. "(__, " .. self:parse_macro_args(tok:next()) .. "))", false
+        elseif tok:is_next("(") then
+            local name = tok:get_token()
+            if self.import[name] ~= import_type.SINGLE then
+                compiler_error(tok, "syntax", "Macro " .. name .. " not imported")
+            end
+            tok:next():require("(")
+            return name .."(__, " .. self:parse_macro_args(tok) .. ")", false
+        end
+    end
+end
+
+--- Parse arguments for macros
+--- @param tok aspect.tokenizer
+function compiler:parse_macro_args(tok)
+    tok:require("("):next()
+    local i, args = 1, {}
+    while true do
+        local key, value = nil, nil
+        if tok:is_word() then
+            if tok:is_next("=") then
+                key = tok:get_token()
+                tok:next():require("="):next()
+                value = self:parse_expression(tok)
+            else
+                value = self:parse_expression(tok)
+            end
+        else
+            value = self:parse_expression(tok)
+        end
+        if key then
+            args[ key ] = value
+        else
+            args[ i ] = value
+        end
+        if tok:is(",") then
+            tok:next()
+        else
+            break
+        end
+        i = i + 1
+    end
+    tok:require(")"):next()
+    args = compiler.utils.implode_hashes(args)
+    if args then
+        return "{ " .. args .. " }"
+    else
+        return "{}"
+    end
+
 end
 
 --- Parse array (list or hash)
@@ -455,9 +528,9 @@ function compiler:parse_filters(tok, var)
                 tok:next()
             end
             if args then
-                var = "__:f['" .. filter .. "'](" .. var .. ", " .. concat(args, ", ") .. ")"
+                var = "__.f['" .. filter .. "'](" .. var .. ", " .. concat(args, ", ") .. ")"
             else
-                var = "__:f['" .. filter .. "'](" .. var .. ")"
+                var = "__.f['" .. filter .. "'](" .. var .. ")"
             end
         else
             compiler_error(tok, "syntax", "expecting filter name")
@@ -472,7 +545,13 @@ function compiler:parse_value(tok)
     local var
     if tok:is_word() then -- is variable name
         if tok:is_next("(") then
-            var = self:parse_function(tok)
+            if self.import[tok:get_token()] == import_type.SINGLE then
+                var = self:parse_macro(tok)
+            else
+                var = self:parse_function(tok)
+            end
+        elseif tok:is_seq{"word", ".", "word", "("} then
+            var = self:parse_macro(tok)
         else
             var = self:parse_variable(tok)
         end
@@ -801,18 +880,30 @@ function utils.implode_hashes(t1, t2)
     local r = {}
     if t1 then
         for k,v in pairs(t1) do
-            r[#r + 1] = '["' .. k .. '"] = ' .. v
+            if type(k) == "number" then
+                r[#r + 1] = '[' .. k .. '] = ' .. v
+            else
+                r[#r + 1] = '["' .. k .. '"] = ' .. v
+            end
         end
         if t2 then
             for k,v in pairs(t2) do
                 if not t1[k] then
-                    r[#r + 1] = '["' .. k .. '"] = ' .. v
+                    if type(k) == "number" then
+                        r[#r + 1] = '[' .. k .. '] = ' .. v
+                    else
+                        r[#r + 1] = '["' .. k .. '"] = ' .. v
+                    end
                 end
             end
         end
     elseif t2 then
         for k,v in pairs(t2) do
-            r[#r + 1] = '["' .. k .. '"] = ' .. v
+            if type(k) == "number" then
+                r[#r + 1] = '[' .. k .. '] = ' .. v
+            else
+                r[#r + 1] = '["' .. k .. '"] = ' .. v
+            end
         end
     end
     if #r > 0 then

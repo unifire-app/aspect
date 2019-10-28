@@ -88,3 +88,18 @@ is_false['0'] = true
 ```
  
 Now example output `Unaceptable condition!` because `zero` will be casted to false.
+
+Custom escaper
+--------------
+
+Add custom escaper via config, using escaper name: 
+
+```lua
+require("aspect.config").escapers.csv = function(value) 
+    -- ... 
+end
+```
+
+```twig
+{{ data.raw|e("csv") }}
+```

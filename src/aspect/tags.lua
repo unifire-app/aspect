@@ -2,9 +2,11 @@ local err = require("aspect.err")
 local compiler_error = err.compiler_error
 local quote_string = require("pl.stringx").quote_string
 local dump = require("pl.pretty").dump
-local reserved_words = require("aspect.config").compiler.reserved_words
-local loop_keys = require("aspect.config").loop.keys
-local tag_type = require("aspect.config").compiler.tag_type
+local config = require("aspect.config")
+local reserved_words = config.compiler.reserved_words
+local loop_keys = config.loop.keys
+local tag_type = config.compiler.tag_type
+local import_type = config.macro.import_type
 local concat = table.concat
 local insert = table.insert
 local tostring = tostring
@@ -126,21 +128,6 @@ function tags.tag_endblock(compiler, tok)
     end
 end
 
---- {% parent %}
---- @param compiler aspect.compiler
---function tags.tag_parent(compiler)
---    local tag = compiler:get_last_tag("block")
---    if not tag then
---        compiler_error(nil, "syntax", "{% parent %} should be called in the block")
---    end
---    local vars = compiler.utils.implode_hashes(compiler:get_local_vars())
---    if vars then
---        return '__:parent(' .. quote_string(tag.block_name) .. ', __.setmetatable({ ' .. vars .. '}, { __index = _context }))' ;
---    else
---        return '__:parent(' .. quote_string(tag.block_name) .. ', _context)' ;
---    end
---end
-
 --- {% use %}
 --- @param compiler aspect.compiler
 --- @param tok aspect.tokenizer
@@ -157,7 +144,8 @@ function tags.tag_macro(compiler, tok)
     end
     local name = tok:get_token()
     compiler.macros[name] = {}
-    compiler:push_tag("macro", compiler.macros[name], "macro." .. name)
+    local tag = compiler:push_tag("macro", compiler.macros[name], "macro." .. name)
+    tag.macro_name = name
     if tok:next():is("(") then
         local no = 1
         repeat
@@ -187,7 +175,14 @@ end
 --- @param compiler aspect.compiler
 --- @param tok aspect.tokenizer
 function tags.tag_endmacro(compiler, tok)
-    compiler:pop_tag("macro")
+    local tag = compiler:pop_tag("macro")
+    if tok:is_valid() then
+        tok:require(tag.macro_name):next()
+    end
+end
+
+function tags.tag_from(compiler, tok)
+
 end
 
 --- {% include {'tpl_1', 'tpl_2'} ignore missing only with {foo = 1} with context with vars %}
@@ -275,7 +270,8 @@ function tags.tag_import(compiler, tok)
     local from = compiler:parse_expression(tok)
     tok:require("as"):next()
     local name = compiler:parse_var_name(tok)
-    return 'local ' .. name .. ' = __.import(' .. from .. ')'
+    compiler.import[name] = import_type.GROUP
+    return 'local ' .. name .. ' = __.fn.import(__, ' .. from .. ')'
 end
 
 --- {% from %}
@@ -284,8 +280,32 @@ end
 function tags.tag_from(compiler, tok)
     local from = compiler:parse_expression(tok)
     tok:require("import"):next()
-    local name = compiler:parse_var_name(tok)
-    return 'local ' .. name .. ' = __.import(' .. from .. ')'
+    local names, aliases = {}, {}
+    while tok:is_valid() do
+        local info = {}
+        local name = compiler:parse_var_name(tok, info)
+        if info.var_system then
+            compiler_error(tok, "syntax", "system variables can't be changed")
+        end
+        insert(names, quote_string(name))
+        if tok:is("as") then
+            name = compiler:parse_var_name(tok:next(), info)
+            compiler.import[name] = import_type.SINGLE
+            insert(aliases, name)
+            if info.var_system then
+                compiler_error(tok, "syntax", "system variables can't be changed")
+            end
+        else
+            compiler.import[name] = import_type.SINGLE
+            insert(aliases, name)
+        end
+        if tok:is(",") then
+            tok:next()
+        else
+            break
+        end
+    end
+    return 'local ' .. concat(aliases, ", ") .. ' = __.fn.import(__, ' .. from .. ', {'.. concat(names, ", ") .. '})'
 end
 
 --- {% for %}

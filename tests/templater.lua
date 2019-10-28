@@ -284,7 +284,6 @@ TestTemplate.templates["range_01"] = {
     ]],
     "1: 1, 2: 2, 3: 3,"
 }
-
 TestTemplate.templates["range_02"] = {
     [[
     {% for k,v in range(step=-2, from=5, to=0) %}
@@ -293,24 +292,54 @@ TestTemplate.templates["range_02"] = {
     ]],
     "1: 5, 2: 3, 3: 1,"
 }
---TestTemplate.templates["hello"] = [[
---{% if user and not user.deleted %}
---    hello, {{ user.name }}!
---{% endif %}
---
---{% for id, u in user.list %}
---    * {{ id }}: {{ u.name }}
---{% endfor %}
---
---{% block content scoped %}
---    this is block
---    {{ content }}
---{% endblock %}
---
---{% macro input(name, value, type = "text", size = 20) %}
---    <input type="{{ type }}" name="{{ name }}" value="{{ value }}" size="{{ size }}" />
---{% endmacro %}
---]]
+
+TestTemplate.templates["macro_01"] = {
+    [[
+    {% macro key_value(key, value = "none") %}
+        [{{ key }}: {{ value }}]
+    {% endmacro %}
+
+    {{ _self.key_value("one") }}
+    {{ _self.key_value("two", "value1") }}
+    {{ _self.key_value(value = "value2") }}
+    {{ _self.key_value(value = "value3", key = "three") }}
+    ]],
+    "[one: none] [two: value1] [: value2] [three: value3]"
+}
+TestTemplate.templates["macro_02"] = {
+    [[
+    {% import "macro_01" as sample %}
+
+    {{ sample.key_value("one") }}
+    {{ sample.key_value("two", "value1") }}
+    {{ sample.key_value(value = "value2") }}
+    {{ sample.key_value(value = "value3", key = "three") }}
+    ]],
+    "[one: none] [two: value1] [: value2] [three: value3]"
+}
+TestTemplate.templates["macro_03"] = {
+    [[
+    {% from "macro_01" import key_value %}
+
+    {{ key_value("one") }}
+    {{ key_value("two", "value1") }}
+    {{ key_value(value = "value2") }}
+    {{ key_value(value = "value3", key = "three") }}
+    ]],
+    "[one: none] [two: value1] [: value2] [three: value3]"
+}
+
+TestTemplate.templates["macro_03"] = {
+    [[
+    {% from "macro_01" import key_value as woo %}
+
+    {{ woo("one") }}
+    {{ woo("two", "value1") }}
+    {{ woo(value = "value2") }}
+    {{ woo(value = "value3", key = "three") }}
+    ]],
+    "[one: none] [two: value1] [: value2] [three: value3]"
+}
 
 function TestTemplate:run_parser(tests, callback)
     for i,t in pairs(tests) do
@@ -338,6 +367,7 @@ function TestTemplate:test_01_tokenize()
     tok:next() -- i
     lu.assertIs(tok:get_token(), "i")
     lu.assertIsTrue(tok:is_word())
+    lu.assertIsTrue(tok:is_seq({"word", ",", "word", "word", "word", "|", "word", "(", "string"}))
 
     tok:next() -- ,
     lu.assertIs(tok:get_token(), ",")

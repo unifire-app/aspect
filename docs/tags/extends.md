@@ -3,8 +3,6 @@
 
 The `extends` tag can be used to extend a template from another one.
 
-[[_TOC_]]
-
 `block`
 -------
 

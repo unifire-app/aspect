@@ -8,8 +8,8 @@ local getmetatable = getmetatable
 local tablex = require("pl.tablex")
 local stringx = require("pl.stringx")
 local array2d = require("pl.array2d")
-local date = require("pl.Date")
 local cjson = require("cjson.safe")
+local date = require("date")
 local count = table.nkeys or tablex.size
 local upper = string.upper
 local lower = string.lower
@@ -48,13 +48,9 @@ end
 
 --- https://twig.symfony.com/doc/2.x/filters/date.html
 function filters.date(v, fmt)
-    fmt = fmt or "yyyy-mm-dd HH:MM:SS"
-    local typ = type(v)
-    if typ == "numeric" or typ == "table" then -- timestamp or table with year, month, etc
-        date:Date(v)
-    elseif type == "string" then -- parsing
-        date.Format:parse(v)
-    elseif type == "userdata" then -- cmodule data
+    local dt = date(v)
+    if dt then
+        return dt:fmt(fmt)
     else
         return ""
     end

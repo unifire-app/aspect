@@ -7,6 +7,8 @@ local config = require("aspect.config")
 local tags = require("aspect.tags")
 local tag_type = config.compiler.tag_type
 local dump = require("pl.pretty").dump
+local date = require("date")
+
 
 local function join(t, delim)
     if type(t) == "table" then
@@ -204,6 +206,13 @@ function func.fn.import(__, from, names)
     else
         return view.macros or {}
     end
+end
+
+--- {{ date(date) }}
+func.args.date = {"date"}
+
+function func.fn.date(__, args)
+    return date(args.date or false) or date(false)
 end
 
 return func

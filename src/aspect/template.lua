@@ -4,6 +4,7 @@ local compiler = require("aspect.compiler")
 local output = require("aspect.output")
 local funcs = require("aspect.funcs")
 local filters = require("aspect.filters")
+local tests = require("aspect.tests")
 local err = require("aspect.err")
 local loadcode
 local loadstring = loadstring
@@ -95,18 +96,31 @@ end
 
 --- @param options table
 function template.new(options)
+    options = options or {}
     local tpl = setmetatable({
         cache = false,
         compiler = compiler,
-        loader = nil,
-        cacher = nil,
+        loader = options.loader,
+        shared = options.shared,
+        luacode_load = options.luacode_load,
+        luacode_save = options.luacode_save,
+        bytecode_load = options.bytecode_load,
+        bytecode_save = options.bytecode_save,
     }, mt)
+    if options.cache then
+        if options.cache == true then
+            tpl.cache = {}
+        else
+            tpl.cache = options.cache
+        end
+    end
     tpl.opts = {
         escape = false,
         strip = false,
         stack_size = 20,
         f = filters,
-        fn = funcs.fn
+        fn = funcs.fn,
+        t = tests
     }
     --- @param names table|string
     tpl.opts.get = function(names)
@@ -130,6 +144,13 @@ function template.new(options)
         end
     end
     return tpl
+end
+
+--- Compiler factory
+--- @param name string
+--- @return aspect.compiler
+function template:get_compiler(name)
+    return self.compiler.new(self, name)
 end
 
 --- @param name string
@@ -182,6 +203,8 @@ function template:load(name)
         luacode, error = self:luacode_load(name)
         if luacode then
             return loadcode(self, luacode, name .. ".lua")
+        elseif error then
+            return nil, err.new(error)
         end
     end
     source, error = self:loader(name)

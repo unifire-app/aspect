@@ -72,3 +72,8 @@ Filters
 * url_encode
 * strip
 * range(low, high, step)
+
+Tests
+-----
+
+* [defined](./docs/tests/defined.md)

@@ -42,7 +42,7 @@ local function wsdump (tok)
     return yield("space", tok)
 end
 
-local function tpl_vdump(tok)
+local function wdump(tok)
     return yield("word",tok)
 end
 
@@ -59,7 +59,7 @@ local straight = {
 local matches = {
     {patterns.WSPACE,wsdump},
     {patterns.NUMBER3,ndump},
-    { patterns.WORD, tpl_vdump},
+    {patterns.WORD, wdump},
     {patterns.NUMBER4,ndump},
     {patterns.NUMBER5,ndump},
     {patterns.STRING1,sdump},
@@ -72,6 +72,7 @@ local matches = {
     {'^<=',tdump},
     {'^>=',tdump},
     {'^%*%*',tdump},
+    {'^//',tdump},
     {'^.',tdump}
 }
 

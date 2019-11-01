@@ -18,6 +18,7 @@ local is_false = require("aspect.config").is_false
 local is_empty_string = require("aspect.config").is_empty_string
 local is_empty = table.isempty or function(v) return next(v) == nil end
 local insert = table.insert
+local tonumber = tonumber
 
 --- @class aspect.output.parent
 --- @field list table<aspect.template.block>
@@ -38,6 +39,7 @@ local output = {
     pairs = pairs,
     concat = table.concat,
     insert = table.insert,
+    tonumber = tonumber,
     setmetatable = setmetatable
 }
 
@@ -162,7 +164,9 @@ function output.b(v)
         return false
     elseif type(v) == "table" then
         if v.__toboolean and getmetatable(v).__toboolean then
-            v:__toboolean()
+            return v:__toboolean()
+        elseif v.__count and getmetatable(v).__count  then
+            return v:__count() ~= 0
         elseif is_empty(v) then
             return false
         end
@@ -181,8 +185,22 @@ function output.s(v)
     end
 end
 
+--- Cast value to number
 --- @param v any
---- @param ... string
+--- @return number
+function output.n(v)
+    local typ = type(v)
+    if typ == "number" then
+        return v
+    elseif typ == "string" then
+        return tonumber(v) or 0
+    else
+        return tonumber(tostring(v)) or 0
+    end
+end
+
+--- Get 'recursive' value from tables
+--- @param v table|any
 function output.v(v, ...)
     for _, k in ipairs({...}) do
         if type(v) ~= "table" then

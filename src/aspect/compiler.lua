@@ -9,6 +9,7 @@ local remove = table.remove
 local concat = table.concat
 local tokenizer = require("aspect.tokenizer")
 local tags = require("aspect.tags")
+local tests = require("aspect.tests")
 local err = require("aspect.err")
 local write = require("pl.pretty").write
 local dump = require("pl.pretty").dump
@@ -502,13 +503,16 @@ function compiler:parse_hash(tok)
 end
 
 --- @param tok aspect.tokenizer
---- @return string filter names
---- @return string arguments
---- @return number count of filter
-function compiler:parse_filters(tok, var)
+--- @param info table
+--- @return string
+function compiler:parse_filters(tok, var, info)
+    info = info or {}
     while tok:is("|") do -- parse pipeline filter
         if tok:next():is_word() then
             local filter = tok:get_token()
+            if filter == "raw" then
+                info.raw = true
+            end
             local args, no = nil, 1
             tok:next()
             if tok:is("(") then
@@ -540,45 +544,55 @@ function compiler:parse_filters(tok, var)
 end
 
 --- @param tok aspect.tokenizer
---- @param opts table
-function compiler:parse_value(tok)
+--- @param info table
+function compiler:parse_value(tok, info)
     local var
+    info = info or {}
+    info.type = nil
     if tok:is_word() then -- is variable name
         if tok:is_next("(") then
             if self.import[tok:get_token()] == import_type.SINGLE then
                 var = self:parse_macro(tok)
+                info.type = "nil"
             else
                 var = self:parse_function(tok)
+                info.type = "any"
             end
         elseif tok:is_seq{"word", ".", "word", "("} then
             var = self:parse_macro(tok)
+            info.type = "nil"
         else
             var = self:parse_variable(tok)
+            info.type = "any"
         end
-    elseif tok:is_string() or tok:is_number() then -- is string or number
+    elseif tok:is_string() then -- is string or number
         var = tok:get_token()
         tok:next()
+        info.type = "string"
+    elseif tok:is_number() then
+        var = tok:get_token()
+        tok:next()
+        info.type = "number"
     elseif tok:is("[") or tok:is("{") then -- is list or hash
         var = self:parse_array(tok)
+        info.type = "table"
     elseif tok:is("(") then -- is expression
-        var = self:parse_expression(tok)
-    elseif tok:is("true") or tok:is("false") or tok:is("nil") then -- is regular true/false/nil
+        var = self:parse_expression(tok:next())
+        tok:require(")"):next()
+        info.type = "expr"
+    elseif tok:is("true") or tok:is("false") then -- is regular true/false/nil
         var = tok:get_token()
         tok:next()
-    elseif tok:is("null") then -- is null
+        info.type = "boolean"
+    elseif tok:is("null") or tok:is("nil") then -- is null
         var = 'nil'
-        tok:next()
-    elseif tok:is("-") then
-        if not tok:next():is_number() then
-            compiler_error(tok, "syntax", "expecting number")
-        end
-        var = "-" .. tok:get_token()
         tok:next()
     else
         compiler_error(tok, "syntax", "expecting any value")
     end
     if tok:is("|") then
         var = self:parse_filters(tok, var)
+        info.type = "any"
     end
     return var
 end
@@ -593,20 +607,26 @@ function compiler:parse_expression(tok, opts)
     local comp_op = false -- only one comparison may be in the expression
     local logic_op = false
     while true do
-        local element
-        local not_op
-
+        local info = {}
+        local not_op, minus_op
         -- 1. checks unary operator 'not'
         if tok:is("not") then
             not_op = "not "
             tok:next()
+        elseif tok:is("-") then
+            minus_op = true
+            tok:next()
         end
         -- 2. parse value
-        if tok:is("(") then
-            element = "(" .. self:parse_expression(tok:next()) .. ")"
-            tok:require(")"):next()
-        else
-            element = self:parse_value(tok)
+        local element = self:parse_value(tok, info)
+        if minus_op then
+            if info.type == "number" then
+                element = "-" .. element
+            elseif info.type == "expr" then
+                element = "-(__.tonumber" .. element .. " or 0)"
+            else
+                element = "-(__.tonumber(" .. element .. ") or 0)"
+            end
         end
         -- 3. check operator 'in' or 'not in' and 'is' or 'is not'
         if tok:is("in") or tok:is("not") then

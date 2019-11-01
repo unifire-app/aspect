@@ -26,6 +26,7 @@ build = {
         ["aspect.err"]  = "src/aspect/err.lua",
         ["aspect.filters"]  = "src/aspect/filters.lua",
         ["aspect.funcs"]  = "src/aspect/funcs.lua",
+        ["aspect.tests"]  = "src/aspect/tests.lua",
         ["aspect.tokenizer"]  = "src/aspect/tokenizer.lua",
         ["aspect.output"]  = "src/aspect/output.lua",
     }

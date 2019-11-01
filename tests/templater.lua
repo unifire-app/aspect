@@ -2,7 +2,9 @@ package.path = "./src/?.lua;" .. package.path
 local lu = require('luaunit')
 local aspect = require("aspect.template")
 local tokenizer = require("aspect.tokenizer")
+local astree = require("aspect.ast")
 local compiler = require("aspect.compiler")
+local err = require("aspect.err")
 local dump = require("pl.pretty").dump
 local tablex = require("pl.tablex")
 local strip = require("pl.stringx").strip
@@ -37,7 +39,7 @@ TestTemplate.vars = {
     }
 }
 TestTemplate.vars.table_inf = TestTemplate.vars
-TestTemplate.templates["tpl_00"] = {
+TestTemplate.templates["basic_00"] = {
     [[{{ integer_1 }} and {{ integer_2 }} and {{ "string" }} and {{ 17 }}]],
     "1 and 2 and string and 17"
 }
@@ -157,35 +159,35 @@ TestTemplate.templates["tpl_41"] = {
 TestTemplate.templates["tpl_50"] = {
     [[
     {% set integer_1 = 42 %}
-    {% include 'tpl_00' %}
+    {% include 'basic_00' %}
     ]],
     "42 and 2 and string and 17"
 }
 TestTemplate.templates["tpl_51"] = {
     [[
     {% set integer_1 = 42 %}
-    {% include 'tpl_00' only %}
+    {% include 'basic_00' only %}
     ]],
     "and and string and 17"
 }
 TestTemplate.templates["tpl_52"] = {
     [[
     {% set integer_1 = 42 %}
-    {% include 'tpl_00' only with context %}
+    {% include 'basic_00' only with context %}
     ]],
     "1 and 2 and string and 17"
 }
 TestTemplate.templates["tpl_53"] = {
     [[
     {% set integer_1 = 42 %}
-    {% include 'tpl_00' only with vars %}
+    {% include 'basic_00' only with vars %}
     ]],
     "42 and and string and 17"
 }
 TestTemplate.templates["tpl_54"] = {
     [[
     {% set integer_1 = 42 %}
-    {% include 'tpl_00' only with vars with context with {integer_1: 4} %}
+    {% include 'basic_00' only with vars with context with {integer_1: 4} %}
     ]],
     "4 and 2 and string and 17"
 }
@@ -329,9 +331,9 @@ TestTemplate.templates["macro_03"] = {
     "[one: none] [two: value1] [: value2] [three: value3]"
 }
 
-TestTemplate.templates["macro_03"] = {
+TestTemplate.templates["macro_04"] = {
     [[
-    {% from "macro_01" import key_value as woo %}
+    {% from "macro_01" import key_value as woo, key_value as foo %}
 
     {{ woo("one") }}
     {{ woo("two", "value1") }}
@@ -340,6 +342,19 @@ TestTemplate.templates["macro_03"] = {
     ]],
     "[one: none] [two: value1] [: value2] [three: value3]"
 }
+
+--TestTemplate.templates["ternary_01"] = {
+--    [[
+--    integer_0: {{ integer_0 ? "no" : "yes" }},
+--    integer_1: {{ integer_1 ? "no" : "yes" }},
+--    nil_value: {{ nil_value ? "no" : "yes" }},
+--    true_value: {{ true_value ? "no" : "yes" }},
+--    false_value: {{ false_value ? "no" : "yes" }},
+--    string_empty: {{ string_empty ? "no" : "yes" }},
+--
+--    ]],
+--    "integer_0: empty, integer_1: not empty, nil_value: empty, true_value: not empty, false_value: empty, string_empty: empty,"
+--}
 
 function TestTemplate:run_parser(tests, callback)
     for i,t in pairs(tests) do
@@ -415,6 +430,22 @@ function TestTemplate:test_01_tokenize()
     lu.assertIs(tok:get_path_as_string() .. "%}", str)
 end
 
+function TestTemplate:test_02_ast()
+    local template = aspect.new()
+    local ast = astree.new()
+    local ok, error = pcall(ast.parse, ast, template:get_compiler("runtime"), tokenizer.new("1 + 2 + 3 * 4 * 5 - 6 or 7 and 8 ** 9 or 10"))
+    if not ok then
+        lu.fail(tostring(err.new(error)))
+    end
+    --ast:parse(template:get_compiler("runtime"), tokenizer.new("1+2+3"))
+    print(ast:dump())
+    local result = ast:pack(function (op, left, right, cond)
+        return "(" .. left.value .. " [" .. op.name .. "] " .. right.value .. ")"
+    end)
+    print(result.value)
+    lu.assertIsTrue(true)
+end
+
 function TestTemplate:provider_values()
     return {
         {'one', 'one'},
@@ -487,7 +518,7 @@ function TestTemplate:_test_03_expression()
     self:run_parser(self:provider_expression(), 'parse_expresion')
 end
 
-function TestTemplate:test_02_templates()
+function TestTemplate:test_04_templates()
     local template = aspect.new()
     template.loader = function(tpl, name)
         if TestTemplate.templates[name] then

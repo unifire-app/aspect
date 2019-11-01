@@ -146,6 +146,223 @@ config.compiler = {
         EXPRESSION = 1,
         CONTROL = 2,
         COMMENT = 3,
+    },
+
+    ops = {
+        -- **
+        {
+            order = 4,
+            name = "**",
+            type = "binary",
+            l = "number",
+            r = "number",
+            out = "number",
+        },
+
+        -- - (unary)
+        {
+            order = 5,
+            name = "-",
+            type = "unary",
+            r = "number",
+            out = "number",
+        },
+
+        -- not (unary)
+        {
+            order = 5,
+            name = "not",
+            type = "unary",
+            r = "any",
+            out = "boolean",
+        },
+
+        -- is, is not, in, not in
+        {
+            order = 6,
+            name = "is",
+            type = "binary",
+            l = "any",
+            r = "any",
+            out = "boolean",
+        },
+        {
+            order = 6,
+            name = "in",
+            type = "binary",
+            l = "any",
+            r = "any",
+            out = "boolean",
+        },
+
+        -- *, /, //, %
+        {
+            order = 7,
+            name = "*",
+            type = "binary",
+            l = "number",
+            r = "number",
+            out = "number",
+        },
+        {
+            order = 7,
+            name = "/",
+            type = "binary",
+            l = "number",
+            r = "number",
+            out = "number",
+        },
+        {
+            order = 7,
+            name = "//",
+            type = "binary",
+            l = "number",
+            r = "number",
+            out = "number",
+        },
+        {
+            order = 7,
+            name = "%",
+            type = "binary",
+            l = "number",
+            r = "number",
+            out = "number",
+        },
+
+        -- +, -
+        {
+            order = 8,
+            name = "+",
+            type = "binary",
+            l = "number",
+            r = "number",
+            out = "number",
+        },
+        {
+            order = 8,
+            name = "-",
+            type = "binary",
+            l = "number",
+            r = "number",
+            out = "number",
+        },
+
+        -- ~
+        {
+            order = 9,
+            name = "~",
+            type = "binary",
+            l = "string",
+            r = "string",
+            out = "string",
+        },
+
+        -- <, >, <=, >=, !=, ==
+        {
+            order = 10,
+            name = "<",
+            type = "binary",
+            l = "number",
+            r = "number",
+            out = "boolean",
+        },
+        {
+            order = 10,
+            name = ">",
+            type = "binary",
+            l = "number",
+            r = "number",
+            out = "boolean",
+        },
+        {
+            order = 10,
+            name = "<=",
+            type = "binary",
+            l = "number",
+            r = "number",
+            out = "boolean",
+        },
+        {
+            order = 10,
+            name = ">=",
+            type = "binary",
+            l = "number",
+            r = "number",
+            out = "boolean",
+        },
+        {
+            order = 10,
+            name = "!=",
+            type = "binary",
+            l = "any",
+            r = "any",
+            out = "boolean",
+        },
+        {
+            order = 10,
+            name = "==",
+            type = "binary",
+            l = "any",
+            r = "any",
+            out = "boolean",
+        },
+
+        -- ?:, ??
+        {
+            order = 11,
+            name = "?",
+            type = "ternary",
+            c = "boolean",
+            l = "any",
+            r = "any",
+            out = "any",
+        },
+        {
+            order = 11,
+            name = ":",
+            type = "ternary",
+            c = "boolean",
+            l = "any",
+            r = "any",
+            out = "any",
+        },
+        --[":"] = 11,
+        {
+            order = 11,
+            name = "??",
+            type = "binary",
+            l = "any",
+            r = "any",
+            out = "any",
+        },
+        {
+            order = 11,
+            name = "?:",
+            type = "binary",
+            l = "any",
+            r = "any",
+            out = "any",
+        },
+
+        -- and
+        {
+            order = 12,
+            name = "and",
+            type = "binary",
+            l = "boolean",
+            r = "boolean",
+            out = "boolean",
+        },
+
+        -- or
+        {
+            order = 13,
+            name = "or",
+            type = "binary",
+            l = "boolean",
+            r = "boolean",
+            out = "boolean",
+        },
     }
 }
 

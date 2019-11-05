@@ -174,6 +174,24 @@ function output.b(v)
     return true
 end
 
+--- Cast value to boolean
+--- @param v any
+--- @return any|nil
+function output.b2(v)
+    if not v or is_false[v] or is_false[getmetatable(v)] then
+        return nil
+    elseif type(v) == "table" then
+        if v.__toboolean and getmetatable(v).__toboolean then
+            return v:__toboolean()
+        elseif v.__count and getmetatable(v).__count  then
+            return v:__count() ~= 0
+        elseif is_empty(v) then
+            return nil
+        end
+    end
+    return v
+end
+
 --- Cast value to string
 --- @param v any
 --- @return string

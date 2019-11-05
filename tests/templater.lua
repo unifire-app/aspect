@@ -43,6 +43,28 @@ TestTemplate.templates["basic_00"] = {
     [[{{ integer_1 }} and {{ integer_2 }} and {{ "string" }} and {{ 17 }}]],
     "1 and 2 and string and 17"
 }
+TestTemplate.templates["basic_01"] = {
+    [[{{ 1 + 2 + 3 * 4 * 5 - 6 ~ "." ~ 7 ~ "." ~ 8 ** 9 ~ "." ~ 10 }}]],
+    "57.7.134217728.10"
+}
+
+TestTemplate.templates["basic_02"] = {
+    [[{{ integer_0 ? integer_1 : integer_2 }}]],
+    "2"
+}
+TestTemplate.templates["basic_03"] = {
+    [[{{ integer_0 ?: integer_1}}]],
+    "1"
+}
+TestTemplate.templates["basic_04"] = {
+    [[{{ integer_3 ? integer_1 : integer_2 }}]],
+    "1"
+}
+TestTemplate.templates["basic_05"] = {
+    [[{{ integer_3 ?: integer_2 }}]],
+    "3"
+}
+
 TestTemplate.templates["tpl_01"] = {
     [[
         {% if integer_1 and float_1 and true_value and string_1 and list_1 and table_1 %}
@@ -430,20 +452,48 @@ function TestTemplate:test_01_tokenize()
     lu.assertIs(tok:get_path_as_string() .. "%}", str)
 end
 
+TestTemplate.ast_expr = {
+    { -- binary operators
+        expr = "1 + 2 + 3 * 4 * 5 - 6 or 7 and 8 ** 9 or 10",
+        ast = "(((((1 [+] 2) [+] ((3 [*] 4) [*] 5)) [-] 6) [or] (7 [and] (8 [**] 9))) [or] 10)"
+    },
+    { -- unary operators
+        expr = "1 + -2 ** 3 * 4",
+        ast = "((1 [+] ([-] (2 [**] 3))) [*] 4)"
+    },
+    { -- ternary operators
+        expr = "1 ? 2 ? 3 ?: 4 : 5 : 6",
+        ast = "(1 [?] (2 [?] (3 [?:] 4) [:] 5) [:] 6)"
+    },
+    { -- unary operators at first
+        expr = "- 1 * 2 + 3",
+        ast = "((([-] 1) [*] 2) [+] 3)"
+    },
+    { -- brackets and unary operators before brackets
+        expr = "(1 + 2) + - (3 * 4)",
+        ast = "((1 + 2) [+] ([-] (3 * 4)))"
+    }
+}
+
 function TestTemplate:test_02_ast()
     local template = aspect.new()
-    local ast = astree.new()
-    local ok, error = pcall(ast.parse, ast, template:get_compiler("runtime"), tokenizer.new("1 + 2 + 3 * 4 * 5 - 6 or 7 and 8 ** 9 or 10"))
-    if not ok then
-        lu.fail(tostring(err.new(error)))
+    for _, e in ipairs(TestTemplate.ast_expr) do
+        local ast = astree.new()
+        local ok, error = pcall(ast.parse, ast, template:get_compiler("runtime"), tokenizer.new(e.expr))
+        if not ok then
+            lu.fail(tostring(err.new(error)))
+        end
+        local result = ast:pack(function (op, left, right, cond)
+            if op.type == "ternary" then
+                return "(" .. cond.value .. " [" .. op.token .. "] " .. left.value .. " [" .. op.delimiter .. "] "  .. right.value .. ")"
+            elseif op.type == "binary" then
+                return "(" .. left.value .. " [" .. op.token .. "] " .. right.value .. ")"
+            else
+                return "([" .. op.token .. "] " .. right.value .. ")"
+            end
+        end)
+        lu.assertIs(result.value, e.ast, "Pack of AST " .. e.expr .. ":\n" .. ast:dump())
     end
-    --ast:parse(template:get_compiler("runtime"), tokenizer.new("1+2+3"))
-    print(ast:dump())
-    local result = ast:pack(function (op, left, right, cond)
-        return "(" .. left.value .. " [" .. op.name .. "] " .. right.value .. ")"
-    end)
-    print(result.value)
-    lu.assertIsTrue(true)
 end
 
 function TestTemplate:provider_values()

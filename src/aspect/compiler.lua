@@ -30,6 +30,7 @@ local logic_ops = config.compiler.logic_ops
 local loop_keys = config.loop.keys
 local tag_type = config.compiler.tag_type
 local func = require("aspect.funcs")
+local ast = require("aspect.ast")
 
 
 --- @class aspect.compiler
@@ -576,16 +577,17 @@ function compiler:parse_value(tok, info)
     elseif tok:is("[") or tok:is("{") then -- is list or hash
         var = self:parse_array(tok)
         info.type = "table"
-    elseif tok:is("(") then -- is expression
-        var = self:parse_expression(tok:next())
-        tok:require(")"):next()
-        info.type = "expr"
+    --elseif tok:is("(") then -- is expression
+    --    var = self:parse_expression(tok:next())
+    --    tok:require(")"):next()
+    --    info.type = "expr"
     elseif tok:is("true") or tok:is("false") then -- is regular true/false/nil
         var = tok:get_token()
         tok:next()
         info.type = "boolean"
     elseif tok:is("null") or tok:is("nil") then -- is null
         var = 'nil'
+        info.type = "nil"
         tok:next()
     else
         compiler_error(tok, "syntax", "expecting any value")
@@ -596,11 +598,18 @@ function compiler:parse_value(tok, info)
     end
     return var
 end
+function compiler:parse_expression(tok, opts)
+    opts = opts or {}
+    local expr = ast.new():parse(self, tok):pack()
+    opts.type = expr.type
+    opts.bracket = expr.bracket
+    return expr.value
+end
 
 --- Parse any expression (math, logic, string e.g.)
 --- @param tok aspect.tokenizer
 --- @param opts table|nil
-function compiler:parse_expression(tok, opts)
+function compiler:_parse_expression(tok, opts)
     opts = opts or {}
     opts.bools = opts.bools or 0
     local elems = {}

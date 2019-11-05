@@ -69,6 +69,8 @@ local matches = {
     {'^%%}',tstop},
     {'^==',tdump},
     {'^!=',tdump},
+    {'^%?:',tdump},
+    {'^%?%?',tdump},
     {'^<=',tdump},
     {'^>=',tdump},
     {'^%*%*',tdump},

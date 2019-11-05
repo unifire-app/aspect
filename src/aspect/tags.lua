@@ -344,7 +344,7 @@ function tags.tag_for(compiler, tok)
             tok:next()
             local info = {}
             cond = compiler:parse_expression(tok, info)
-            if info.bools == info.count then
+            if info.type == "boolean" then
                 tag.cond = "if " .. cond .. " then"
             else
                 tag.cond = "if __.b(" .. cond .. ") then"
@@ -473,7 +473,7 @@ function tags.tag_if(compiler, tok)
     compiler:push_tag('if')
     local stats = {}
     local exp =  compiler:parse_expression(tok, stats)
-    if stats.bools == stats.count then
+    if stats.type == "boolean" then
         return "if " .. exp .. " then"
     else
         return "if __.b(" .. exp .. ") then"

@@ -217,6 +217,28 @@ function output.n(v)
     end
 end
 
+--- Get iterator of the v
+--- @param v any
+--- @return fun iterator
+--- @return any object
+--- @return any key
+function output.i(v)
+    local typ, mt = type(v), getmetatable(v)
+    if typ == "table" then
+        if mt.__pairs then
+            return mt.__pairs(v)
+        else
+            return pairs(v)
+        end
+    elseif mt and typ == "userdata" then
+        if mt.__pairs then
+            return mt.__pairs(v)
+        end
+    end
+
+    return nil, nil, nil
+end
+
 --- Get 'recursive' value from tables
 --- @param v table|any
 function output.v(v, ...)

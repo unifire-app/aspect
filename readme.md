@@ -44,21 +44,21 @@ Tags
 Filters
 -------
 
-* [abs](./docs/filters.md#abs)
-* batch(size)
-* [column(column)]()
-* date(format)
-* date_modify(offset)
-* escape(type), e(type)
-* default(value)
-* first
+* [abs](./docs/filters/abs.md)
+* [batch(size)](./docs/filters/batch.md)
+* [column(column)](./docs/filters/columns.md)
+* [date(format)](./docs/filters/date.md)
+* [date_modify(offset)](./docs/filters/date_modify.md)
+* [escape(type), e(type)](./docs/filters/escape.md)
+* [default(value, boolean)](./docs/filters/default.md)
+* [first](./docs/filters/first.md)
 * last
-* format(...)
+* [format(...)](./docs/filters/format.md)
 * format_number(opts)
 * markdown_to_html(opts)
-* join(delim, last_delim)
-* json_encode
-* keys
+* [join(delim, last_delim)](./docs/filters/join.md)
+* [json_encode](./docs/filters/json_encode.md)
+* [keys](./docs/filters/keys.md)
 * length
 * lower
 * upper

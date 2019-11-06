@@ -1,40 +1,5 @@
-Filters
-=======
-
-
-abs
----
-
-Filter `column(abs)`.
-
-The `abs` filter returns the absolute value.
-
-```twig
-{# number = -5 #}
-
-{{ number|abs }}
-
-{# outputs 5 #}
-```
-
-columns
--------
-
-Filter `column(name)`:
-* `name`: The column name to extract
-
-The `column` filter returns the values from a single column in the input array.
-
-```twig
-{% set items = [{ 'fruit' : 'apple'}, {'fruit' : 'orange' }] %}
-
-{% set fruits = items|column('fruit') %}
-
-{# fruits now contains ['apple', 'orange'] #}
-```
-
-escape
-------
+Filter `escape`
+===============
 
 Filter `escape(strategy)`:
 * `strategy`: The escaping strategy. By default is `html`.
@@ -84,21 +49,3 @@ Also you cat [add your custom escaper](./api.md#custom-escaper).
    
 Built-in escapers cannot be overridden mainly because they should be considered 
 as the final implementation and also for better performance.
-
-default
--------
-
-Filter `default(default)`:
-* `default`: The default value 
-
-The `default` filter returns the passed default value if the value is undefined or empty, otherwise the value of the variable:
-
-```twig
-{{ var|default('var is not defined') }}
-
-{{ var.foo|default('foo item on var is not defined') }}
-
-{{ var['foo']|default('foo item on var is not defined') }}
-
-{{ ''|default('passed var is empty')  }}
-```

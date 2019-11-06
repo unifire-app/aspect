@@ -1,3 +1,7 @@
+local tonumber = tonumber
+local pairs = pairs
+local next = next
+local pcall = pcall
 local type = type
 local math = math
 local strlen = string.len
@@ -5,6 +9,8 @@ local format = string.format
 local concat = table.concat
 local tostring = tostring
 local getmetatable = getmetatable
+local batch = require("aspect.utils.batch")
+local output = require("aspect.output")
 local tablex = require("pl.tablex")
 local stringx = require("pl.stringx")
 local array2d = require("pl.array2d")
@@ -14,6 +20,7 @@ local count = table.nkeys or tablex.size
 local upper = string.upper
 local lower = string.lower
 local gsub = string.gsub
+local sub = string.sub
 local config = require("aspect.config")
 local e_pattern = config.escape.pattern
 local e_replaces = config.escape.replaces
@@ -23,6 +30,7 @@ if has_utf8 then
     strlen = utf8.len
     upper = utf8.upper
     lower = utf8.lower
+    sub   = utf8.sub
 end
 
 if table.nkeys then -- new luajit function
@@ -31,24 +39,25 @@ end
 
 local filters = {}
 
---- https://twig.symfony.com/doc/2.x/filters/abs.html
 function filters.abs(v)
-    return math.abs(v)
+    return math.abs(output.n(v))
 end
 
---- https://twig.symfony.com/doc/2.x/filters/batch.html
-function filters.batch(v)
-
+function filters.batch(v, c)
+    return batch.new(v, output.n(c))
 end
 
---- https://twig.symfony.com/doc/2.x/filters/column.html
 function filters.column(v, column)
-    return array2d.column(v, column)
+    local ok, res = pcall(array2d.column, v, column)
+    if ok then
+        return res
+    else
+        return nil
+    end
 end
 
---- https://twig.symfony.com/doc/2.x/filters/date.html
 function filters.date(v, fmt)
-    local dt = date(v)
+    local dt = date(tostring(v))
     if dt then
         return dt:fmt(fmt)
     else
@@ -56,12 +65,23 @@ function filters.date(v, fmt)
     end
 end
 
---- https://twig.symfony.com/doc/2.x/filters/date_modify.html
 function filters.date_modify(v, offset)
-
+    local dt = date(tostring(v))
+    if dt then
+        local typ = type(offset)
+        if typ == "table" then
+            for k, d in pairs(offset) do
+                if dt["set" .. k] then
+                    dt["set" .. k](dt, tonumber(d))
+                end
+            end
+        elseif typ == "number" then
+        end
+    else
+        return v
+    end
 end
 
---- https://twig.symfony.com/doc/2.x/filters/escape.html
 function filters.escape(v, typ)
     return filters.e(v, typ)
 end
@@ -77,36 +97,43 @@ function filters.e(v, typ)
     end
 end
 
---- https://twig.symfony.com/doc/2.x/filters/default.html
-function filters.default(v, default)
-    if v == nil then
-        return default
+function filters.default(v, default, boolean)
+    if boolean then
+        return output.b2(v) or default
     else
-        return v
+        if v == nil then
+            return default
+        else
+            return v
+        end
     end
 end
 
---- https://twig.symfony.com/doc/2.x/filters/first.html
 function filters.first(v)
     local typ = type(v)
     if typ == "table" then
-
-    else
-        return nil
+        local mt = getmetatable(v)
+        if mt.__pairs then
+            for _, f in mt.__pairs(v) do
+                return f
+            end
+        else
+            return next(v)
+        end
+    elseif typ == "string" then
+        return sub(v, 1, 1)
     end
+    return nil
 end
 
---- https://twig.symfony.com/doc/2.x/filters/format.html
 function filters.format(v, ...)
     return format(tostring(v), ...)
 end
 
---- https://twig.symfony.com/doc/2.x/filters/last.html
 function filters.last(v)
 
 end
 
---- https://twig.symfony.com/doc/2.x/filters/format_number.html
 function filters.format_number(v, opts)
 
 end
@@ -115,7 +142,6 @@ function filters.markdown_to_html(v, opts)
 
 end
 
---- https://twig.symfony.com/doc/2.x/filters/join.html
 function filters.join(v, delim, last_delim)
     return concat(v, delim)
 end
@@ -148,9 +174,10 @@ end
 function filters.length(v)
     local typ = type(v)
     if typ == "table" then
-        if v.__count and getmetatable(v).__count then
-            return v:__count()
-        elseif v.__pairs and getmetatable(v).__pairs then -- has custom iterator. we don't know how much elements will be
+        local mt = getmetatable(v)
+        if mt and mt.__count then
+            return mt.__count(v)
+        elseif mt and mt.__pairs then -- has custom iterator. we don't know how much elements will be
             return 0 -- may be return -1 ?
         else
             return count(v)

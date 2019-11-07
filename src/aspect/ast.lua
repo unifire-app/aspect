@@ -3,6 +3,7 @@ local concat = table.concat
 local setmetatable = setmetatable
 local ipairs = ipairs
 local require = require
+local type = type
 
 --- Intermediate branch element
 --- @class aspect.ast.node

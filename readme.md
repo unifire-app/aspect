@@ -50,6 +50,17 @@ Below is a minimal template that illustrates a few basics. We will cover further
 There are two kinds of delimiters: `{% ... %}` and `{{ ... }}`. 
 The first one is used to execute statements such as for-loops, the latter outputs the result of an expression.
 
+API
+---
+
+* Get template output
+* Run template pipline output
+* Cache configuration
+* Add tags
+* Add filter
+* Add functions
+* Configure behaviors
+
 Syntax
 ------
 

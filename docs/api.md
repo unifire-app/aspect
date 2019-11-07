@@ -1,6 +1,6 @@
 
-Extending tags
---------------
+Add tags
+--------
 
 Add inline tag `{% foo %}`:
 
@@ -41,6 +41,12 @@ end
 ```
 
 See `aspect.tags` for more details.
+
+Add filters
+-----------
+
+Add functions
+-------------
 
 Condition behaviour
 -------------------

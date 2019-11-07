@@ -170,7 +170,6 @@ function filters.keys(v)
     end
 end
 
---- https://twig.symfony.com/doc/2.x/filters/length.html
 function filters.length(v)
     local typ = type(v)
     if typ == "table" then
@@ -224,24 +223,28 @@ function filters.replace(v)
 
 end
 
---- https://twig.symfony.com/doc/2.x/filters/split.html
-function filters.split(v, delim, count)
+function filters.split(v, delim, c)
 
 end
 
---- https://twig.symfony.com/doc/2.x/filters/striptags.html
 function filters.striptags(v, tags)
 
 end
 
---- https://twig.symfony.com/doc/2.x/filters/url_encode.html
 function filters.url_encode(v)
 
 end
 
---- https://twig.symfony.com/doc/2.x/filters/trim.html
-function filters.trim(v)
-    return stringx.strip(v)
+function filters.trim(v, what, side)
+    if not side then
+        return stringx.strip(v, what)
+    elseif side == "right" then
+        return stringx.rstrip(v, what)
+    elseif side == "right" then
+        return stringx.strip(v, what)
+    else
+        return stringx.strip(v, what)
+    end
 end
 
 return filters

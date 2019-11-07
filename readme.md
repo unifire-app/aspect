@@ -17,12 +17,53 @@ Features
 * User-friendly: expected behavior at certain values (`0` or empty string always false etc)
 * OpenResty supported.
 
-Basic
------
+Synopsis
+--------
 
-* `{{ ... }}` - variable or expression
-* `{% ... %}` — control tag
-* `{# ... #}` - comment
+A template is a regular text file. 
+It can generate any text-based format (HTML, XML, CSV, LaTeX, etc.). It doesn't have a specific extension, 
+.html or .xml are just fine.
+
+A template contains **variables** or **expressions**, which get replaced with values when the template is evaluated, 
+and tags, which control the template's logic.
+
+Below is a minimal template that illustrates a few basics. We will cover further details later on:
+
+```twig
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>My Webpage</title>
+    </head>
+    <body>
+        <ul id="navigation">
+        {% for item in navigation %}
+            <li><a href="{{ item.href }}">{{ item.caption }}</a></li>
+        {% endfor %}
+        </ul>
+
+        <h1>My Webpage</h1>
+        {{ a_variable }}
+    </body>
+</html>
+```
+There are two kinds of delimiters: `{% ... %}` and `{{ ... }}`. 
+The first one is used to execute statements such as for-loops, the latter outputs the result of an expression.
+
+Syntax
+------
+
+* [Variables](./docs/syntax.md#variables)
+* [Expression](./docs/syntax.md#expressions)
+* [Filters](./docs/syntax.md#filters)
+* [Functions](./docs/syntax.md#functions)
+* [Named Arguments](./docs/syntax.md#named-arguments)
+* [Control Structure](./docs/syntax.md#control-structure)
+* [Comments](./docs/syntax.md#comments)
+* [Template Inheritance](./docs/syntax.md#template-inheritance)
+* [Macros](./docs/syntax.md#macros)
+* [Expressions](./docs/syntax.md#expressions)
+* [Operators](./docs/syntax.md#operators)
 
 Tags
 ----
@@ -33,7 +74,8 @@ Tags
 * [for, else](./docs/tags/for.md) — loop over each item in a sequence.
 * [macro](./docs/tags/macro.md), [import](./docs/tags/macro.md#importing-macros), [from](./docs/tags/macro.md#importing-macros)
 * [include](./docs/tags/include.md) — includes a template and returns the rendered content
-* [extends](./docs/tags/extends.md), [block](./docs/tags/extends.md#block), [use](./docs/tags/extends.md#use) — template inheritance ([read more](./docs/inheritance.md))
+* [extends](./docs/tags/extends.md), [block](./docs/tags/extends.md#block), [use](./docs/tags/extends.md#use) — 
+  template inheritance ([read more](./docs/syntax.md#template-inheritance))
 * apply
 * embed
 * autoescape
@@ -59,19 +101,24 @@ Filters
 * [join(delim, last_delim)](./docs/filters/join.md)
 * [json_encode](./docs/filters/json_encode.md)
 * [keys](./docs/filters/keys.md)
-* length
-* lower
-* upper
+* [length](./docs/filters/length.md)
+* [lower](./docs/filters/lower.md)
+* [upper](./docs/filters/lower.md)
 * map(formatter)
 * merge(items)
 * nl2br
-* raw
+* [raw](./docs/filters/raw.md)
 * replace
 * split(delim, count)
 * striptags(tags)
+* [trim](./docs/filters/trim.md)
 * url_encode
 * strip
-* range(low, high, step)
+
+Functions
+---------
+
+* [range(low, high, step)](./funcs/range.md)
 
 Tests
 -----

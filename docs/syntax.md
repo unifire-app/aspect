@@ -1,6 +1,288 @@
 Syntax
 ======
 
+Variables
+---------
+
+The application passes variables to the templates for manipulation in the template. 
+Variables may have attributes or elements you can access, too. 
+The visual representation of a variable depends heavily on the application providing it.
+
+Use a dot (.) to access attributes of a variable:
+
+```twig
+{{ foo.bar }}
+```
+
+**Note.** It's important to know that the curly braces are _not_ part of the variable but the print statement. 
+When accessing variables inside tags, don't put the braces around them.
+
+If a variable or attribute does not exist, you will receive a null value.
+
+### Global Variables
+
+The following variables are always available in templates:
+
+* `_self`: references the current template name;
+* `_context`: references the current context;
+* `_charset`: references the current charset.
+
+### Setting Variables
+
+You can assign values to variables inside code blocks. Assignments use the [set](./tags/set.md) tag:
+```twig
+{% set foo = 'foo' %}
+{% set foo = [1, 2] %}
+{% set foo = {'foo': 'bar'} %}
+```
+
+Filters
+-------
+
+Variables can be modified by **filters**. 
+Filters are separated from the variable by a pipe symbol (`|`). Multiple filters can be chained. The output of one filter is applied to the next.
+
+The following example removes all HTML tags from the `name` and title-cases it:
+
+```twig
+{{ name|striptags|title }}
+```
+
+Filters that accept arguments have parentheses around the arguments. This example joins the elements of a list by commas:
+
+```twig
+{{ list|join(', ') }}
+```
+
+To apply a filter on a section of code, wrap it with the [apply](./tags/apply.md) tag:
+
+```twig
+{% apply upper %}
+    This text becomes uppercase
+{% endapply %}
+```
+Go to the [filters](../readme.md#filters) list to learn more about built-in filters.
+
+Functions
+---------
+
+Functions can be called to generate content. Functions are called by their name followed by parentheses (`()`) and may have arguments.
+
+For instance, the `range` function returns a list containing an arithmetic progression of integers:
+
+```twig
+{% for i in range(0, 3) %}
+    {{ i }},
+{% endfor %}
+```
+
+Go to the [functions](../readme.md#functions) list to learn more about the built-in functions.
+
+Named Arguments
+---------------
+
+```twig
+{% for i in range(low=1, high=10, step=2) %}
+    {{ i }},
+{% endfor %}
+```
+
+Using named arguments makes your templates more explicit about the meaning of the values you pass as arguments:
+
+```twig
+{{ names|join(', ', ' and ') }}
+
+{# versus #}
+
+{{ names|join(last_delim=' and ', delim=', ') }}
+```
+
+Named arguments also allow you to skip some arguments for which you don't want to change the default value:
+
+```twig
+{{ names|join(null, ' and ') }}
+
+{{ names|join(last_delim=' and ')}}
+```
+
+You can also use both positional and named arguments in one call, 
+in which case positional arguments must always come before named arguments:
+
+```twig
+{{ names|join(', ', last_delim = ' and ') }}
+```
+
+**Note.** 
+Each function and filter documentation page has a section where the names of all arguments are listed when supported.
+
+Control Structure
+-----------------
+
+A control structure refers to all those things that control the flow of a program - conditionals (i.e. `if/elseif/else`), 
+`for`-loops, as well as things like blocks. Control structures appear inside `{% ... %}` blocks.
+
+For example, to display a list of users provided in a variable called `users`, use the [for](./tags/for.md) tag:
+
+```twig
+<h1>Members</h1>
+<ul>
+    {% for user in users %}
+        <li>{{ user.username|e }}</li>
+    {% endfor %}
+</ul>
+```
+
+The [if](./tags/if.md) tag can be used to test an expression:
+
+```twig
+{% if users|length > 0 %}
+    <ul>
+        {% for user in users %}
+            <li>{{ user.username|e }}</li>
+        {% endfor %}
+    </ul>
+{% endif %}
+```
+
+Go to the [tags](../readme.md#tags) list to learn more about the built-in tags.
+
+Comments
+--------
+
+To comment-out part of a line in a template, use the comment syntax `{# ... #}`. 
+This is useful for debugging or to add information for other template designers or yourself:
+
+```twig
+{# note: disabled template because we no longer use this
+    {% for user in users %}
+        ...
+    {% endfor %}
+#}
+```
+
+Template Inheritance
+--------------------
+
+Template inheritance allows you to build a base "skeleton" template that contains all the common elements 
+of your site and defines **blocks** that child templates can override.
+
+It's easier to understand the concept by starting with an example.
+
+Let's define a base template, `base.html`, which defines an HTML skeleton document that might be used for a two-column page:
+
+```twig
+<!DOCTYPE html>
+<html>
+    <head>
+        {% block head %}
+            <link rel="stylesheet" href="style.css" />
+            <title>{% block title %}{% endblock %} - My Webpage</title>
+        {% endblock %}
+    </head>
+    <body>
+        <div id="content">{% block content %}{% endblock %}</div>
+        <div id="footer">
+            {% block footer %}
+                &copy; Copyright 2011 by <a href="http://domain.invalid/">you</a>.
+            {% endblock %}
+        </div>
+    </body>
+</html>
+```
+
+In this example, the [block](./tags/extends.md#block) tags define four blocks that child templates can fill in. 
+All the `block` tag does is to tell the template engine that a child template may override those portions of the template.
+
+A child template might look like this:
+
+```twig
+{% extends "base.html" %}
+
+{% block title %}Index{% endblock %}
+{% block head %}
+    {{ parent() }}
+    <style type="text/css">
+        .important { color: #336699; }
+    </style>
+{% endblock %}
+{% block content %}
+    <h1>Index</h1>
+    <p class="important">
+        Welcome to my awesome homepage.
+    </p>
+{% endblock %}
+```
+
+The [extends](./tags/extends.md) tag is the key here. It tells the template engine that this template "extends" another template. 
+When the template system evaluates this template, first it locates the parent. 
+The extends tag should be the first tag in the template.
+
+Note that since the child template doesn't define the `footer` block, the value from the parent template is used instead.
+
+It's possible to render the contents of the parent block by using the [parent](./tags/extends.md#parent) function. This gives back the results of the parent block:
+
+```twig
+{% block sidebar %}
+    <h3>Table Of Contents</h3>
+    ...
+    {{ parent() }}
+{% endblock %}
+```
+
+**Note.** The documentation page for the [extends](./tags/extends.md) tag describes more advanced features like block nesting, scope, dynamic inheritance, and conditional inheritance.
+
+**Note.** Twig also supports multiple inheritance via "horizontal reuse" with the help of the [use](./tags/extends.md#use) tag.
+
+Macros
+------
+
+Macros are comparable with functions in regular programming languages. 
+They are useful to reuse HTML fragments to not repeat yourself. 
+They are described in the [macro](./tags/macros.md) tag documentation.
+
+Expressions
+-----------
+
+Aspect allows expressions everywhere.
+
+### Literals
+
+The following literals exist:
+
+* `"Hello World"`: Everything between two double or single quotes is a string. 
+  They are useful whenever you need a string in the template (for example as arguments to function calls, 
+  filters or just to extend or include a template). A string can contain a delimiter 
+  if it is preceded by a backslash (`\`) -- like in `'`It\'s good'`. 
+* `42` / `42.23`: Integers and floating point numbers are created by writing the number down. 
+  If a dot is present the number is a float, otherwise an integer.
+* `["foo", "bar"]`: Arrays (indexed tables) are defined by a sequence of expressions separated by a comma (`,`) 
+  and wrapped with squared brackets (`[]`).
+* `{"foo": "bar"}`: Hashes (associative tables) are defined by a list of keys and values separated by a comma (`,`) 
+  and wrapped with curly braces (`{}`):
+  ```twig
+  {# keys as string #}
+  { 'foo': 'foo', 'bar': 'bar' }
+  
+  {# keys as names (equivalent to the previous hash) #}
+  { foo: 'foo', bar: 'bar' }
+  
+  {# keys as integer #}
+  { 2: 'foo', 4: 'bar' }
+  
+  {# keys as expressions (the expression must be enclosed into parentheses) #}
+  {% set foo = 'foo' %}
+  { (foo): 'foo', (1 + 1): 'bar', (foo ~ 'b'): 'baz' }
+  ```
+* `true` / `false`: true represents the true value, false represents the false value.
+* `null` / `nil`: null represents no specific value. This is the value returned when a variable does not exist. 
+  `nil` is an alias for `null`.
+  
+Arrays and hashes can be nested:
+
+```twig
+{% set foo = [1, {"foo": "bar"}] %}
+```
+
 Operators
 ---------
 
@@ -25,15 +307,8 @@ Operators
 
 The following comparison operators are supported in any expression: `==`, `!=`, `<`, `>`, `>=`, and `<=`.
 
-You can also check if a string `starts` with or `ends` with another string:
-
-```twig
-{% if 'Aspect' starts with 'A' %}
-{% endif %}
-
-{% if 'Aspect' ends with 't' %}
-{% endif %}
-```
+**Note.** Aspect automatically cast values to numbers then `<`, `>`, `>=`, and `<=` used. 
+But NOT cast to anything with `==` and `!=`, i. g. `"0" == 0` is `false`.
 
 ### Containment Operator
 
@@ -93,7 +368,7 @@ The following operators don't fit into any of the other categories:
   {{ foo ?? 'no' }}
   ```
   
-### Precedence
+### Operator precedence
 
 Operator precedence, from the higher to the lower priority:
 
@@ -108,125 +383,6 @@ Operator precedence, from the higher to the lower priority:
 9. `~` (string)
 10. `<`, `>`, `<=`, `>=`, `!=`, `==` (boolean)
 11. `?:`, `??` (any)
-12. `and` (boolean)
-13. `or` (boolean)
-
-Template:
-```
-- a ** 2 < 5 or b ? b ~ "0" : (a + 4 * 5) and c is defined or c // 2 * d + 1 != 10
-```
-
-Lua:
-```
-    - tonumber(a) ^ 2 < 5
-or
-    toboolean(
-        toboolean(b) and tostring(b) .. "0" or tonumber(a) + 4 + 5
-    )
-and 
-    test_defined(c)
-or 
-    toboolean(
-        mod2(
-            tonumber(c),
-            2 * tonumber(d)
-        ) + 1 != 10
-    )
-```
-
-AST:
-
-```
-{
-    op: "or",
-    l: {
-        op: "<",
-        l: {
-            op: "**",
-            l: {
-                op: "-",
-                r: {
-                    value: "a",
-                    type: "variable"
-                }
-            },
-            r: {
-                value: "2",
-                type: "number"
-            }
-        },
-        r: {
-            value: "5",
-            type: "number"
-        }
-    },
-    r: {
-        op: "or",
-        l: {
-            op: "and",
-            l: {
-                op: "?:",
-                cond: {
-                    value: "b",
-                    type: "variable"
-                },
-                l: {
-                    op: "~",
-                    l: {
-                        value: "b",
-                        type: "variable"
-                    },
-                    r: {
-                        value: "0",
-                        type: "string"
-                    }
-                },
-                r: {
-                    value: "a + 5 * 5",
-                    type: "expr"
-                }
-            },
-            r: {
-                op: "is",
-                name: "defined",
-                l: {
-                    value: "c",
-                    type: "variable"
-                },
-            }
-        },
-        r: {
-            op: "!=",
-            l: {
-                op: "+",
-                l: {
-                    op: "//",
-                    l: {
-                        value: "c",
-                        type: "variable"
-                    },
-                    r: {
-                        op: "*",
-                        l: {
-                            value: "2",
-                            type: "number"
-                        },
-                        r: {
-                            value: "d",
-                            type: "variable"
-                        },
-                    }
-                },
-                r: {
-                    value: "1",
-                    type: "number"
-                }
-            },
-            r: {
-                value: "10",
-                type: "number"
-            }
-        }
-    }
-}
-```
+12. `? ... : ...` (any)
+13. `and` (boolean)
+14. `or` (boolean)

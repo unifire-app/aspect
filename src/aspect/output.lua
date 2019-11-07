@@ -152,7 +152,7 @@ function output:get_callstack()
     for _, c in ipairs(self.stack) do
         callstack[#callstack + 1 ]= c[1] .. ":" .. c[2]
     end
-    callstack[#callstack + 1 ]= (self.view.name or "<unnamed>") .. ":" .. self.line
+    callstack[#callstack + 1 ]= (self.view.name or "<undef>") .. ":" .. self.line
     return "\t" .. concat(callstack, "\n\t")
 end
 

@@ -67,12 +67,34 @@ This limitation exists because a block tag works in "both" directions.
 That is, a `block` tag doesn't just provide a hole to fill - it also defines the content that fills the hole in the `parent`. 
 If there were two similarly-named `block` tags in a template, that template's parent wouldn't know which one of the blocks' content to use.
 
-If you want to print a block multiple times you can however use the block function:
+## Block function
+When a template uses inheritance and if you want to print a block multiple times, use the `block` function:
 
 ```twig
 <title>{% block title %}{% endblock %}</title>
-<h1>{{ _self.blocks.title() }}</h1>
+
+<h1>{{ block('title') }}</h1>
+
 {% block body %}{% endblock %}
+```
+
+The `block` function can also be used to display one block from another template:
+
+```twig
+	
+{{ block("title", "common_blocks.html") }}
+```
+
+Use the `defined` test to check if a block exists in the context of the current template:
+
+```twig
+{% if block("footer") is defined %}
+    ...
+{% endif %}
+
+{% if block("footer", "common_blocks.html") is defined %}
+    ...
+{% endif %}
 ```
 
 ## Named Block End-Tags

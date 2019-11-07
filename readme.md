@@ -53,12 +53,13 @@ The first one is used to execute statements such as for-loops, the latter output
 API
 ---
 
+* Configuration
 * Get template output
 * Run template pipline output
-* Cache configuration
-* Add tags
-* Add filter
-* Add functions
+* [Cache](./docs/api.md#cache)
+* [Add tags](./docs/api.md#add-tags)
+* [Add filter](./docs/api.md#add-filters)
+* [Add functions](./docs/api.md#add-functions)
 * Configure behaviors
 
 Syntax
@@ -129,7 +130,10 @@ Filters
 Functions
 ---------
 
-* [range(low, high, step)](./funcs/range.md)
+* [parent()](./docs/tags/extends.md#parent)
+* [block(name, template)](./docs/tags/extends.md#block-function)
+* [range(low, high, step)](./docs/funcs/range.md)
+* [date(date)](./docs/funcs/date.md)
 
 Tests
 -----

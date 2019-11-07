@@ -4,7 +4,7 @@ source = {
     url = "https://github.com/unifire-app/aspect/-/archive/master/aspect-master.zip"
 }
 description = {
-    summary = "Aspect is a compiling (HTML) templating engine for Lua and OpenResty.",
+    summary = "Aspect is a compiling templating engine for Lua and OpenResty with syntax Twig/Django/Jinja.",
     detailed = [[
 * Popular Django syntax compatible with Twig2 and Jinja2
 * Bytecode and lua code caching of compiled templates are available.
@@ -21,7 +21,8 @@ description = {
 }
 dependencies = {
     "penlight",
-    "date"
+    "date",
+    "lua-cjson"
 }
 build = {
     type = "builtin",

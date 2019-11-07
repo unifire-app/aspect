@@ -1,4 +1,5 @@
 local unpack = unpack
+local concat = table.concat
 local err = require("aspect.err")
 local compiler_error = err.compiler_error
 local runtime_error = err.runtime_error
@@ -6,7 +7,7 @@ local quote_string = require("pl.stringx").quote_string
 local config = require("aspect.config")
 local tags = require("aspect.tags")
 local tag_type = config.compiler.tag_type
-local dump = require("pl.pretty").dump
+local dump = require("aspect.utils").dump
 local date = require("date")
 
 
@@ -213,6 +214,20 @@ func.args.date = {"date"}
 
 function func.fn.date(__, args)
     return date(args.date or false) or date(false)
+end
+
+func.args.dump = {"..."}
+
+--- {% dump(...) %}
+--- @param __ aspect.output
+--- @param args table|nil
+function func.fn.dump(__, args)
+    local out = {__.view.name .. ":"..__.line .. ":"}
+    if args then
+        out[#out + 1] = dump(unpack(args))
+    end
+    out[#out + 1] = "\nStack:\n" .. __:get_callstack()
+    return concat(out, "\n")
 end
 
 return func

@@ -4,10 +4,10 @@ local tostring = tostring
 local type = type
 local concat = table.concat
 local insert = table.insert
+local str_rep  = string.rep
+local getmetatable = getmetatable
 
 local utils = {}
-
-
 
 --- Merge two tables and returns lua representation. Value of table are expressions.
 --- @param t1 table|nil
@@ -77,6 +77,63 @@ function utils.join(t, delim)
     else
         return tostring(t)
     end
+end
+
+--- Export arguments as string
+--- @return string
+function utils.dump(...)
+    local output = {};
+    for _, v in pairs({ ... }) do
+        if type(v) == 'table' then
+            insert(output, utils.table_export(v, 0))
+        else
+            insert(output, tostring(v))
+        end
+    end
+    return concat(output, "\n")
+end
+
+--- Serialize the table
+--- @param tbl table
+--- @param indent number отступ в количествах пробелов
+--- @return string
+function utils.table_export(tbl, indent)
+    if not indent then
+        indent = 0
+    elseif indent > 16 then
+        return "*** too deep ***"
+    end
+    local output = "";
+    local mt = getmetatable(tbl)
+    local tab = str_rep("  ", indent + 1)
+    local iter, ctx, key
+    if mt and mt.__pairs then
+        iter, ctx, key = mt.__pairs(tbl)
+    else
+        iter, ctx, key = pairs(tbl)
+    end
+    for k, v in iter, ctx, key do
+        local formatting = tab
+        if type(k) == 'string' then
+            formatting = formatting .. k .. " = "
+        end
+        if type(v) == "table" then
+            if type(k) == "string" and k:sub(1, 1) == "_" then
+                output = output .. formatting .. "*** private table ***\n"
+            else
+                output = output .. formatting .. utils.table_export(v, indent + 1) .. "\n"
+            end
+        else
+            output = output .. formatting .. "("..type(v)..") " .. tostring(v) .. "\n"
+        end
+    end
+
+    if output ~= "" then
+        return "{\n" .. output ..  str_rep("  ", indent) .. "}"
+    else
+        return "{}"
+    end
+
 end
 
 return utils

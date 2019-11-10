@@ -131,7 +131,17 @@ function filters.format(v, ...)
 end
 
 function filters.last(v)
-
+    local typ = type(v)
+    if typ == "table" then
+        local last
+        for _, e in output.i(v) do
+            last = e
+        end
+        return last
+    elseif typ == "string" then
+        return sub(v, -2, -1)
+    end
+    return nil
 end
 
 function filters.format_number(v, opts)
@@ -188,37 +198,28 @@ function filters.length(v)
     end
 end
 
---- https://twig.symfony.com/doc/2.x/filters/lower.html
 function filters.lower(v)
     return lower(tostring(v))
 end
 
---- https://twig.symfony.com/doc/2.x/filters/upper.html
 function filters.upper(v)
     return upper(tostring(v))
 end
 
---- https://twig.symfony.com/doc/2.x/filters/map.html
-function filters.map(v, formatter)
-
-end
-
---- https://twig.symfony.com/doc/2.x/filters/merge.html
 function filters.merge(v, items)
-
+    if type(v) == "table" and type(items) == "table" then
+        return tablex.merge(v, items)
+    end
 end
 
---- https://twig.symfony.com/doc/2.x/filters/nl2br.html
 function filters.nl2br(v)
-
+    return gsub(output.s(v), "\n", "<br/>\n")
 end
 
---- https://twig.symfony.com/doc/2.x/filters/raw.html
 function filters.raw(v)
 
 end
 
---- https://twig.symfony.com/doc/2.x/filters/replace.html
 function filters.replace(v)
 
 end
@@ -244,6 +245,14 @@ function filters.trim(v, what, side)
         return stringx.strip(v, what)
     else
         return stringx.strip(v, what)
+    end
+end
+
+function filters.inthe(v, k)
+    if type(k) == "table" then
+        return tablex.find(k, v) ~= nil
+    else
+        return stringx.lfind(k, output.s(v)) ~= nil
     end
 end
 

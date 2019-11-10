@@ -1,16 +1,37 @@
 
+Get started
+-----------
+
+```lua
+local aspect = require("aspect.template")
+
+local tmpl = aspect.new()
+tmpl.loader = function (name)
+    --- load template body by name
+    return app:load_template(name) 
+end
+
+tmpl:display("dashboard.tpl", {
+    title = "hello world",
+    data = app:get_data()
+})
+```
+
+
 Cache
 -----
 
 Cache stages:
 
+0. _Require the template_
 1. Get `aspect.view` from internal (table in the `aspect.template`) cache.
-2. Get bytcode from `bytecode_load` function.
-3. Get lua code from `luacode_load` function.
-4. _Get template source code via `loader` function._
-5. Save lua code via `luacode_save` function.
-6. Save bytcode via `bytecode_save` function.
+2. Get bytcode using `bytecode_load` function.
+3. Get lua code using `luacode_load` function.
+4. _Get template source code using `loader` function._
+5. Save lua code using `luacode_save` function.
+6. Save bytcode using `bytecode_save` function.
 7. Save `aspect.view` into internal (table in the `aspect.template`) cache.
+8. _Render the template_
 
 ```lua
 local aspect = require("aspect.template")
@@ -125,8 +146,62 @@ function funcs.fs.foo(__, args)
 
 See [aspect.funcs](../src/aspect/funcs.lua) for more examples.
 
-Condition behaviour
--------------------
+Add tests
+---------
+
+Add tests `foo` and `bar`
+
+```lua
+local tests = require("aspect.tests")
+
+tests.fn.is_foo = function (v)
+   -- return boolean
+end
+
+tests.args.is_bar = true -- bar tests has expression
+tests.fn.is_bar = function (v, expr)
+   -- return boolean
+end
+```
+
+Result:
+
+```twig
+{{ a is foo }}
+{{ a is bar(c) }}
+```
+
+See [aspect.tests](../src/aspect/tests.lua) for more examples.
+
+Add operators
+-------------
+
+For example add bitwise operator `&`: 
+
+```lua
+local ops = require("aspect.ast.ops")
+
+--- push new operator to operators array
+--- @see aspect.ast.op
+table.insert(ops, {
+    token = "&",
+    order = 7,
+    l = "number",
+    r = "number",
+    out = "number",
+    out = "binary",
+    pack = function (left, right)
+        return "BitOp.and(" .. left .. ", " .. right .. ")"
+    end
+})
+```
+
+See [aspect.ast.ops](../src/aspect/ast/ops.lua) for more examples.
+
+Behaviors
+---------
+
+### Condition behaviour
 
 Cast specific tables and userdata to false. 
 

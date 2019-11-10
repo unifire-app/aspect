@@ -4,6 +4,8 @@ local setmetatable = setmetatable
 local ipairs = ipairs
 local require = require
 local type = type
+local json_encode = require("cjson.safe").encode
+local var_dump = require("aspect.utils").var_dump
 
 --- Intermediate branch element
 --- @class aspect.ast.node
@@ -93,60 +95,83 @@ function ast:parse(compiler, tok)
         end
     end
     while tok:is_valid() do
-        local token, sub_ast = tok:get_token(), nil
+        local token, cond, cond_type = tok:get_token(), nil, nil
         local op, op_unary, info = ops[token], nil, {}
-        if not op then
-            break
-        end
-        if op.type == "ternary" then
-            local sub_tree = ast.new()
-            sub_ast = sub_tree:parse(compiler, tok:next()):get_root()
-            tok:require(op.delimiter)
-        end
-        tok:next()
-        if ops_unary[tok:get_token()] then -- has unary operator ('-' or 'not')
-            op_unary = ops_unary[tok:get_token()]
-            tok:next()
-        end
-        local leaf
-        if tok:is("(") then
-            leaf = {
-                value = "(" .. compiler:parse_expression(tok:next(), info) .. ")",
-                type = info.type,
-                bracket = true
-            }
-            tok:require(")"):next()
+
+        if op then -- binary or ternary operator
+            if op.parse then
+                cond, cond_type = op.parse(compiler, tok)
+                if cond_type then
+                    cond = {
+                        value = cond,
+                        type = cond_type
+                    }
+                end
+            else
+                tok:next()
+            end
+            if ops_unary[tok:get_token()] then -- has unary operator ('-' or 'not')
+                op_unary = ops_unary[tok:get_token()]
+                tok:next()
+            end
+
+            local leaf
+            if tok:is("(") then
+                leaf = {
+                    value = "(" .. compiler:parse_expression(tok:next(), info) .. ")",
+                    type = info.type,
+                    bracket = true
+                }
+                tok:require(")"):next()
+            else
+                leaf = {
+                    value = compiler:parse_value(tok, info),
+                    type = info.type,
+                    bracket = false
+                }
+            end
+            if self.current.value then -- first element of the tree
+                self:insert(op, leaf, cond)
+            elseif self.current.op.order <= op.order then
+                while self.current.p and self.current.op.order < op.order do
+                    self:up()
+                end
+                self:insert(op, leaf, cond)
+            else -- self.current.op.order > op.order
+                while self.current.r.op and self.current.op.order > op.order do -- just in case
+                    self:down()
+                end
+                self:fork(op, leaf, cond)
+            end
+            if op_unary then
+                self:fork(op_unary, nil)
+            end
+        elseif ops_unary[token] then -- some unary operators are specific (e.g. 'is')
+            op_unary = ops_unary[token]
+            if op_unary.parse then
+                cond, cond_type = op_unary.parse(compiler, tok)
+                if cond then
+                    cond = {
+                        value = cond,
+                        type = cond_type or "expr"
+                    }
+                end
+            end
+            if self.current.value then -- first element of the tree
+                self:fork(op_unary, nil, cond)
+            elseif self.current.op.order <= op_unary.order then
+                while self.current.p and self.current.op.order < op_unary.order do
+                    self:up()
+                end
+                self:fork(op_unary, nil, cond)
+            else -- self.current.op.order > op_unary.order
+                while self.current.r.op and self.current.op.order > op_unary.order do -- just in case
+                    self:down()
+                end
+                self:fork(op_unary, nil, cond)
+            end
         else
-            leaf = {
-                value = compiler:parse_value(tok, info),
-                type = info.type,
-                bracket = false
-            }
-        end
-        if self.current.value then -- first element of the tree
-            self:insert(op, leaf)
-        elseif self.current.op.order <= op.order then
-            --print("push (<=) " .. op.name)
-            while self.current.p and self.current.op.order < op.order do
-                --print("MOVE UP")
-                self:up()
-            end
-            self:insert(op, leaf)
-        else -- self.current.op.order > op.order
-            --print("push (>) " .. op.name)
-            while self.current.r.op and self.current.op.order > op.order do -- just in case
-                --print("MOVE DOWN")
-                self:down()
-            end
-            self:fork(op, leaf)
-        end
-        if op.type == "ternary" and sub_ast then
-            self.current.c = self.current.l
-            self.current.l = sub_ast
-            sub_ast.p = self.current
-        end
-        if op_unary then
-            self:fork(op_unary, nil)
+            break
         end
     end
     return self
@@ -155,15 +180,19 @@ end
 --- Insert new node in the current branch
 --- @param op aspect.ast.op
 --- @param r aspect.ast.leaf
-function ast:insert(op, r)
-    --print("INSERT " .. r.value)
+function ast:insert(op, r, cond)
+    --print("INSERT " .. op.token)
     local parent = self.current.p
     self.current = {
         p = parent,
         op = op,
         l = self.current,
-        r = r
+        r = r,
+        c = cond
     }
+    if cond and cond.op then
+        cond.p = self.current
+    end
     if parent then
         parent.r = self.current
     end
@@ -175,34 +204,46 @@ end
 --- Insert new node and create new branch
 --- @param op aspect.ast.op
 --- @param r aspect.ast.leaf|nil if nil - unary operator, just create new branch with current leaf
-function ast:fork(op, r)
-    --print("BEGIN FORK FOR", op.name, op.type)
+function ast:fork(op, r, cond)
     local current_r = self.current.r
     if op.type == "binary" and r then
-        --print("FORK BINARY ",  r.value)
         self.current.r = {
             p = self.current,
             op = op,
             l = current_r,
-            r = r
+            r = r,
+            c = cond
         }
         if self.current.r.l.op then
             self.current.r.l.p = self.current.r
         end
         self.current = self.current.r
     elseif op.type == "unary" and not r then
-        --print("FORK UNARY ", self.current.r.value)
-        self.current.r = {
-            p = self.current,
-            op = op,
-            r = current_r,
-            l = nil
-        }
-        if current_r.op then
-            current_r.p = self.current.r
+        if cond then -- unary with cond - test operator
+            self.current = {
+                p = self.current.p,
+                op = op,
+                l = nil,
+                r = self.current,
+                c = cond
+            }
+            if self.current.r.op then
+                self.current.r.p = self.current
+            end
+        else
+            self.current.r = {
+                p = self.current,
+                op = op,
+                l = nil,
+                r = current_r,
+                c = cond
+            }
+            if current_r.op then
+                current_r.p = self.current.r
+            end
         end
     else
-        assert("right is nil but operator is not unary")
+        assert(false, "right is nil but operator is not unary")
     end
 end
 
@@ -229,10 +270,12 @@ function ast:get_root()
     return node
 end
 
+--- @param node aspect.ast.node|aspect.ast.leaf
+--- @param indent string
 local function dump_visit(node, indent)
     local out = {}
     if node.op then -- if aspect.ast.node
-        insert(out, "\n" .. indent .. "OP " .. node.op.token .. " " .. (node.op.delimiter or ""))
+        insert(out, "\n" .. indent .. "OP " .. node.op.token .. " " .. (node.op.delimiter or "") .. " (order " .. node.op.order .. " )")
         if node.c then
             insert(out, indent .. "c: " .. dump_visit(node.c, indent .. "    "))
         end
@@ -242,7 +285,9 @@ local function dump_visit(node, indent)
         if node.r then
             insert(out, indent .. "r: " .. dump_visit(node.r, indent .. "    "))
         end
-    else -- if aspect.ast.leaf
+    elseif type(node.value) == "table" then
+        insert(out, node.type .. "(" .. json_encode(node.value) .. ")")
+    else
         insert(out, node.type .. "(" .. node.value .. ")")
     end
 
@@ -300,6 +345,7 @@ local function pack_tree(node)
             end
             cond = cast(cond, node.op.c)
         end
+        --var_dump(node)
         local v = node.op.pack(left, right, cond)
         if node.op.brackets then
             v = "(" .. v .. ")"

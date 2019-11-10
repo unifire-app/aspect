@@ -225,7 +225,7 @@ end
 function output.i(v)
     local typ, mt = type(v), getmetatable(v)
     if typ == "table" then
-        if mt.__pairs then
+        if mt and mt.__pairs then
             return mt.__pairs(v)
         else
             return pairs(v)

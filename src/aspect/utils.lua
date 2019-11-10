@@ -79,13 +79,17 @@ function utils.join(t, delim)
     end
 end
 
+function utils.var_dump(...)
+    io.stderr:write(utils.dump(...) .. "\n" .. debug.traceback() .. "\n")
+end
+
 --- Export arguments as string
 --- @return string
 function utils.dump(...)
     local output = {};
     for _, v in pairs({ ... }) do
         if type(v) == 'table' then
-            insert(output, utils.table_export(v, 0))
+            insert(output, utils.table_export(v, 0, {[tostring(v)] = true}))
         else
             insert(output, tostring(v))
         end
@@ -97,7 +101,7 @@ end
 --- @param tbl table
 --- @param indent number отступ в количествах пробелов
 --- @return string
-function utils.table_export(tbl, indent)
+function utils.table_export(tbl, indent, tables)
     if not indent then
         indent = 0
     elseif indent > 16 then
@@ -118,10 +122,14 @@ function utils.table_export(tbl, indent)
             formatting = formatting .. k .. " = "
         end
         if type(v) == "table" then
-            if type(k) == "string" and k:sub(1, 1) == "_" then
+            local table_id = tostring(v)
+            if tables[table_id] then
+                output = output .. formatting .. "*** recursive ***\n"
+            elseif type(k) == "string" and k:sub(1, 1) == "_" then
                 output = output .. formatting .. "*** private table ***\n"
             else
-                output = output .. formatting .. utils.table_export(v, indent + 1) .. "\n"
+                tables[table_id] = true
+                output = output .. formatting .. utils.table_export(v, indent + 1, tables) .. "\n"
             end
         else
             output = output .. formatting .. "("..type(v)..") " .. tostring(v) .. "\n"

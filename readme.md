@@ -53,14 +53,11 @@ The first one is used to execute statements such as for-loops, the latter output
 API
 ---
 
+* [Get stated](./docs/api.md#get-started)
 * Configuration
 * Get template output
 * Run template pipline output
 * [Cache](./docs/api.md#cache)
-* [Add tags](./docs/api.md#add-tags)
-* [Add filter](./docs/api.md#add-filters)
-* [Add functions](./docs/api.md#add-functions)
-* Configure behaviors
 
 Syntax
 ------
@@ -138,4 +135,19 @@ Functions
 Tests
 -----
 
-* [defined](./docs/tests/defined.md)
+* [is defined](./docs/tests/defined.md)
+* [is odd](./docs/tests/defined.md)
+* [is even](./docs/tests/defined.md)
+* [is number](./docs/tests/defined.md)
+* [is string](./docs/tests/defined.md)
+* [is iterator](./docs/tests/defined.md)
+
+Extending
+---------
+
+* [Add tags](./docs/api.md#add-tags)
+* [Add filter](./docs/api.md#add-filters)
+* [Add functions](./docs/api.md#add-functions)
+* [Add tests](./docs/api.md#add-tests)
+* [Add operators](./docs/api.md#add-operators)
+* [Configure behaviors](./docs/api.md#behaviors)

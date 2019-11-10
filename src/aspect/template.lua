@@ -120,7 +120,7 @@ function template.new(options)
         stack_size = 20,
         f = filters,
         fn = funcs.fn,
-        t = tests
+        t = tests.fn
     }
     --- @param names table|string
     tpl.opts.get = function(names)

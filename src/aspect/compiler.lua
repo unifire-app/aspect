@@ -31,6 +31,7 @@ local loop_keys = config.loop.keys
 local tag_type = config.compiler.tag_type
 local func = require("aspect.funcs")
 local ast = require("aspect.ast")
+local var_dump = require("aspect.utils").var_dump
 
 
 --- @class aspect.compiler
@@ -606,103 +607,24 @@ function compiler:parse_expression(tok, opts)
     return expr.value
 end
 
---- Parse any expression (math, logic, string e.g.)
 --- @param tok aspect.tokenizer
---- @param opts table|nil
-function compiler:_parse_expression(tok, opts)
-    opts = opts or {}
-    opts.bools = opts.bools or 0
-    local elems = {}
-    local comp_op = false -- only one comparison may be in the expression
-    local logic_op = false
-    while true do
-        local info = {}
-        local not_op, minus_op
-        -- 1. checks unary operator 'not'
-        if tok:is("not") then
-            not_op = "not "
-            tok:next()
-        elseif tok:is("-") then
-            minus_op = true
-            tok:next()
-        end
-        -- 2. parse value
-        local element = self:parse_value(tok, info)
-        if minus_op then
-            if info.type == "number" then
-                element = "-" .. element
-            elseif info.type == "expr" then
-                element = "-(__.tonumber" .. element .. " or 0)"
-            else
-                element = "-(__.tonumber(" .. element .. ") or 0)"
-            end
-        end
-        -- 3. check operator 'in' or 'not in' and 'is' or 'is not'
-        if tok:is("in") or tok:is("not") then
-            if tok:is("not") then
-                insert(elems, "not")
-            end
-            tok:require("in"):next()
-            element = "__.f['in'](" .. element .. ", " ..  self:parse_expression(tok) .. ")"
-        elseif tok:is("is") then
-            element = self:parse_test(tok, element)
-        end
-        if logic_op then
-            opts.bools  = opts.bools + 1
-            insert(elems, (not_op or "") .. "__.b(" .. element .. ")")
-        elseif not_op then
-            opts.bools  = opts.bools + 1
-            insert(elems, not_op .. "__.b(" .. element .. ")")
-        else
-            insert(elems, element)
-        end
-        local op = false
-        comp_op = false
-
-        -- 4. checks and parse math/logic/comparison/concat operator
-        if math_ops[tok:get_token()] then -- math
-            insert(elems, math_ops[tok:get_token()])
-            tok:next()
-            op = true
-            logic_op = false
-        elseif comparison_ops[tok:get_token()] then -- comparison
-            if comp_op then
-                compiler_error(tok, "syntax", "only one comparison operator may be in the expression")
-            end
-            insert(elems, comparison_ops[tok:get_token()])
-            tok:next()
-            op = true
-            comp_op = true
-            logic_op = false
-        elseif logic_ops[tok:get_token()] then -- logic
-            if not logic_op then
-                opts.bools  = opts.bools + 1
-                elems[#elems] = "__.b(" .. elems[#elems] .. ")"
-            end
-            insert(elems, logic_ops[tok:get_token()])
-            tok:next()
-            op = true
-            comp_op = false
-            logic_op = true
-        elseif tok:is("~") then -- concat
-            insert(elems, "..")
-            tok:next()
-            op = true
-            logic_op = false
-        else
-            logic_op = false
-        end
-        -- 5. if no more math/logic/comparison/concat operators found - work done
-        if not op then
-            break
-        end
+--- @return table test information
+function compiler:parse_is(tok)
+    local test = {}
+    if tok:require("is"):next():is('not') then
+        test["not"] = true
+        tok:next()
     end
-    if comp_op then -- comparison with nothing?
-        compiler_error(tok, "syntax", "expecting expression statement")
+    test.name = tok:get_token()
+    if not tests.fn["is_" .. test.name] then
+        compiler_error(tok, "syntax", "expecting valid test name")
     end
-    opts.count = (#elems + 1)/2
-    opts.all_bools = logic_op == opts.count -- all elements converted to boolean?
-    return concat(elems, " ")
+    tok:next()
+    if tests.args[test.name] then
+        test.expr = self:parse_expression(tok:require("("):next())
+        tok:require(")"):next()
+    end
+    return test
 end
 
 --- Append any text

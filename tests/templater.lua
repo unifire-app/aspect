@@ -8,6 +8,7 @@ local err = require("aspect.err")
 local dump = require("pl.pretty").dump
 local tablex = require("pl.tablex")
 local strip = require("pl.stringx").strip
+local json_encode = require("cjson.safe").encode
 
 TestTemplate = {
     templates = {}
@@ -365,18 +366,49 @@ TestTemplate.templates["macro_04"] = {
     "[one: none] [two: value1] [: value2] [three: value3]"
 }
 
---TestTemplate.templates["ternary_01"] = {
---    [[
---    integer_0: {{ integer_0 ? "no" : "yes" }},
---    integer_1: {{ integer_1 ? "no" : "yes" }},
---    nil_value: {{ nil_value ? "no" : "yes" }},
---    true_value: {{ true_value ? "no" : "yes" }},
---    false_value: {{ false_value ? "no" : "yes" }},
---    string_empty: {{ string_empty ? "no" : "yes" }},
---
---    ]],
---    "integer_0: empty, integer_1: not empty, nil_value: empty, true_value: not empty, false_value: empty, string_empty: empty,"
---}
+TestTemplate.templates["is_01"] = {
+    [[
+    {% if integer_1 is defined or integer_0 %}
+    defined
+    {% endif %}
+    ]],
+    "defined"
+}
+
+TestTemplate.templates["is_01"] = {
+    [[
+    {{ integer_2 ** integer_3 is even ~ " is" }}
+    ]],
+    "true is"
+}
+
+TestTemplate.templates["is_01"] = {
+    [[
+    {{ integer_2 ** integer_3 is not even ~ " is" }}
+    ]],
+    "is"
+}
+
+TestTemplate.templates["in_01"] = {
+    [[
+    has: {{ integer_2 in [1, 3] }}
+    ]],
+    "has:"
+}
+
+TestTemplate.templates["in_02"] = {
+    [[
+    has: {{ integer_2 in [1, 2, 3] }}
+    ]],
+    "has: true"
+}
+
+TestTemplate.templates["in_02"] = {
+    [[
+    has: {{ integer_2 not in [1, 2, 3] }}
+    ]],
+    "has:"
+}
 
 function TestTemplate:run_parser(tests, callback)
     for i,t in pairs(tests) do
@@ -472,6 +504,10 @@ TestTemplate.ast_expr = {
     { -- brackets and unary operators before brackets
         expr = "(1 + 2) + - (3 * 4)",
         ast = "((1 + 2) [+] ([-] (3 * 4)))"
+    },
+    { -- brackets and unary operators before brackets
+        expr = "1 ** 2 is odd and 3",
+        ast = '(((1 [**] 2) [is {"name":"odd"}]) [and] 3)'
     }
 }
 
@@ -484,11 +520,14 @@ function TestTemplate:test_02_ast()
             lu.fail(tostring(err.new(error)))
         end
         local result = ast:pack(function (op, left, right, cond)
-            if op.type == "ternary" then
-                return "(" .. cond.value .. " [" .. op.token .. "] " .. left.value .. " [" .. op.delimiter .. "] "  .. right.value .. ")"
+            if op.token == "?" then
+                --return "(" .. cond.value .. " [" .. op.token .. "] " .. left.value .. " [" .. op.delimiter .. "] "  .. right.value .. ")"
+                return "(" .. left.value .. " [?] " .. cond.value .. " [:] "  .. right.value .. ")"
             elseif op.type == "binary" then
                 return "(" .. left.value .. " [" .. op.token .. "] " .. right.value .. ")"
-            else
+            elseif cond then -- unary with cond
+                return "(" .. right.value .. " [" .. op.token .. " " .. json_encode(cond.value) .. "])"
+            else -- unary without cond
                 return "([" .. op.token .. "] " .. right.value .. ")"
             end
         end)

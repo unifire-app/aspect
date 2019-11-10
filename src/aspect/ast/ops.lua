@@ -1,17 +1,20 @@
+local require = require
 local quote_string = require("pl.stringx").quote_string
+local var_dump = require("aspect.utils").var_dump
 
 --- The operator settings
 --- @class aspect.ast.op
---- @field order number
---- @field name string
---- @field type string
---- @field pack fun(l:string, r:string, c:string)
---- @field delimiter string|nil
---- @field brackets boolean
---- @field c string|nil
---- @field l string|nil
---- @field r string
---- @field out string
+--- @field order number operator precedence (from lower to higher)
+--- @field token string operator template token
+--- @field type string type of operator& one of: unary, binary, ternary
+--- @field parser fun(c:aspect.compiler, tok:aspect.tokenizer) how to parse operator in the template, returns cond
+--- @field pack fun(l:string, r:string, c:string) how to pack lua code
+--- @field delimiter string|nil ternary delimiter
+--- @field brackets boolean operator in brackets
+--- @field c string|nil data type of condition branch
+--- @field l string|nil data type of left member (branch)
+--- @field r string data type of right member (branch)
+--- @field out string data type of operator's result
 local _op = {}
 
 local ops = {
@@ -54,15 +57,18 @@ local ops = {
     {
         order = 6,
         token = "is",
-        type  = "binary",
-        l     = "any",
+        type  = "unary",
         r     = "any",
         out   = "boolean",
+        parse = function (compiler, tok)
+            return compiler:parse_is(tok), "test"
+        end,
         pack  = function (left, right, test)
+            local expr = "__.opts.t.is_" .. test.name .. "(__, " .. right .. ", " .. (test.expr or "nil") .. ")"
             if test["not"] then
-                return "not __.test(" .. left .. ", " .. quote_string(test.name)  .. ", " .. right .. ")"
+                return "not " .. expr
             else
-                return "__.test(" .. left .. ", " .. quote_string(test.name)  .. ", " .. right .. ")"
+                return expr
             end
         end
     },
@@ -75,12 +81,22 @@ local ops = {
         l     = "any",
         r     = "any",
         out   = "boolean",
-        pack  = function (left, right, opts)
-            if opts["not"] then
-                return "not __.f['in'](" .. left .. ", " .. right .. ")"
-            else
-                return "__.f['in'](" .. left .. ", " .. right .. ")"
-            end
+        pack  = function (left, right)
+            return "__.f.inthe(" .. left .. ", " .. right .. ")"
+        end
+    },
+    {
+        order = 6,
+        token = "not",
+        type  = "binary",
+        l     = "any",
+        r     = "any",
+        out   = "boolean",
+        parse = function (compiler, tok)
+            tok:require("not"):next():require("in"):next()
+        end,
+        pack  = function (left, right)
+            return "not __.f.inthe(" .. left .. ", " .. right .. ")"
         end
     },
 
@@ -265,15 +281,24 @@ local ops = {
     {
         order = 12,
         token = "?",
-        type  = "ternary",
+        type  = "binary", -- yeah, be binary
         delimiter = ":",
-        c     = "boolean",
-        l     = "any",
-        r     = "any",
+        c     = "any",     -- center
+        l     = "boolean", -- left
+        r     = "any",     -- right
         out   = "any",
         brackets = true,
-        pack  = function (left, right, cond)
-            return "(" .. cond .. ") and (" .. left .. ") or (" .. right .. ")"
+        --- @param compiler aspect.compiler
+        --- @param tok aspect.tokenizer
+        parse = function (compiler, tok)
+            local ast = require("aspect.ast").new()
+            local root = ast:parse(compiler, tok:require("?"):next()):get_root()
+            tok:require(":"):next()
+            --var_dump("ROOT", root)
+            return root
+        end,
+        pack  = function (left, right, center)
+            return "(" .. left .. ") and (" .. center .. ") or (" .. right .. ")"
         end
     },
 

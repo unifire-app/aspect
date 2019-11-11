@@ -120,6 +120,8 @@ function utils.table_export(tbl, indent, tables)
         local formatting = tab
         if type(k) == 'string' then
             formatting = formatting .. k .. " = "
+        elseif type(k) ~= 'number' then
+            formatting = formatting .. "[" .. tostring(k) .. "]" .. " = "
         end
         if type(v) == "table" then
             local table_id = tostring(v)

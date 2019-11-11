@@ -14,11 +14,15 @@ local err = require("aspect.err")
 local e_pattern = require("aspect.config").escape.pattern
 local e_replaces = require("aspect.config").escape.replaces
 local runtime_error = err.runtime_error
-local is_false = require("aspect.config").is_false
-local is_empty_string = require("aspect.config").is_empty_string
+local var_dump = require("aspect.utils").var_dump
+local config = require("aspect.config")
+local is_false = config.is_false
+local is_n = config.is_n
+local is_empty_string = config.is_empty_string
 local is_empty = table.isempty or function(v) return next(v) == nil end
 local insert = table.insert
 local tonumber = tonumber
+
 
 --- @class aspect.output.parent
 --- @field list table<aspect.template.block>
@@ -207,11 +211,15 @@ end
 --- @param v any
 --- @return number
 function output.n(v)
+    print("IS N", tostring(v), tostring(getmetatable(v)), tostring(is_n[getmetatable(v)]));
+
     local typ = type(v)
     if typ == "number" then
         return v
     elseif typ == "string" then
         return tonumber(v) or 0
+    elseif is_n[getmetatable(v)] then
+        return v
     else
         return tonumber(tostring(v)) or 0
     end

@@ -31,6 +31,9 @@ config.is_empty_string = {
     [""] = true,
 }
 
+config.is_n = {
+}
+
 --- dynamically configure config.is_false and config.is_empty_string
 do
     --- https://github.com/openresty/lua-nginx-module#core-constants
@@ -75,6 +78,8 @@ do
         config.is_false[msgpack.NULL] = true
         config.is_empty_string[msgpack.NULL] = true
     end
+
+    config.is_n[getmetatable(require("date"))] = true
 end
 
 --- Compiler configuration

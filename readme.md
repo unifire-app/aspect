@@ -103,7 +103,7 @@ Filters
 * [escape(type), e(type)](./docs/filters/escape.md)
 * [default(value, boolean)](./docs/filters/default.md)
 * [first](./docs/filters/first.md)
-* last
+* [last](./docs/filters/last.md)
 * [format(...)](./docs/filters/format.md)
 * format_number(opts)
 * markdown_to_html(opts)

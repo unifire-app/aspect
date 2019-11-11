@@ -410,6 +410,19 @@ TestTemplate.templates["in_02"] = {
     "has:"
 }
 
+TestTemplate.templates["date_01"] = {
+    [[
+    {% if date("2019-11-11 09:56:30") > date("2019-11-11 09:55:30") %}
+        valid
+    {% endif %}
+    [and]
+    {% if date("2019-11-11 09:55:30") < date("2019-11-11 09:56:30") %}
+        valid
+    {% endif %}
+    ]],
+    "valid [and] valid"
+}
+
 function TestTemplate:run_parser(tests, callback)
     for i,t in pairs(tests) do
         local tpl = compiler.new()

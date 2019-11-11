@@ -30,6 +30,9 @@ TestTemplate.vars = {
     string_empty = "",
     string_1 = [[string value]],
 
+    date_1 = "2019-11-11 09:55:30",
+    date_2 = "2019-11-11 09:56:30",
+
     list_empty = {},
     list_1 = {"item1", "item2", "item3"},
 
@@ -414,13 +417,44 @@ TestTemplate.templates["date_01"] = {
     [[
     {% if date("2019-11-11 09:56:30") > date("2019-11-11 09:55:30") %}
         valid
+    {% else %}
+        in valid
     {% endif %}
     [and]
-    {% if date("2019-11-11 09:55:30") < date("2019-11-11 09:56:30") %}
+    {% if date("2019-11-11 09:56:30") < date("2019-11-11 09:55:30") %}
         valid
+    {% else %}
+        not valid
+    {% endif %}
+    [and]
+    {% if date("2019-11-11 09:55:30") == date("2019-11-11 09:56:30") %}
+        valid
+    {% else %}
+        not valid
+    {% endif %}
+    [and]
+    {% if date("2019-11-11 09:55:30") != date("2019-11-11 09:56:30") %}
+        valid
+    {% else %}
+        in valid
+    {% endif %}
+    [and]
+    {% if date("2019-11-11 09:56:30") == date("2019-11-11 09:56:30") %}
+        valid
+    {% else %}
+        in valid
     {% endif %}
     ]],
-    "valid [and] valid"
+    "valid [and] not valid [and] not valid [and] valid [and] valid"
+}
+
+TestTemplate.templates["date_02"] = {
+    [[
+        {% if date_1|date_modify({"minutes": 1}) == date(date_2) %}
+            equals
+        {% endif %}
+    ]],
+    "equals"
 }
 
 function TestTemplate:run_parser(tests, callback)

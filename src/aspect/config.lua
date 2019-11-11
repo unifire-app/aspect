@@ -79,7 +79,7 @@ do
         config.is_empty_string[msgpack.NULL] = true
     end
 
-    config.is_n[getmetatable(require("date"))] = true
+    config.is_n[getmetatable(require("date")())] = true
 end
 
 --- Compiler configuration

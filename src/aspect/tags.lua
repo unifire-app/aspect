@@ -50,6 +50,14 @@ function tags.tag_set(compiler, tok)
     end
 end
 
+--- {% do %}
+--- @param compiler aspect.compiler
+--- @param tok aspect.tokenizer
+--- @return string
+function tags.tag_do(compiler, tok)
+    return compiler:parse_expression(tok)
+end
+
 --- {% endset %}
 --- @param compiler aspect.compiler
 --- @param tok aspect.tokenizer

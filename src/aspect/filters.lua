@@ -65,18 +65,40 @@ function filters.date(v, fmt)
     end
 end
 
+local date_mods = {
+    seconds = "addseconds",
+    second  = "addseconds",
+    secs    = "addseconds",
+    sec     = "addseconds",
+    minutes = "addminutes",
+    minute  = "addminutes",
+    mins    = "addmins",
+    min     = "addmins",
+    hours   = "addhours",
+    hour    = "addhours",
+    days    = "adddays",
+    day     = "adddays",
+    months  = "addmonths",
+    month   = "addmonths",
+    years   = "addyears",
+    year    = "addyears",
+}
+
 function filters.date_modify(v, offset)
     local dt = date(tostring(v))
+
     if dt then
         local typ = type(offset)
         if typ == "table" then
             for k, d in pairs(offset) do
-                if dt["set" .. k] then
-                    dt["set" .. k](dt, tonumber(d))
+                if date_mods[k] then
+                    dt[ date_mods[k] ](dt, tonumber(d))
                 end
             end
         elseif typ == "number" then
+            dt:addseconds(offset)
         end
+        return dt
     else
         return v
     end
@@ -145,10 +167,6 @@ function filters.last(v)
 end
 
 function filters.format_number(v, opts)
-
-end
-
-function filters.markdown_to_html(v, opts)
 
 end
 

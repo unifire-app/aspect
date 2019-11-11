@@ -1,62 +1,54 @@
 Aspect Lua Template
 ===================
 
-**Aspect** is a compiling (HTML) templating engine for Lua and OpenResty.
+**Aspect** is a compiling templating engine for Lua and OpenResty.
 
-Features
---------
-
-* Syntax: [Twig2](https://twig.symfony.com/doc/2.x/templates.html) and [Jinja2](https://jinja.palletsprojects.com/en/2.10.x/templates/)
-* Available byte code cache (for luajit)
-* Available lua code cache
-* Safety: template always runs in sandbox.
-* Resistant to unexpected data: data type checking before use.
-* Big data is not a problem: data output can be pipelined, works without buffers, works with runtime small buffer (chunked) etc
-* Easy to develop: detailed description of problems when they occur.
-* Extensibility: adding your own tags, filters, functions, handlers.
-* User-friendly: expected behavior at certain values (`0` or empty string always false etc)
-* OpenResty supported.
+The key-features are...
+* _Well known_: The most popular Django-like syntax is used - 
+  [Twig2](https://twig.symfony.com/doc/2.x/templates.html) compatible and [Jinja2](https://jinja.palletsprojects.com/en/2.10.x/templates/) like.
+* _Fast_: Aspect compiles templates down to plain optimized Lua code. 
+  Moreover, Lua cod compiles into bytecode - the fastest representation of a template.
+* _Secure_: Aspect has a sandbox mode to evaluate all template code. 
+  This allows Aspect to be used as a template language for applications where users may modify the template design.
+* _Flexible_: Aspect is powered by a flexible lexer and parser. 
+  This allows the developer to define their own custom tags, filters, functions and operators, and to create their own DSL.
+* _Comfortable_: Aspect allows you to process userdata data. 
+  More intuitive behavior with special values such as a empty string, number zero and so on.
+* _Memory-safe_: The template is built in such a way as to save maximum memory when it is executed, 
+  even if the iterator provides a lot of data.
 
 Synopsis
 --------
-
-A template is a regular text file. 
-It can generate any text-based format (HTML, XML, CSV, LaTeX, etc.). It doesn't have a specific extension, 
-.html or .xml are just fine.
-
-A template contains **variables** or **expressions**, which get replaced with values when the template is evaluated, 
-and tags, which control the template's logic.
-
-Below is a minimal template that illustrates a few basics. We will cover further details later on:
 
 ```twig
 <!DOCTYPE html>
 <html>
     <head>
-        <title>My Webpage</title>
+        {% block head %}
+            <title>{{ page.title }}</title>
+        {% endblock %}
     </head>
     <body>
-        <ul id="navigation">
-        {% for item in navigation %}
-            <li><a href="{{ item.href }}">{{ item.caption }}</a></li>
-        {% endfor %}
-        </ul>
-
-        <h1>My Webpage</h1>
-        {{ a_variable }}
+        {% block content %}
+            <ul id="navigation">
+            {% for item in navigation %}
+                <li><a href="{{ item.href }}">{{ item.caption }}</a></li>
+            {% endfor %}
+            </ul>
+    
+            <h1>My Webpage</h1>
+            {{ page.body }}
+        {% endblock %}
     </body>
 </html>
 ```
-There are two kinds of delimiters: `{% ... %}` and `{{ ... }}`. 
-The first one is used to execute statements such as for-loops, the latter outputs the result of an expression.
 
-API
----
+Aspect Documentation
+--------------------
 
-* [Get stated](./docs/api.md#get-started)
-* Configuration
-* Get template output
-* Run template pipline output
+* [Installation](./docs/installation.md)
+* [Basic Usage](./docs/api.md#basic-api-usage)
+* [Configuration](./docs/api.md#options)
 * [Cache](./docs/api.md#cache)
 
 Syntax
@@ -78,7 +70,7 @@ Tags
 ----
 
 * [set](./docs/tags/set.md) — assign values to variables
-* do
+* [do](./docs/tags/do.md) 
 * [if, elseif, elif, else](./docs/tags/if.md) — conditional statement
 * [for, else](./docs/tags/for.md) — loop over each item in a sequence.
 * [macro](./docs/tags/macro.md), [import](./docs/tags/macro.md#importing-macros), [from](./docs/tags/macro.md#importing-macros)
@@ -86,11 +78,8 @@ Tags
 * [extends](./docs/tags/extends.md), [block](./docs/tags/extends.md#block), [use](./docs/tags/extends.md#use) — 
   template inheritance ([read more](./docs/syntax.md#template-inheritance))
 * apply
-* embed
 * autoescape
-* deprecated
 * verbatim aka ignore
-* scope
 
 Filters
 -------
@@ -106,14 +95,12 @@ Filters
 * [last](./docs/filters/last.md)
 * [format(...)](./docs/filters/format.md)
 * format_number(opts)
-* markdown_to_html(opts)
 * [join(delim, last_delim)](./docs/filters/join.md)
 * [json_encode](./docs/filters/json_encode.md)
 * [keys](./docs/filters/keys.md)
 * [length](./docs/filters/length.md)
 * [lower](./docs/filters/lower.md)
 * [upper](./docs/filters/lower.md)
-* map(formatter)
 * merge(items)
 * nl2br
 * [raw](./docs/filters/raw.md)
@@ -136,11 +123,13 @@ Tests
 -----
 
 * [is defined](./docs/tests/defined.md)
-* [is odd](./docs/tests/defined.md)
-* [is even](./docs/tests/defined.md)
-* [is number](./docs/tests/defined.md)
-* [is string](./docs/tests/defined.md)
+* [is odd](./docs/tests/odd.md)
+* [is even](./docs/tests/even.md)
 * [is iterator](./docs/tests/defined.md)
+* [is empty](./docs/tests/empty.md)
+* [is divisible by()](./docs/tests/divisible_by.md)
+* [is null, is nil](./docs/tests/null.md)
+* [is_same_as](./docs/tests/same_as.md)
 
 Extending
 ---------

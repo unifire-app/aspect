@@ -1,6 +1,37 @@
 Syntax
 ======
 
+A template is a regular text file. 
+It can generate any text-based format (HTML, XML, CSV, LaTeX, etc.). It doesn't have a specific extension, 
+.html or .xml are just fine.
+
+A template contains **variables** or **expressions**, which get replaced with values when the template is evaluated, 
+and tags, which control the template's logic.
+
+Below is a minimal template that illustrates a few basics. We will cover further details later on:
+
+```twig
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>{{ page.title }}</title>
+    </head>
+    <body>
+        <ul id="navigation">
+        {% for item in navigation %}
+            <li><a href="{{ item.href }}">{{ item.caption }}</a></li>
+        {% endfor %}
+        </ul>
+
+        <h1>My Webpage</h1>
+        {{ page.body }}
+    </body>
+</html>
+```
+There are two kinds of delimiters: `{% ... %}` and `{{ ... }}`. 
+The first one is used to execute statements such as for-loops, the latter outputs the result of an expression.
+
+
 Variables
 ---------
 

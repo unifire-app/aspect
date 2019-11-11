@@ -234,15 +234,11 @@ function template:load(name)
     end
 end
 
---- Add filter
-function template:add_filter(name, func, args_list)
-    self.filters[name] = func
-    self.filters_about[name] = args_list
-end
-
 --- Returns template result as string
 --- @param name string
 --- @param vars table
+--- @return string template result
+--- @return aspect.error if error occur
 function template:fetch(name, vars)
     local view, error = self:get_view(name)
     if not view then

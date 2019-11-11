@@ -11,11 +11,11 @@ local tostring = tostring
 local gsub = string.gsub
 local ngx = ngx or {}
 local err = require("aspect.err")
-local e_pattern = require("aspect.config").escape.pattern
-local e_replaces = require("aspect.config").escape.replaces
-local runtime_error = err.runtime_error
 local var_dump = require("aspect.utils").var_dump
 local config = require("aspect.config")
+local e_pattern = config.escape.pattern
+local e_replaces = config.escape.replaces
+local runtime_error = err.runtime_error
 local is_false = config.is_false
 local is_n = config.is_n
 local is_empty_string = config.is_empty_string
@@ -167,29 +167,37 @@ function output.b(v)
     if not v or is_false[v] or is_false[getmetatable(v)] then
         return false
     elseif type(v) == "table" then
-        if v.__toboolean and getmetatable(v).__toboolean then
-            return v:__toboolean()
-        elseif v.__count and getmetatable(v).__count  then
-            return v:__count() ~= 0
-        elseif is_empty(v) then
-            return false
+        local mt = getmetatable(v)
+        if mt then
+            if mt.__toboolean then
+                return mt.__toboolean(v)
+            elseif mt.__count  then
+                return mt.__count(v) ~= 0
+            end
+        end
+        if is_empty(v) then
+            return nil
         end
     end
     return true
 end
 
---- Cast value to boolean
+--- Returns value if cast value to boolean is true
 --- @param v any
 --- @return any|nil
 function output.b2(v)
     if not v or is_false[v] or is_false[getmetatable(v)] then
         return nil
     elseif type(v) == "table" then
-        if v.__toboolean and getmetatable(v).__toboolean then
-            return v:__toboolean()
-        elseif v.__count and getmetatable(v).__count  then
-            return v:__count() ~= 0
-        elseif is_empty(v) then
+        local mt = getmetatable(v)
+        if mt then
+            if mt.__toboolean then
+                return mt.__toboolean(v)
+            elseif mt.__count  then
+                return mt.__count(v) ~= 0
+            end
+        end
+        if is_empty(v) then
             return nil
         end
     end
@@ -211,8 +219,6 @@ end
 --- @param v any
 --- @return number
 function output.n(v)
-    print("IS N", tostring(v), tostring(getmetatable(v)), tostring(is_n[getmetatable(v)]));
-
     local typ = type(v)
     if typ == "number" then
         return v

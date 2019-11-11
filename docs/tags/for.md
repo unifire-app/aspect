@@ -13,8 +13,8 @@ For example, to display a list of users provided in a variable called `users`:
 </ul>
 ```
 
-The else Clause
----------------
+The `else` clause
+-----------------
 
 If no iteration took place because the sequence was empty, you can render a replacement block by using `else`:
 

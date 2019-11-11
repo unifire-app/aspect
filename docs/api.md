@@ -1,22 +1,98 @@
+Aspect for Developers
+=====================
 
-Get started
------------
+This chapter describes the API to Aspect and not the template language. 
+It will be most useful as reference to those implementing the template interface to the application 
+and not those who are creating Aspect templates.
+
+Basic API Usage
+--------------
+
+Get Aspect from `aspect.template` package
+```lua
+local aspect = require("aspect.template").new(options)
+```
+
+`options` variable store Aspect configuration. 
+
+Aspect uses a loader `aspect.loader` to locate templates
 
 ```lua
-local aspect = require("aspect.template")
-
-local tmpl = aspect.new()
-tmpl.loader = function (name)
-    --- load template body by name
-    return app:load_template(name) 
+aspect.loader = function (name)
+    local templates = {
+        index = 'Hello {{ name }}!',
+    }
+    return templates[name]
 end
+```
 
-tmpl:display("dashboard.tpl", {
+The `display()` method loads the template passed as a first argument and renders it with the variables passed as a second argument.
+
+```lua
+aspect:display("dashboard.tpl", {
     title = "hello world",
     data = app:get_data()
 })
 ```
 
+Rendering Templates
+-------------------
+
+* To render the template with some variables, call the `render()` method:
+  ```lua
+  print(aspect:render('index.html', {the = 'variables', go = 'here'}))
+  ```
+* If a template defines blocks, they can be rendered individually via the `render_block()`:
+  ```lua
+  print(aspect:render_block('index.html', 'block_name', {the = 'variables', go = 'here'})) 
+  ```
+* If a template defines macros, they can be rendered individually via the `render_macro()`:
+  ```lua
+  print(aspect:render_macro('index.html', 'macro_name', {the = 'variables', go = 'here'})) 
+  ```
+* The `display()`, `display_block()`, `display_macro()` methods are shortcuts to output the rendered template.
+  
+  ```lua
+  aspect:display('index.html', {the = 'variables', go = 'here'})
+  aspect:display_block('index.html', 'block_name', {the = 'variables', go = 'here'})
+  aspect:display_macro('index.html', 'macro_name', {the = 'variables', go = 'here'})
+  ```
+  Also method has some options for output:
+  ```lua 
+  aspect:display('index.html', vars, {chunk_size = 8198, print = ngx.print})
+  ```
+  Possible options are:
+  * `chunk_size` (number) - buffer size before sending data to `print`. By default - `nil`, buffer disabled.
+  * `print` (callable) - callback used to send data. By default - `ngx.print or print`.
+
+Options
+-------
+
+When creating a new `aspect.template` instance, you can pass an table of options as the constructor argument:
+```lua
+local aspect = require("aspect.template").new({
+    cache = true, 
+    debug = true
+})
+```
+The following options are available:
+* `debug` _boolean_.
+  When set to true, templates generates notices in some obscure situations. Also enables `dump` function.
+* `cache` _table_ or `false` or `true`
+  Enables or disables in-memory cache. If this parameter is a table, then it will be used to store the cache. 
+  If `true` - own table will be used.
+* `loader` _function_ `fun(name: string):string,string`.
+  Template source code loader with etag (optionally)
+* `luacode_load` _function_ `fun(tpl: aspect.template, name: string):string`
+  Function used for loading compiled lua code of the template.
+* `luacode_save` _function_ `fun(tpl: aspect.template, name: string, luacode: string)`
+  Function used for saving compiled lua code of the template.
+* `bytecode_load` _function_ `fun(tpl: aspect.template, name: string):string`
+  Function used for loading byte-code of the template.
+* `bytecode_save` _function_ `fun(tpl: aspect.template, name: string, bytecode: string)`
+  Function used for saving byte-code of the template.
+* `autoescape` _boolean_
+  Enables or disables auto-escaping with 'html' strategy. 
 
 Cache
 -----
@@ -63,6 +139,15 @@ local template = aspect.new({
     cache = _G.tpls -- use global tpls table for storing aspect.view
 })
 ```
+
+Loaders
+-------
+
+### File system loader
+
+### Resty loader
+
+### Array loader
 
 Add tags
 --------
@@ -181,17 +266,19 @@ For example add bitwise operator `&`:
 ```lua
 local ops = require("aspect.ast.ops")
 
---- push new operator to operators array
+-- Push new operator to the operators array
+
+--- Define 'and' bitwise operator.
 --- @see aspect.ast.op
 table.insert(ops, {
-    token = "&",
-    order = 7,
-    l = "number",
-    r = "number",
-    out = "number",
-    out = "binary",
-    pack = function (left, right)
-        return "BitOp.and(" .. left .. ", " .. right .. ")"
+    token = "&", -- token for parser 
+    order = 7, -- operator precedence
+    l = "number", -- left operand should be number
+    r = "number", -- right operand should be number
+    out = "number", -- result of the operator is number
+    type = "binary", -- operator with two operands
+    pack = function (left, right) -- build lua code
+        return "bit.band(" .. left .. ", " .. right .. ")"
     end
 })
 ```

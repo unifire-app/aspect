@@ -13,9 +13,9 @@ Possible modifiers:
 
 | keys | action |
 |------|--------|
-| days | incr or decr days |
-| hours  | incr or decr hours  |
-| minutes  | incr or decr minutes  |
-| seconds | incr or decr seconds |
-| months  | incr or decr months  |
-| years  | incr or decr years  |
+| days, day | incr or decr days |
+| hours, hour  | incr or decr hours  |
+| minutes, minute, mins, min | incr or decr minutes  |
+| seconds, second, secs, sec | incr or decr seconds |
+| months, month  | incr or decr months  |
+| years, year  | incr or decr years  |

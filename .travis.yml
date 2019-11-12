@@ -51,7 +51,7 @@ install:
     - luarocks make
 
 script:
-    - luacheck src spec
+#    - luacheck src spec
     - busted -c
 
 after_script:

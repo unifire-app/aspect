@@ -22,7 +22,7 @@ build_script:
     - luarocks make
 
 test_script:
-    - luacheck src spec
+#    - luacheck src spec
     - busted -c
 
 after_test:

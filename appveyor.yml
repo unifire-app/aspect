@@ -9,7 +9,7 @@ environment:
         - LUA: "luajit=2.1"
 
 before_build:
-    - set PATH=C:\Python27\Scripts;%PATH%
+    - set PATH=C:\Python36\Scripts;%PATH%
     - pip install codecov
     - pip install hererocks
     - hererocks lua_install --%LUA% -r latest

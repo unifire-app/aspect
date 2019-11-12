@@ -1,0 +1,59 @@
+language: python
+
+matrix:
+    include:
+        - os: linux
+          env:
+              - LUA="lua=5.1"
+        - os: linux
+          env:
+              - LUA="lua=5.2"
+        - os: linux
+          env:
+              - LUA="lua=5.3"
+        - os: linux
+          env:
+              - LUA="luajit=2.0"
+        - os: linux
+          env:
+              - LUA="luajit=2.1"
+        - os: osx
+          language: generic
+          env:
+              - LUA="lua=5.1"
+        - os: osx
+          language: generic
+          env:
+              - LUA="lua=5.2"
+        - os: osx
+          language: generic
+          env:
+              - LUA="lua=5.3"
+        - os: osx
+          language: generic
+          env:
+              - LUA="luajit=2.0"
+        - os: osx
+          language: generic
+          env:
+              - LUA="luajit=2.1"
+
+before_install:
+    - pip2 install codecov
+    - pip2 install hererocks
+    - hererocks lua_install --$LUA -r latest
+    - source lua_install/bin/activate
+    - luarocks install busted
+    - luarocks install cluacov
+    - luarocks install luacheck
+
+install:
+    - luarocks make
+
+script:
+    - luacheck src spec
+    - busted -c
+
+after_script:
+    - luacov
+    - codecov -X gcov

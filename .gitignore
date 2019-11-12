@@ -1,2 +1,3 @@
 .idea
 lua_modules
+*.out

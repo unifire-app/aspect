@@ -17,26 +17,27 @@ matrix:
         - os: linux
           env:
               - LUA="luajit=2.1"
-        - os: osx
-          language: generic
-          env:
-              - LUA="lua=5.1"
-        - os: osx
-          language: generic
-          env:
-              - LUA="lua=5.2"
-        - os: osx
-          language: generic
-          env:
-              - LUA="lua=5.3"
-        - os: osx
-          language: generic
-          env:
-              - LUA="luajit=2.0"
-        - os: osx
-          language: generic
-          env:
-              - LUA="luajit=2.1"
+# testing osx too long
+#        - os: osx
+#          language: generic
+#          env:
+#              - LUA="lua=5.1"
+#        - os: osx
+#          language: generic
+#          env:
+#              - LUA="lua=5.2"
+#        - os: osx
+#          language: generic
+#          env:
+#              - LUA="lua=5.3"
+#        - os: osx
+#          language: generic
+#          env:
+#              - LUA="luajit=2.0"
+#        - os: osx
+#          language: generic
+#          env:
+#              - LUA="luajit=2.1"
 
 before_install:
     - pip install codecov
@@ -46,6 +47,7 @@ before_install:
     - luarocks install busted
     - luarocks install cluacov
     - luarocks install luacheck
+    - luarocks install lua-cjson 2.1.0
 
 install:
     - luarocks make

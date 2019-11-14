@@ -589,10 +589,13 @@ function compiler:parse_value(tok, info)
     elseif tok:is("[") or tok:is("{") then -- is list or hash
         var = self:parse_array(tok)
         info.type = "table"
-    --elseif tok:is("(") then -- is expression
-    --    var = self:parse_expression(tok:next())
-    --    tok:require(")"):next()
-    --    info.type = "expr"
+    elseif tok:is("(") then -- is expression
+        var = self:parse_expression(tok:next())
+        tok:require(")"):next()
+        if tok:is("|") then
+            var = self:parse_filters(tok, var, info)
+        end
+        info.type = "any"
     elseif tok:is("true") or tok:is("false") then -- is regular true/false/nil
         var = tok:get_token()
         tok:next()

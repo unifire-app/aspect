@@ -137,7 +137,7 @@ Tests
 * [is empty](./docs/tests/empty.md)
 * [is divisible by()](./docs/tests/divisible_by.md)
 * [is null, is nil](./docs/tests/null.md)
-* [is_same_as](./docs/tests/same_as.md)
+* [is same as()](./docs/tests/same_as.md)
 
 Extending
 ---------

@@ -43,6 +43,15 @@ function filters.batch(v, c)
     return batch.new(v, output.n(c))
 end
 
+function filters.round(v)
+    v = output.n(v)
+    if v % 1 > 0.5 then
+        return math.ceil(v)
+    else
+        return math.floor(v)
+    end
+end
+
 function filters.column(v, column)
     local ok, res = pcall(array2d.column, v, column)
     if ok then

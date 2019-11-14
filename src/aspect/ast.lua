@@ -72,11 +72,10 @@ function ast:parse(compiler, tok)
         end
         if tok:is("(") then
             leaf = {
-                value = "(" .. compiler:parse_expression(tok:next(), info) .. ")",
+                value = "(" .. compiler:parse_value(tok, info) .. ")",
                 type = info.type,
                 bracket = true
             }
-            tok:require(")"):next()
         else
             leaf = {
                 value = compiler:parse_value(tok, info),
@@ -118,11 +117,10 @@ function ast:parse(compiler, tok)
             local leaf
             if tok:is("(") then
                 leaf = {
-                    value = "(" .. compiler:parse_expression(tok:next(), info) .. ")",
+                    value = "(" .. compiler:parse_value(tok, info) .. ")",
                     type = info.type,
                     bracket = true
                 }
-                tok:require(")"):next()
             else
                 leaf = {
                     value = compiler:parse_value(tok, info),

@@ -12,7 +12,6 @@ local tags = require("aspect.tags")
 local tests = require("aspect.tests")
 local err = require("aspect.err")
 local write = require("pl.pretty").write
-local dump = require("pl.pretty").dump
 local quote_string = require("pl.stringx").quote_string
 local strcount = require("pl.stringx").count
 local tablex = require("pl.tablex")
@@ -22,17 +21,26 @@ local strlen = string.len
 local pcall = pcall
 local config = require("aspect.config")
 local import_type = config.macro.import_type
-local reserved_words = config.compiler.reserved_words
-local reserved_vars = config.compiler.reserved_vars
-local math_ops = config.compiler.math_ops
-local comparison_ops = config.compiler.comparison_ops
-local logic_ops = config.compiler.logic_ops
 local loop_keys = config.loop.keys
 local tag_type = config.compiler.tag_type
 local func = require("aspect.funcs")
 local ast = require("aspect.ast")
-local var_dump = require("aspect.utils").var_dump
+local utils = require("aspect.utils")
+--local var_dump = require("aspect.utils").var_dump
 
+--- @class aspect.tag
+--- @field id number unique ID of the tag in compilation
+--- @field name string tag name
+--- @field line number where the tag opened
+--- @field code_space table own table for code
+--- @field code_space_no number stack number of own table of code
+--- @field code_start_line number
+--- @field var_space table own table of variables
+--- @field var_space_no number stack number of own table of variables
+--- @field append_text fun(tpl:aspect.compiler, text:string)
+--- @field append_expr fun(tpl:aspect.compiler, expr:string)
+--- @field append_code fun(tpl:aspect.compiler, code:string)
+local _tag = {}
 
 --- @class aspect.compiler
 --- @field aspect aspect.template
@@ -43,14 +51,13 @@ local var_dump = require("aspect.utils").var_dump
 --- @field import table
 --- @field line number
 --- @field tok aspect.tokenizer
---- @field utils aspect.compiler.utils
 --- @field code table stack of code. Each level is isolated code (block or macro). 0 level is body
 local compiler = {
     version = 1,
 }
 
 --- @class aspect.compiler.utils
-local utils = {}
+--local utils = {}
 
 local mt = {__index = compiler}
 
@@ -111,12 +118,12 @@ function compiler:get_code()
     end
     insert(code, "}\n")
 
-    insert(code, "function _self.body(__, ...)")
+    insert(code, "function _self.body(__, _context)")
     if self.extends then
-        insert(code, "\t_context = ...")
+        --insert(code, "\t_context = ...")
         insert(code, "\treturn " .. self.extends.value)
     elseif #self.body then
-        insert(code, "\t_context = ...")
+        --insert(code, "\t_context = ...")
         insert(code, "\t__:push_state(_self, 1)")
         for _, v in ipairs(self.body) do
             insert(code, "\t" .. v)
@@ -133,8 +140,8 @@ function compiler:get_code()
             insert(code, "\tdesc = " .. quote_string(b.desc or "") .. ",")
             insert(code, "\tvars = " .. write(b.vars or {}, "\t") .. ",")
             insert(code, "}")
-            insert(code, "function _self.blocks." .. n .. ".body(__, ...)")
-            insert(code, "\t_context = ...")
+            insert(code, "function _self.blocks." .. n .. ".body(__, _context)")
+            --insert(code, "\t_context = ...")
             for _, v in ipairs(b.code) do
                 insert(code, "\t" .. v)
             end
@@ -162,6 +169,7 @@ function compiler:parse(source)
     local tag_pos = find(source, "{", l, true)
     self.body = {}
     self.code = {self.body}
+    self.vars = {{}}
     self.macros = {}
     self.blocks = {}
     while tag_pos do
@@ -257,15 +265,18 @@ function compiler:parse_variable(tok)
                 --    tok:next()
                 --    var = {"loop"}
             end
-        elseif tok:is("_context") then -- magick variable name {{ _context }}
-            tok:next()
-            var = {"_context"}
+        --elseif tok:is("_context") then -- magick variable name {{ _context }}
+        --    tok:next()
+        --    var = {"_context"}
         end
         --if remember and not self.var_names[tok:get_token()] then
         --    self.var_names[tok:get_token()] = remember
         --end
         if not var then
             var = {self:parse_var_name(tok)}
+            if not self:has_local_var(var[1]) then
+                var[1] = "_context." .. var[1]
+            end
         end
         while tok:is(".") or tok:is("[") do
             local mode = tok:get_token()
@@ -345,7 +356,7 @@ function compiler:parse_function(tok)
     if func.parsers[name] then
         return func.parsers[name](self, args)
     else
-        return "__.fn." .. name .. "(__, {" .. compiler.utils.implode_hashes(args) .. "})"
+        return "__.fn." .. name .. "(__, {" .. utils.implode_hashes(args) .. "})"
     end
 end
 
@@ -408,7 +419,7 @@ function compiler:parse_macro_args(tok)
         i = i + 1
     end
     tok:require(")"):next()
-    args = compiler.utils.implode_hashes(args)
+    args = utils.implode_hashes(args)
     if args then
         return "{ " .. args .. " }"
     else
@@ -692,52 +703,61 @@ function compiler:get_checkpoint()
     end
 end
 
+--- Variable with name used in the code
+--- @param name string
+--- @param context any for what use variable
+function compiler:use_var(name, context)
+
+end
+
 --- Add local variable name to scope (used for includes and blocks)
 --- @param name string
 function compiler:push_var(name)
     if #self.tags > 0 then
         local tag = self.tags[#self.tags]
         if not tag.vars then
-            tag.vars = {name = true}
+            tag.vars = {[name] = true}
         else
             tag.vars[name] = true
         end
+    end
+    local vars = self.vars[#self.vars]
+    if not vars[name] then
+        vars[name] = 1
     else
-        self.vars[name] = true
+        vars[name] = vars[name] + 1
     end
 end
 
 --- Returns all variables name defined in the scope (without global)
 --- @return table|nil list of variables like ["variable"] = variable
 function compiler:get_local_vars()
-    local vars, c = {}, 0
-    for k, _ in pairs(self.vars) do
+    local vars = {}
+    for k, _ in pairs(self.vars[#self.vars]) do
         vars[k] = k
-        c = c  + 1
-    end
-    for _, tag in ipairs(self.tags) do
-        if tag.vars then
-            for k, _ in pairs(self.vars) do
-                if not vars[k] then
-                    vars[k] = k
-                    c = c + 1
-                end
-            end
-        end
     end
 
-    if c > 0 then
+    if utils.nkeys(vars) > 0 then
         return vars
     else
         return nil
     end
 end
 
+--- Checks if local variable exists in current scope
+--- @param name string
+--- @return boolean
+function compiler:has_local_var(name)
+    return self.vars[ #self.vars ][name] ~= nil
+end
+
 --- Push the tag in tag's stacks
 --- @param name string the tag name
 --- @param code_space table|nil for lua code
-function compiler:push_tag(name, code_space, code_space_name)
+--- @return aspect.tag
+function compiler:push_tag(name, code_space, code_space_name, var_space)
     self.idx = self.idx + 1
+    --- @type aspect.tag
     local tag = {
         id = self.idx,
         name = name,
@@ -756,6 +776,11 @@ function compiler:push_tag(name, code_space, code_space_name)
     end
     tag.code_space = self.code[#self.code]
     tag.code_start_line = #tag.code_space
+    if var_space then
+        insert(self.vars, var_space)
+        tag.var_space_no = #self.vars
+    end
+    tag.var_space = self.vars[#self.vars]
 
     local prev = self.tags[#self.tags]
     if prev then
@@ -775,16 +800,39 @@ end
 
 --- Remove tag from stack
 --- @param name string the tag name
+--- @return aspect.tag
 function compiler:pop_tag(name)
     if #self.tags then
+        --- @type aspect.tag
         local tag = self.tags[#self.tags]
         if tag.name == name then
+            if tag.vars then -- pop variables
+                local vars = self.vars[#self.vars]
+                for var_name, _ in pairs(tag.vars) do
+                    if vars[var_name] and vars[var_name] > 0 then
+                        vars[var_name] = vars[var_name] - 1
+                        if vars[var_name] == 0 then
+                            vars[var_name] = nil
+                        end
+                    else
+                        --utils.var_dump(var_name, vars, tag)
+                        compiler_error(nil, "compiler", "broken variable scope")
+                    end
+                end
+            end
             if tag.code_space_no then
                 if tag.code_space_no ~= #self.code then -- dummy protection
-                    compiler_error(nil, "compiler", "invalid code space layer in the tag")
+                    compiler_error(nil, "compiler", "invalid code space layer in the tag " .. name)
                 else
                     local prev = remove(self.code)
                     prev[#prev + 1] = "__:pop_state()"
+                end
+            end
+            if tag.var_space_no then
+                if tag.var_space_no ~= #self.vars then -- dummy protection
+                    compiler_error(nil, "compiler", "invalid vars space layer in the tag " .. name)
+                else
+                    remove(self.vars)
                 end
             end
             return remove(self.tags)
@@ -800,7 +848,7 @@ end
 --- Returns last tag from stack
 --- @param name string if set then returns last tag with this name
 --- @param from number|nil stack offset
---- @return table|nil
+--- @return aspect.tag
 --- @return number|nil stack position
 function compiler:get_last_tag(name, from)
     if name then
@@ -820,79 +868,5 @@ function compiler:get_last_tag(name, from)
     end
     return nil
 end
-
-
-
---- Merge two tables and returns lua representation. Value of table are expressions.
---- @param t1 table|nil
---- @param t2 table|nil
---- @return string|nil
-function utils.implode_hashes(t1, t2)
-    local r = {}
-    if t1 then
-        for k,v in pairs(t1) do
-            if type(k) == "number" then
-                r[#r + 1] = '[' .. k .. '] = ' .. v
-            else
-                r[#r + 1] = '["' .. k .. '"] = ' .. v
-            end
-        end
-        if t2 then
-            for k,v in pairs(t2) do
-                if not t1[k] then
-                    if type(k) == "number" then
-                        r[#r + 1] = '[' .. k .. '] = ' .. v
-                    else
-                        r[#r + 1] = '["' .. k .. '"] = ' .. v
-                    end
-                end
-            end
-        end
-    elseif t2 then
-        for k,v in pairs(t2) do
-            if type(k) == "number" then
-                r[#r + 1] = '[' .. k .. '] = ' .. v
-            else
-                r[#r + 1] = '["' .. k .. '"] = ' .. v
-            end
-        end
-    end
-    if #r > 0 then
-        return concat(r, ",")
-    else
-        return nil
-    end
-end
-
---- Prepend the table to another table
---- @param from table
---- @param to table
-function utils.prepend_table(from, to)
-    for i, v in ipairs(from) do
-        insert(to, i, v)
-    end
-end
-
---- Prepend the table to another table
---- @param from table
---- @param to table
-function utils.append_table(from, to)
-    for _, v in ipairs(from) do
-        insert(to, v)
-    end
-end
-
---- Join elements of the table
---- @param t table|string
---- @param delim string
-function utils.join(t, delim)
-    if type(t) == "table" then
-        return concat(t, delim)
-    else
-        return tostring(t)
-    end
-end
-
-compiler.utils = utils
 
 return compiler

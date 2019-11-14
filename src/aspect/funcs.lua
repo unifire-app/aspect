@@ -9,15 +9,7 @@ local tags = require("aspect.tags")
 local tag_type = config.compiler.tag_type
 local dump = require("aspect.utils").dump
 local date = require("date")
-
-
-local function join(t, delim)
-    if type(t) == "table" then
-        return table.concat(t, delim)
-    else
-        return tostring(t)
-    end
-end
+local utils = require("aspect.utils")
 
 local func = {
     args = {},
@@ -38,7 +30,7 @@ function func.parsers.parent(compiler)
         tag.parent = true
     end
     if compiler.tag_type == tag_type.EXPRESSION then -- {{ parent(...) }}
-        local vars = compiler.utils.implode_hashes(compiler:get_local_vars())
+        local vars = utils.implode_hashes(compiler:get_local_vars())
         if vars then
             return '__.fn.parent(__, ' .. quote_string(tag.block_name) .. ', __.setmetatable({ ' .. vars .. '}, { __index = _context }))' ;
         else
@@ -84,7 +76,7 @@ function func.parsers.block(compiler, args)
         compiler_error(nil, "syntax", "function block() requires argument 'name'")
     end
     if compiler.tag_type == tag_type.EXPRESSION then -- {{ block(...) }}
-        local vars, context = compiler.utils.implode_hashes(compiler:get_local_vars()), "_context"
+        local vars, context = utils.implode_hashes(compiler:get_local_vars()), "_context"
         if vars then
             context =  '__.setmetatable({ ' .. vars .. ' }, { __index = _context })' ;
         end
@@ -148,7 +140,7 @@ function func.fn.include(__, names, ignore, context)
         runtime_error(__, error)
     elseif not view then
         if not ignore then
-            runtime_error(__, "Template(s) not found. Trying " .. join(names, ", "))
+            runtime_error(__, "Template(s) not found. Trying " .. utils.join(names, ", "))
         else
             return
         end

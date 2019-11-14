@@ -587,7 +587,7 @@ describe("Testing compiler.", function()
     for k, v in tablex.sort(templates) do
         it("Run template " .. k, function ()
             compiled = {}
-            local result, err = template:fetch(k, vars)
+            local result, err = template:render(k, vars)
             if result then
                 result = string.gsub(result, "%s+", " ")
                 assert.is.equals(strip(result), v[2], "Test template ".. k ..":\n" .. v[1] .. "\nCompiled template:\n" .. table.concat(compiled))

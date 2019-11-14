@@ -10,13 +10,13 @@ local concat = table.concat
 local tostring = tostring
 local getmetatable = getmetatable
 local batch = require("aspect.utils.batch")
+local nkeys = require("aspect.utils").nkeys
 local output = require("aspect.output")
 local tablex = require("pl.tablex")
 local stringx = require("pl.stringx")
 local array2d = require("pl.array2d")
 local cjson = require("cjson.safe")
 local date = require("date")
-local count = table.nkeys or tablex.size
 local upper = string.upper
 local lower = string.lower
 local gsub = string.gsub
@@ -31,10 +31,6 @@ if has_utf8 then
     upper = utf8.upper
     lower = utf8.lower
     sub   = utf8.sub
-end
-
-if table.nkeys then -- new luajit function
-    count = table.nkeys
 end
 
 local filters = {}
@@ -207,7 +203,7 @@ function filters.length(v)
         elseif mt and mt.__pairs then -- has custom iterator. we don't know how much elements will be
             return 0 -- may be return -1 ?
         else
-            return count(v)
+            return nkeys(v)
         end
     elseif typ == "string" or typ == "userdata" then
         return strlen(v)
@@ -235,15 +231,21 @@ function filters.nl2br(v)
 end
 
 function filters.raw(v)
-
+    return v
 end
 
-function filters.replace(v)
-
+function filters.replace(v, from)
+    if type(from) == "table" then
+        for k, e in pairs(from) do
+            v = stringx.replace(v, tostring(k), tostring(e))
+        end
+    else
+        return v
+    end
 end
 
 function filters.split(v, delim, c)
-
+    return stringx.split(tostring(v), delim, c)
 end
 
 function filters.striptags(v, tags)

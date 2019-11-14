@@ -1,22 +1,24 @@
 local setmetatable = setmetatable
-local pretty = require("pl.pretty")
 local compiler = require("aspect.compiler")
 local output = require("aspect.output")
 local funcs = require("aspect.funcs")
 local filters = require("aspect.filters")
 local tests = require("aspect.tests")
 local err = require("aspect.err")
+local utils = require("aspect.utils")
+local var_dump = utils.var_dump
 local loadcode
+local loadchunk
+local _VERSION = _VERSION
 local loadstring = loadstring
-local dump = string.dump
+local load = load
+local setfenv = setfenv
+local function_dump = string.dump
 local tostring = tostring
-local assert = assert
 local pairs = pairs
 local ipairs = ipairs
 local type = type
 local pcall = pcall
-local setfenv = setfenv
-local ngx = ngx
 local jit = jit
 
 
@@ -51,45 +53,61 @@ local _block = {}
 --- @field bytecode_load fun(tpl: aspect.template, name: string):string
 --- @field bytecode_save fun(tpl: aspect.template, name: string, bytecode: string)
 local template = {
-    _VERSION = "0.1"
+    _VERSION = "0.2"
 }
 local mt = { __index = template }
 
 do
-    local context = { __index = function(t, k)
-        return t._context[k]
-    end }
-    --- @param t aspect.template
-    --- @param func fun
-    --- @param name string
-    loadcode = function (t, func, name)
-        local error, c = nil, 0
-        if type(func) == 'string' then
-            func, error = loadstring(func, name)
-            if error then
-                return nil, err.new("Failed to load '" .. name .. "': " .. tostring(error))
+    if _VERSION == "Lua 5.1" then
+        if jit then
+            loadchunk = function(tpl, code, name)
+                return load(code, name, nil, tpl.env)
+            end
+        else
+            loadchunk = function(tpl, code, name)
+                local func, error = loadstring(code, name)
+                setfenv(func, tpl.env)
+                return func, error
             end
         end
-        if type(func) ~= 'function' then
-            return nil, err.new("loaded view '" .. name .. "' is not a function/bytecode")
+    else
+        loadchunk = function(tpl, code, name)
+            return load(code, name, nil, tpl.env)
         end
-        local view = func()
-        setfenv(view.body, setmetatable({}, context))
-        for _, b in pairs(view.blocks) do
-            c = c + 1
-            setfenv(b.body, setmetatable({}, context))
+    end
+    --- @param tpl aspect.template
+    --- @param code fun
+    --- @param name string
+    loadcode = function (tpl, code, name)
+        local error
+        if type(code) == 'string' then
+            code, error = loadchunk(tpl, code, name)
+            if error then
+                return nil, err.new("Failed to load '" .. name .. "' chunk: " .. tostring(error))
+            end
         end
-        if c > 0 then
-            view.has_blocks = true
+        if type(code) ~= 'function' then
+            return nil, err.new("loaded view '" .. name .. "' is not valid a function or bytecode")
         end
-        c = 0
-        for _, m in pairs(view.macros) do
-            c = c + 1
-            setfenv(m, {})
-        end
-        if c > 0 then
-            view.has_macros = true
-        end
+        local view = code()
+        --setfenv(view.body, setmetatable({}, context))
+        --for _, b in pairs(view.blocks) do
+        --    c = c + 1
+        --    setfenv(b.body, setmetatable({}, context))
+        --end
+        --if c > 0 then
+        --    view.has_blocks = true
+        --end
+        view.has_blocks = (utils.nkeys(view.blocks) > 0)
+        --c = 0
+        --for _, m in pairs(view.macros) do
+        --    c = c + 1
+        --    setfenv(m, {})
+        --end
+        view.has_macros = (utils.nkeys(view.macros) > 0)
+        --if c > 0 then
+        --    view.has_macros = true
+        --end
         return view
     end
 end
@@ -101,7 +119,7 @@ function template.new(options)
         cache = false,
         compiler = compiler,
         loader = options.loader,
-        shared = options.shared,
+        env = options.env or {},
         luacode_load = options.luacode_load,
         luacode_save = options.luacode_save,
         bytecode_load = options.bytecode_load,
@@ -115,8 +133,8 @@ function template.new(options)
         end
     end
     tpl.opts = {
-        escape = false,
-        strip = false,
+        escape = options.autoescape or false,
+        strip = options.autostrip or false,
         stack_size = 20,
         f = filters,
         fn = funcs.fn,
@@ -217,11 +235,11 @@ function template:load(name)
                 self:luacode_save(name, luacode)
             end
             if self.binary_save then
-                f, error = loadstring(luacode, name .. ".lua")
+                f, error = (loadstring or load)(luacode, name .. ".lua")
                 if not f then
-                    return nil, err.new(error)
+                    return nil, err.new(error or "Failed to dump a view " .. name)
                 end
-                self:binary_save(name, dump(f))
+                self:binary_save(name, function_dump(f))
             end
             return loadcode(self, luacode, name .. ".lua")
         else
@@ -239,7 +257,7 @@ end
 --- @param vars table
 --- @return string template result
 --- @return aspect.error if error occur
-function template:fetch(name, vars)
+function template:render(name, vars)
     local view, error = self:get_view(name)
     if not view then
         return nil, err.new(error or "Template '" .. tostring(name) .. "' not found")
@@ -248,6 +266,7 @@ function template:fetch(name, vars)
     out:add_blocks(view)
     while view.extends do
         if view.extends == true then -- dynamic extends
+            -- @todo
         else -- static extends
             local v, e = self:get_view(view.extends)
             if not v then
@@ -278,7 +297,7 @@ end
 --- @param arguments table of arguments for macro
 --- @return string macro result
 --- @return aspect.error if error occur
-function template:fetch_macro(name, macro_name, arguments)
+function template:render_macro(name, macro_name, arguments)
     local out, ok = output.new(self.opts), nil
     local view, error = self:get_view(name)
     if not view then
@@ -305,7 +324,7 @@ end
 --- @param vars table of arguments for block
 --- @return string block result
 --- @return aspect.error if error occur
-function template:fetch_block(name, block_name, vars)
+function template:render_block(name, block_name, vars)
     local out, ok = output.new(self.opts), nil
     local view, error = self:get_view(name)
     if not view then

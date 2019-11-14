@@ -1,8 +1,8 @@
 local err = require("aspect.err")
 local compiler_error = err.compiler_error
 local quote_string = require("pl.stringx").quote_string
-local dump = require("pl.pretty").dump
 local config = require("aspect.config")
+local utils = require("aspect.utils")
 local reserved_words = config.compiler.reserved_words
 local loop_keys = config.loop.keys
 local tag_type = config.compiler.tag_type
@@ -32,10 +32,10 @@ function tags.tag_set(compiler, tok)
         else
             tag.final = '__.concat(_' .. tag.id .. ')'
         end
-        tag.append_text = function (tg, text)
+        tag.append_text = function (_, text)
             return '_' .. id .. '[#_'.. id .. ' + 1] = ' .. quote_string(text)
         end
-        tag.append_expr = function (tg, lua)
+        tag.append_expr = function (_, lua)
             return '_' .. id .. '[#_'.. id .. ' + 1] = ' .. lua
         end
         return {
@@ -111,7 +111,7 @@ function tags.tag_block(compiler, tok)
         tag_for.has_loop = true
         tag_for, pos = compiler:get_last_tag("for", pos - 1)
     end
-    local tag = compiler:push_tag("block", compiler.blocks[name].code, "block." .. name)
+    local tag = compiler:push_tag("block", compiler.blocks[name].code, "block." .. name, {})
     tag.block_name = name
 end
 
@@ -128,7 +128,7 @@ function tags.tag_endblock(compiler, tok)
         end
     end
     compiler.blocks[tag.block_name].parent = tag.parent
-    local vars = compiler.utils.implode_hashes(compiler:get_local_vars())
+    local vars = utils.implode_hashes(compiler:get_local_vars())
     if vars then
         return '__.blocks.' .. tag.block_name .. '.body(__, __.setmetatable({ ' .. vars .. '}, { __index = _context }))' ;
     else
@@ -152,7 +152,7 @@ function tags.tag_macro(compiler, tok)
     end
     local name = tok:get_token()
     compiler.macros[name] = {}
-    local tag = compiler:push_tag("macro", compiler.macros[name], "macro." .. name)
+    local tag = compiler:push_tag("macro", compiler.macros[name], "macro." .. name, {})
     tag.macro_name = name
     if tok:next():is("(") then
         local no = 1
@@ -166,6 +166,7 @@ function tags.tag_macro(compiler, tok)
             end
             local key = tok:get_token()
             local arg  = "local " .. key .. " = _context." .. key .. " or _context[" .. no .. "] or "
+            compiler:push_var(key)
             tok:next()
             if tok:is("=") then
                 tok:next()
@@ -189,12 +190,7 @@ function tags.tag_endmacro(compiler, tok)
     end
 end
 
-function tags.tag_from(compiler, tok)
-
-end
-
 --- {% include {'tpl_1', 'tpl_2'} ignore missing only with {foo = 1} with context with vars %}
-
 --- @param compiler aspect.compiler
 --- @param tok aspect.tokenizer
 function tags.tag_include(compiler, tok, ...)
@@ -248,14 +244,14 @@ end
 function tags.include(compiler, args)
     local vars, context = args.vars
     if args.with_vars then
-        vars = compiler.utils.implode_hashes(vars, compiler:get_local_vars())
+        vars = utils.implode_hashes(vars, compiler:get_local_vars())
         local tag, pos = compiler:get_last_tag("for") -- may be {{ loop }} used in included template
         while tag do
             tag.has_loop = true
             tag, pos = compiler:get_last_tag("for", pos - 1)
         end
     else
-        vars = compiler.utils.implode_hashes(vars)
+        vars = utils.implode_hashes(vars)
     end
 
     if vars and args.with_context then
@@ -327,6 +323,7 @@ function tags.tag_for(compiler, tok)
         if reserved_words[value] then
             compiler_error(tok, "syntax", "reserved words can not be used as variable name")
         end
+        compiler:push_var(value)
         tok:next()
     else
         compiler_error(tok, "syntax", "expecting variable name")
@@ -336,6 +333,10 @@ function tags.tag_for(compiler, tok)
         key = value
         if tok:next():is_word() then
             value = tok:get_token()
+            if reserved_words[value] then
+                compiler_error(tok, "syntax", "reserved words can not be used as variable name")
+            end
+            compiler:push_var(value)
             tok:next()
         else
             compiler_error(tok, "syntax", "expecting variable name")
@@ -469,7 +470,7 @@ function tags.tag_endfor(compiler)
         lua[#lua + 1] = "end" -- end of 'do'
     end
     lua[#lua + 1] = "end" -- end if 'for'
-    compiler.utils.prepend_table(before, lua)
+    utils.prepend_table(before, lua)
     return lua
 end
 

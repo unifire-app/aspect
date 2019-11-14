@@ -6,8 +6,11 @@ local concat = table.concat
 local insert = table.insert
 local str_rep  = string.rep
 local getmetatable = getmetatable
+local tablex = require("pl.tablex")
 
-local utils = {}
+local utils = {
+    nkeys = table.nkeys or tablex.size
+}
 
 --- Merge two tables and returns lua representation. Value of table are expressions.
 --- @param t1 table|nil

@@ -1,4 +1,4 @@
-local unpack = unpack
+local unpack = unpack or table.unpack
 local concat = table.concat
 local err = require("aspect.err")
 local compiler_error = err.compiler_error

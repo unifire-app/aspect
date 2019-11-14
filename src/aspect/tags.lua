@@ -317,7 +317,6 @@ end
 --- @param tok aspect.tokenizer
 function tags.tag_for(compiler, tok)
     local key, value, from, cond
-
     if tok:is_word() then
         value = tok:get_token()
         if reserved_words[value] then

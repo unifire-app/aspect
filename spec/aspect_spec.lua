@@ -37,8 +37,8 @@ local vars = {
     list_1 = {"item1", "item2", "item3"},
 
     table_1 = {
-        integer_value = 7,
         float_value = 2.1,
+        integer_value = 7,
         string_value = "is table value",
     }
 }
@@ -487,6 +487,36 @@ templates["date_02"] = {
     "equals"
 }
 
+--list_1 = {"item1", "item2", "item3"},
+--
+--table_1 = {
+--integer_value = 7,
+--float_value = 2.1,
+--string_value = "is table value",
+--}
+
+templates["filter:first_last_01"] = {
+    "{{ list_1|first }} | {{ list_1|last }} || "
+        .. "{{ range(1, 5, 2)|first }} | {{ range(1, 5, 2)|last }} || "
+        .. "{{ table_1|first }} | {{ table_1|last }}",
+    "item1 | item3 || 1 | 5 || 2.1 | is table value"
+}
+
+templates["filter:join_01"] = {
+    "{{ list_1|join(',') }} | {{ range(1, 5, 2)|join(',') }} | {{ table_1|join(',') }}",
+    "item1,item2,item3 | 1,3,5 | 2.1,7,is table value"
+}
+
+templates["filter:keys_01"] = {
+    "{{ list_1|keys|join(',') }} | {{ range(1, 5, 2)|keys|join(',') }} | {{ table_1|keys|join(',') }}",
+    "1,2,3 | 1,2,3 | float_value,integer_value,string_value"
+}
+
+templates["filter:length_01"] = {
+    "{{ list_1|length }} | {{ range(1, 5, 2)|length }} | {{ table_1|length }} | {{ string_1|length }} | {{ empty_string|length }}",
+    "3 | 3 | 3 | 12 | 0"
+}
+
 describe("Testing compiler.", function()
     it("Checks tokenizer", function()
         local str = "for i,j in vers|select('this', \"oh\") %}"
@@ -570,7 +600,9 @@ describe("Testing compiler.", function()
 
         end)
     end
+end)
 
+describe("Testing template.", function ()
     local template = aspect.new()
     template.loader = function(tpl, name)
         if templates[name] then

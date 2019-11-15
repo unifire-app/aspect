@@ -6,6 +6,8 @@ local type = type
 local math = math
 local strlen = string.len
 local format = string.format
+local insert = table.insert
+local isarray = table.isarray -- new luajit feature (https://github.com/openresty/luajit2#tableisarray)
 local concat = table.concat
 local tostring = tostring
 local getmetatable = getmetatable
@@ -140,12 +142,12 @@ function filters.first(v)
     local typ = type(v)
     if typ == "table" then
         local mt = getmetatable(v)
-        if mt.__pairs then
+        if mt and mt.__pairs then
             for _, f in mt.__pairs(v) do
                 return f
             end
         else
-            return next(v)
+            return v[next(v)]
         end
     elseif typ == "string" then
         return sub(v, 1, 1)
@@ -176,7 +178,26 @@ function filters.format_number(v, opts)
 end
 
 function filters.join(v, delim, last_delim)
-    return concat(v, delim)
+    if type(v) == "table" then
+        local mt = getmetatable(v)
+        if mt and mt.__pairs then
+            local t = {}
+            for _, val in mt.__pairs(v) do
+                insert(t, val)
+            end
+            return concat(t, delim)
+        elseif isarray and isarray(v) then
+            return concat(v, delim)
+        else
+            local t = {}
+            for  _, val in pairs(v) do
+                insert(t, val)
+            end
+            return concat(t, delim)
+        end
+    else
+        return tostring(v)
+    end
 end
 
 --- https://twig.symfony.com/doc/2.x/filters/json_encode.html
@@ -232,6 +253,8 @@ end
 function filters.merge(v, items)
     if type(v) == "table" and type(items) == "table" then
         return tablex.merge(v, items)
+    else
+        return v
     end
 end
 

@@ -107,10 +107,10 @@ Filters
 * [length](./docs/filters/length.md)
 * [lower](./docs/filters/lower.md)
 * [upper](./docs/filters/lower.md)
-* merge(items)
-* nl2br
+* [merge(items)](./docs/filters/merge.md)
+* [nl2br](./docs/filters/nl2br.md)
 * [raw](./docs/filters/raw.md)
-* replace
+* [replace()](./docs/filters/replace.md)
 * split(delim, count)
 * striptags(tags)
 * [trim](./docs/filters/trim.md)
@@ -132,7 +132,7 @@ Tests
 * [is defined](./docs/tests/defined.md)
 * [is odd](./docs/tests/odd.md)
 * [is even](./docs/tests/even.md)
-* [is iterator](./docs/tests/defined.md)
+* [is iterator](./docs/tests/iterator.md)
 * [is empty](./docs/tests/empty.md)
 * [is divisible by()](./docs/tests/divisible_by.md)
 * [is null, is nil](./docs/tests/null.md)

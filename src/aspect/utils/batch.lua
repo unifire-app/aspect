@@ -1,12 +1,14 @@
 local output = require("aspect.output")
 local type = type
+local ceil = math.ceil
 local getmetatable = getmetatable
 local setmetatable = setmetatable
 local tablex = require("pl.tablex")
-local count = table.nkeys or tablex.size
-if table.nkeys then -- new luajit function
-    count = table.nkeys
-end
+local nkeys = require("aspect.utils")
+--local count = table.nkeys or tablex.size
+--if table.nkeys then -- new luajit function
+--    count = table.nkeys
+--end
 
 local function __pairs(self)
     return function ()
@@ -36,21 +38,23 @@ local function __count(self)
     local mt = getmetatable(self.t)
     if typ == "table" then
         if mt and mt.__count then
-            return mt.__count(self.t)
+            return ceil(mt.__count(self.t) / self.count)
         elseif mt and mt.__pairs then -- has custom iterator. we don't know how much elements will be
             return 0
         else
-            return count(self.t)
+            return ceil(nkeys(self.t) / self.count)
         end
     elseif typ == "userdata" then
         if mt and mt.__count then
-            return mt.__count(self.t)
+            return ceil(mt.__count(self.t) / self.count)
         end
     else
         return 0
     end
 end
 
+--- Iterator for batch filter
+--- @class aspect.utils.batch
 local batch = {}
 local mt = {
     __index = batch,

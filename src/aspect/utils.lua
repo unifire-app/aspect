@@ -146,7 +146,27 @@ function utils.table_export(tbl, indent, tables)
     else
         return "{}"
     end
+end
 
+function utils.any_to_table(v)
+    local typ, mt = type(v), getmetatable(v)
+    if typ == "table" then
+        if mt and mt.__pairs then
+            for key, val in mt.__pairs(v) do
+
+            end
+        else
+            return v
+        end
+    elseif mt and typ == "userdata" then
+        if mt.__pairs then
+            for key, val in mt.__pairs(v) do
+
+            end
+        end
+    else
+        return {v}
+    end
 end
 
 return utils

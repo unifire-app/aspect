@@ -128,7 +128,6 @@ function compiler:get_code()
         for _, v in ipairs(self.body) do
             insert(code, "\t" .. v)
         end
-        insert(code, "\t_context = nil")
         insert(code, "\t__:pop_state()")
     end
     insert(code, "end\n")
@@ -145,7 +144,6 @@ function compiler:get_code()
             for _, v in ipairs(b.code) do
                 insert(code, "\t" .. v)
             end
-            insert(code, "\t_context = nil")
             insert(code, "end\n")
         end
     end

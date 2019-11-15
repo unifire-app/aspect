@@ -2,7 +2,6 @@ Aspect Lua Template
 ===================
 
 [![Build Status](https://travis-ci.org/unifire-app/aspect.svg?branch=master)](https://travis-ci.org/unifire-app/aspect)
-[![Build status](https://ci.appveyor.com/api/projects/status/f5vlmegvs7fe2gjt?svg=true)](https://ci.appveyor.com/project/bzick/aspect)
 [![codecov](https://codecov.io/gh/unifire-app/aspect/branch/master/graph/badge.svg)](https://codecov.io/gh/unifire-app/aspect)
 [![Luarocks](https://img.shields.io/badge/LuaRocks-Aspect-blue)](https://luarocks.org/modules/unifire/aspect)
 

@@ -66,7 +66,9 @@ do
         else
             loadchunk = function(tpl, code, name)
                 local func, error = loadstring(code, name)
-                setfenv(func, tpl.env)
+                if func then
+                    setfenv(func, tpl.env)
+                end
                 return func, error
             end
         end
@@ -90,24 +92,8 @@ do
             return nil, err.new("loaded view '" .. name .. "' is not valid a function or bytecode")
         end
         local view = code()
-        --setfenv(view.body, setmetatable({}, context))
-        --for _, b in pairs(view.blocks) do
-        --    c = c + 1
-        --    setfenv(b.body, setmetatable({}, context))
-        --end
-        --if c > 0 then
-        --    view.has_blocks = true
-        --end
         view.has_blocks = (utils.nkeys(view.blocks) > 0)
-        --c = 0
-        --for _, m in pairs(view.macros) do
-        --    c = c + 1
-        --    setfenv(m, {})
-        --end
         view.has_macros = (utils.nkeys(view.macros) > 0)
-        --if c > 0 then
-        --    view.has_macros = true
-        --end
         return view
     end
 end

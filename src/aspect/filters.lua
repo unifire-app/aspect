@@ -6,6 +6,7 @@ local type = type
 local math = math
 local strlen = string.len
 local format = string.format
+local byte = string.byte
 local insert = table.insert
 local isarray = table.isarray -- new luajit feature (https://github.com/openresty/luajit2#tableisarray)
 local concat = table.concat
@@ -13,6 +14,7 @@ local tostring = tostring
 local getmetatable = getmetatable
 local batch = require("aspect.utils.batch")
 local nkeys = require("aspect.utils").nkeys
+local var_dump = require("aspect.utils").var_dump
 local output = require("aspect.output")
 local tablex = require("pl.tablex")
 local stringx = require("pl.stringx")
@@ -115,12 +117,21 @@ function filters.escape(v, typ)
     return filters.e(v, typ)
 end
 
+local function char_to_hex(c)
+    return format("%%%02X", byte(c))
+end
+
 function filters.e(v, typ)
     v = tostring(v)
     if not typ or typ == "html" then
-        gsub(v, e_pattern, e_replaces)
+        return gsub(v, e_pattern, e_replaces)
     elseif typ == "js" then
         return cjson.encode(v)
+    elseif typ == "url" then
+        v = v:gsub("\n", "\r\n")
+        v = v:gsub("([^%w ])", char_to_hex)
+        v = v:gsub(" ", "+")
+        return v
     elseif escapers[typ] then
         return escapers(v)
     end
@@ -293,8 +304,8 @@ function filters.trim(v, what, side)
         return stringx.strip(v, what)
     elseif side == "right" then
         return stringx.rstrip(v, what)
-    elseif side == "right" then
-        return stringx.strip(v, what)
+    elseif side == "left" then
+        return stringx.lstrip(v, what)
     else
         return stringx.strip(v, what)
     end

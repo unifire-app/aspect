@@ -3,12 +3,14 @@ local aspect = require("aspect.template")
 local tokenizer = require("aspect.tokenizer")
 local astree = require("aspect.ast")
 local compiler = require("aspect.compiler")
+local filters = require("aspect.filters")
 local err = require("aspect.err")
 local dump = require("pl.pretty").dump
 local tablex = require("pl.tablex")
 local strip = require("pl.stringx").strip
 local json_encode = require("cjson.safe").encode
 local assert = require("luassert")
+local cjson = require("cjson.safe")
 
 require('busted.runner')()
 
@@ -29,6 +31,7 @@ local vars = {
 
     string_empty = "",
     string_1 = [[string value]],
+    string_html = [[<b>Hello</b>]],
 
     date_1 = "2019-11-11 09:55:30",
     date_2 = "2019-11-11 09:56:30",
@@ -487,35 +490,63 @@ templates["date_02"] = {
     "equals"
 }
 
---list_1 = {"item1", "item2", "item3"},
---
---table_1 = {
---integer_value = 7,
---float_value = 2.1,
---string_value = "is table value",
---}
 
 templates["filter:first_last_01"] = {
     "{{ list_1|first }} | {{ list_1|last }} || "
         .. "{{ range(1, 5, 2)|first }} | {{ range(1, 5, 2)|last }} || "
         .. "{{ table_1|first }} | {{ table_1|last }}",
-    "item1 | item3 || 1 | 5 || 2.1 | is table value"
+    -- table is dict and no has order, just checks what all ok
+    "item1 | item3 || 1 | 5 || " ..  filters.first(vars.table_1) .. " | " .. filters.last(vars.table_1)
 }
 
 templates["filter:join_01"] = {
     "{{ list_1|join(',') }} | {{ range(1, 5, 2)|join(',') }} | {{ table_1|join(',') }}",
-    "item1,item2,item3 | 1,3,5 | 2.1,7,is table value"
+    -- table is dict and no has order, just checks what all ok
+    "item1,item2,item3 | 1,3,5 | " .. filters.join(vars.table_1, ",")
 }
 
 templates["filter:keys_01"] = {
     "{{ list_1|keys|join(',') }} | {{ range(1, 5, 2)|keys|join(',') }} | {{ table_1|keys|join(',') }}",
-    "1,2,3 | 1,2,3 | float_value,integer_value,string_value"
+    -- table is dict and no has order, just checks what all ok
+    "1,2,3 | 1,2,3 | " .. filters.join(filters.keys(vars.table_1), ",")
 }
 
 templates["filter:length_01"] = {
     "{{ list_1|length }} | {{ range(1, 5, 2)|length }} | {{ table_1|length }} | {{ string_1|length }} | {{ empty_string|length }}",
     "3 | 3 | 3 | 12 | 0"
 }
+
+templates["filter:escape_01"] = {
+    "{{ string_html|e }}",
+    "&lt;b&gt;Hello&lt;&#47;b&gt;"
+}
+
+templates["filter:escape_02"] = {
+    "{{ string_html|e('js') }}",
+    cjson.encode(vars.string_html)
+}
+
+templates["filter:escape_03"] = {
+    "{{ string_1|e('url') }}",
+    "string+value"
+}
+
+templates["filter:default_01"] = {
+    "{{ nil_value|default('empty') }} [and] {{ nil_value|default('empty', true) }}",
+    "empty [and] empty"
+}
+
+templates["filter:default_02"] = {
+    "{{ integer_0|default('empty') }} [and] {{ integer_0|default('empty', true) }}",
+    "0 [and] empty"
+}
+
+
+templates["filter:trim_01"] = {
+    ".{{ ' spaced '|trim(' ', 'left') }}.{{ ' spaced '|trim(' ', 'right') }}.{{ ' spaced '|trim }}",
+    ".spaced . spaced.spaced"
+}
+
 
 describe("Testing compiler.", function()
     it("Checks tokenizer", function()
@@ -622,7 +653,7 @@ describe("Testing template.", function ()
             local result, err = template:render(k, vars)
             if result then
                 result = string.gsub(result, "%s+", " ")
-                assert.is.equals(strip(result), v[2], "Test template ".. k ..":\n" .. v[1] .. "\nCompiled template:\n" .. table.concat(compiled))
+                assert.is.equals(v[2], strip(result), "Test template ".. k ..":\n" .. v[1] .. "\nCompiled template:\n" .. table.concat(compiled))
             elseif not v[2] and v[3] then
                 assert.is.equals(err.message, v[3])
             else

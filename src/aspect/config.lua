@@ -84,6 +84,12 @@ end
 
 --- Compiler configuration
 config.compiler = {
+    special = {
+        ["true"] = "true",
+        ["false"] = "false",
+        ["nil"] = "nil",
+        ["null"] = "nil"
+    },
     --- danger variables names
     reserved_words = {
         ["and"] = true,

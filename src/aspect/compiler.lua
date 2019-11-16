@@ -26,6 +26,8 @@ local tag_type = config.compiler.tag_type
 local func = require("aspect.funcs")
 local ast = require("aspect.ast")
 local utils = require("aspect.utils")
+local special = config.compiler.special
+
 --local var_dump = require("aspect.utils").var_dump
 
 --- @class aspect.tag
@@ -531,7 +533,7 @@ function compiler:parse_filters(tok, var, info)
                 while not tok:is(")") and tok:is_valid() do -- parse arguments of the filter
                     tok:next()
                     local key
-                    if tok:is_word() then
+                    if tok:is_word() and not special[tok:get_token()] then
                         key = tok:get_token()
                         tok:next():require("="):next()
                         args[key] = self:parse_expression(tok)
@@ -561,7 +563,19 @@ function compiler:parse_value(tok, info)
     info = info or {}
     info.type = nil
     if tok:is_word() then -- is variable name
-        if tok:is_next("(") then
+        if special[tok:get_token()] then
+            if tok:is("true") or tok:is("false") then -- is regular true/false/nil
+                var = tok:get_token()
+                tok:next()
+                info.type = "boolean"
+            elseif tok:is("null") or tok:is("nil") then -- is null
+                var = 'nil'
+                info.type = "nil"
+                tok:next()
+            else
+                compiler_error(tok, "syntax", "unknown special token")
+            end
+        elseif tok:is_next("(") then
             if self.import[tok:get_token()] == import_type.SINGLE then
                 var = self:parse_macro(tok)
                 info.type = "nil"
@@ -594,14 +608,6 @@ function compiler:parse_value(tok, info)
             var = self:parse_filters(tok, var, info)
         end
         info.type = "any"
-    elseif tok:is("true") or tok:is("false") then -- is regular true/false/nil
-        var = tok:get_token()
-        tok:next()
-        info.type = "boolean"
-    elseif tok:is("null") or tok:is("nil") then -- is null
-        var = 'nil'
-        info.type = "nil"
-        tok:next()
     else
         compiler_error(tok, "syntax", "expecting any value")
     end

@@ -106,6 +106,12 @@ templates["basic_06"] = {
     "7 and 2.1 and is table value"
 }
 
+templates["basic_07"] = {
+    [[{{ integer_3 * + }}]],
+    nil,
+    "unexpected token '+', expecting any value"
+}
+
 templates["if_01"] = {
     [[
         {% if integer_1 and float_1 and true_value and string_1 and list_1 and table_1 %}

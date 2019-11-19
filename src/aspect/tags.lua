@@ -527,6 +527,28 @@ function tags.tag_endif(compiler, tok)
     return 'end'
 end
 
+--- {% autoescape %}
+--- @param compiler aspect.compiler
+--- @param tok aspect.tokenizer
+--- @return string
+function tags.tag_autoescape(compiler, tok)
+    local state = "true"
+    if tok:is_boolean() then
+        state = tok:get_token()
+        tok:next()
+    end
+    local tag = compiler:push_tag('autoescape')
+    return '__' .. tag.id .. " = __:autoescape(" .. state .. ")"
+end
+
+--- {% endautoescape %}
+--- @param compiler aspect.compiler
+--- @param tok aspect.tokenizer
+--- @return string
+function tags.tag_endautoescape(compiler)
+    local tag = compiler:pop_tag('autoescape')
+    return "__:autoescape(__" .. tag.id .. ")"
+end
 
 
 return tags

@@ -41,5 +41,6 @@ build = {
         ["aspect.ast.ops"]     = "src/aspect/ast/ops.lua",
         ["aspect.utils.batch"] = "src/aspect/utils/batch.lua",
         ["aspect.utils.range"] = "src/aspect/utils/range.lua",
+        ["aspect.loader.array"] = "src/aspect/loader/array.lua",
     }
 }

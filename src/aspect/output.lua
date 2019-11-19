@@ -72,23 +72,28 @@ local mt_print  = {
 }
 
 
-function output.new(opts, p, size)
-    if size and size == 0 then
-        size = nil
-    end
+function output.new(opts, ctx)
     return setmetatable({
         root = nil,
         view = nil,
         line = 0,
         data = {},
-        p = p,
-        size = size,
         stack = {},
         opts = opts,
+        esc = opts.escape or false,
         f = opts.f,
         fn = opts.fn,
-        blocks = {}
+        blocks = {},
+        ctx = ctx
     }, mt_collect)
+end
+
+function output:set_print(p, size)
+    if size and size == 0 then
+        size = nil
+    end
+    self.p = p
+    self.size = size
 end
 
 function output:push_state(view, line, scope_name)
@@ -274,10 +279,21 @@ function output:e(v)
     if type(v) ~= "string" then
         v = output.s(v)
     end
-    if self.opts.escape then
+    if self.esc then
         return self(gsub(v, e_pattern, e_replaces))
     else
         return self(v)
+    end
+end
+
+--- Set autoescape
+function output:autoescape(state)
+    if state == nil then
+        return
+    end
+    if self.esc ~= state then
+        self.esc = state
+        return not state
     end
 end
 

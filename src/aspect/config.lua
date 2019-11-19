@@ -84,6 +84,10 @@ end
 
 --- Compiler configuration
 config.compiler = {
+    boolean = {
+        ["true"] = true,
+        ["false"] = true
+    },
     special = {
         ["true"] = "true",
         ["false"] = "false",

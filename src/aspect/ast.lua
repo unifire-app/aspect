@@ -5,6 +5,7 @@ local ipairs = ipairs
 local require = require
 local type = type
 local json_encode = require("cjson.safe").encode
+local utils = require("aspect.utils")
 local var_dump = require("aspect.utils").var_dump
 
 --- Intermediate branch element
@@ -27,6 +28,7 @@ local _leaf = {}
 --- AST builder
 --- @class aspect.ast
 --- @field current aspect.ast.node|aspect.ast.leaf
+--- @field nodes number
 local ast = {}
 
 --- @type table<aspect.ast.op>
@@ -59,6 +61,7 @@ function ast.new()
 
     return setmetatable({
         current = nil,
+        nodes = 0
     }, mt)
 end
 
@@ -74,13 +77,15 @@ function ast:parse(compiler, tok)
             leaf = {
                 value = "(" .. compiler:parse_value(tok, info) .. ")",
                 type = info.type,
-                bracket = true
+                bracket = true,
+                raw = info.raw
             }
         else
             leaf = {
                 value = compiler:parse_value(tok, info),
                 type = info.type,
-                bracket = false
+                bracket = false,
+                raw = info.raw
             }
         end
         if unary_op then
@@ -89,8 +94,10 @@ function ast:parse(compiler, tok)
                 l = nil,
                 r = leaf
             }
+            self.nodes = 2
         else
             self.current = leaf
+            self.nodes = 1
         end
     end
     while tok:is_valid() do
@@ -119,15 +126,18 @@ function ast:parse(compiler, tok)
                 leaf = {
                     value = "(" .. compiler:parse_value(tok, info) .. ")",
                     type = info.type,
-                    bracket = true
+                    bracket = true,
+                    raw = info.raw
                 }
             else
                 leaf = {
                     value = compiler:parse_value(tok, info),
                     type = info.type,
-                    bracket = false
+                    bracket = false,
+                    raw = info.raw
                 }
             end
+            self.nodes = self.nodes + 1
             if self.current.value then -- first element of the tree
                 self:insert(op, leaf, cond)
             elseif self.current.op.order <= op.order then
@@ -168,6 +178,7 @@ function ast:parse(compiler, tok)
                 end
                 self:fork(op_unary, nil, cond)
             end
+            self.nodes = self.nodes + 1
         else
             break
         end
@@ -322,24 +333,24 @@ end
 
 --- @param node aspect.ast.node
 --- @return aspect.ast.leaf
-local function pack_tree(node)
+local function pack_node(node)
     if node.op then -- if aspect.ast.node
         local left, right, cond = node.l, node.r, node.c
         if left then
             if left.op then
-                left = pack_tree(left)
+                left = pack_node(left)
             end
             left = cast(left, node.op.l)
         end
         if right then
             if right.op then
-                right = pack_tree(right)
+                right = pack_node(right)
             end
             right = cast(right, node.op.r)
         end
         if cond then
             if cond.op then
-                cond = pack_tree(cond)
+                cond = pack_node(cond)
             end
             cond = cast(cond, node.op.c)
         end
@@ -351,7 +362,7 @@ local function pack_tree(node)
         return {
             value = v,
             type = node.op.out,
-            brackets = node.op.brackets
+            brackets = node.op.brackets,
         }
     else -- is leaf
         return node
@@ -374,7 +385,7 @@ local function visit(node, callback)
         end
         return {
             value = callback(node.op, left, right, cond),
-            type = node.op.out
+            type = node.op.out,
         }
     else -- is leaf
         return node
@@ -386,8 +397,10 @@ end
 function ast:pack(callback)
     if callback then
         return visit(self:get_root(), callback)
+    elseif self.nodes == 1 then --
+        return self.current
     else
-        return pack_tree(self:get_root())
+        return pack_node(self:get_root())
     end
 end
 

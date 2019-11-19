@@ -101,8 +101,12 @@ templates["basic_05"] = {
     [[{{ integer_3 ?: integer_2 }}]],
     "3"
 }
+templates["basic_06"] = {
+    [[{{ table_1.integer_value }} and {{ table_1.float_value }} and {{ table_1.string_value }}]],
+    "7 and 2.1 and is table value"
+}
 
-templates["tpl_01"] = {
+templates["if_01"] = {
     [[
         {% if integer_1 and float_1 and true_value and string_1 and list_1 and table_1 %}
             passed
@@ -112,7 +116,7 @@ templates["tpl_01"] = {
     ]],
     "passed"
 }
-templates["tpl_02"] = {
+templates["if_02"] = {
     [[
         {% if 0 + integer_1 %}
             passed
@@ -122,7 +126,7 @@ templates["tpl_02"] = {
     ]],
     "passed"
 }
-templates["tpl_03"] = {
+templates["if_03"] = {
     [[
         {% if string_1 != "random" %}
             passed
@@ -132,7 +136,7 @@ templates["tpl_03"] = {
     ]],
     "passed"
 }
-templates["tpl_10"] = {
+templates["if_04"] = {
     [[
         {% if integer_0 or nil_value or false_value or string_empty or list_empty %}
             passed
@@ -142,7 +146,7 @@ templates["tpl_10"] = {
     ]],
     "failed"
 }
-templates["tpl_11"] = {
+templates["if_05"] = {
     [[
         {% if integer_1 - 1 %}
             passed
@@ -152,7 +156,7 @@ templates["tpl_11"] = {
     ]],
     "failed"
 }
-templates["tpl_20"] = {
+templates["for_00"] = {
     [[
         {% for v in list_1 %}
             {{ v }}
@@ -160,7 +164,7 @@ templates["tpl_20"] = {
     ]],
     "item1 item2 item3"
 }
-templates["tpl_21"] = {
+templates["for_01"] = {
     [[
         {% for k, v in list_1 if v != "item2" %}
             {{ k }}: {{ v }}
@@ -168,7 +172,7 @@ templates["tpl_21"] = {
     ]],
     "1: item1 3: item3"
 }
-templates["tpl_22"] = {
+templates["for_02"] = {
     [[
         {% for k, v in list_1 %}
             {{ loop.index }}: {{ v }} {% if not loop.last %}|{% endif %}
@@ -176,12 +180,9 @@ templates["tpl_22"] = {
     ]],
     "1: item1 | 2: item2 | 3: item3"
 }
-templates["tpl_30"] = {
-    [[{{ table_1.integer_value }} and {{ table_1.float_value }} and {{ table_1.string_value }}]],
-    "7 and 2.1 and is table value"
-}
 
-templates["tpl_40"] = {
+
+templates["set_00"] = {
     [[
     {% set var_1 = 1 %}
     {% set var_2 = "string1." ~ "string2." %}
@@ -191,7 +192,7 @@ templates["tpl_40"] = {
 
     "1 and string1.string2. and is table value"
 }
-templates["tpl_41"] = {
+templates["set_01"] = {
     [[
     {% set var_1 %}
         content: {{ string_1 }}
@@ -203,7 +204,7 @@ templates["tpl_41"] = {
     ]],
     "content: string value integer_1"
 }
-templates["tpl_41"] = {
+templates["set_02"] = {
     [[
     {% set var_1 %}
         {% set var_2 %}
@@ -215,42 +216,42 @@ templates["tpl_41"] = {
     ]],
     "var_2: variable 2 and"
 }
-templates["tpl_50"] = {
+templates["include_00"] = {
     [[
     {% set integer_1 = 42 %}
     {% include 'basic_00' %}
     ]],
     "42 and 2 and string and 17"
 }
-templates["tpl_51"] = {
+templates["include_01"] = {
     [[
     {% set integer_1 = 42 %}
     {% include 'basic_00' only %}
     ]],
     "and and string and 17"
 }
-templates["tpl_52"] = {
+templates["include_02"] = {
     [[
     {% set integer_1 = 42 %}
     {% include 'basic_00' only with context %}
     ]],
     "1 and 2 and string and 17"
 }
-templates["tpl_53"] = {
+templates["include_03"] = {
     [[
     {% set integer_1 = 42 %}
     {% include 'basic_00' only with vars %}
     ]],
     "42 and and string and 17"
 }
-templates["tpl_54"] = {
+templates["include_04"] = {
     [[
     {% set integer_1 = 42 %}
     {% include 'basic_00' only with vars with context with {integer_1: 4} %}
     ]],
     "4 and 2 and string and 17"
 }
-templates["tpl_55"] = {
+templates["include_05"] = {
     [[
     {% set integer_1 = 42 %}
     {% include 'tpl_none' %}
@@ -258,14 +259,14 @@ templates["tpl_55"] = {
     nil,
     "Template(s) not found. Trying tpl_none"
 }
-templates["tpl_56"] = {
+templates["include_06"] = {
     [[
     {% set integer_1 = 42 %}
     {% include 'tpl_none' ignore missing %}
     ]],
     ""
 }
-templates["tpl_57"] = {
+templates["include_07"] = {
     [[
     {% set integer_1 = 42 %}
     {% include ['tpl_none', 'tpl_none2'] %}
@@ -273,7 +274,7 @@ templates["tpl_57"] = {
     nil,
     "Template(s) not found. Trying tpl_none, tpl_none2"
 }
-templates["tpl_58"] = {
+templates["include_08"] = {
     [[
     {% set integer_1 = 42 %}
     {% include ['tpl_none', 'tpl_none2'] ignore missing %}
@@ -491,6 +492,45 @@ templates["date_02"] = {
 }
 
 
+templates["autoescape_00"] = {
+    "<pre>{{ string_html }}</pre>",
+    "<pre>&lt;b&gt;Hello&lt;&#47;b&gt;</pre>",
+    nil,
+    { autoescape = true }
+}
+
+templates["autoescape_01"] = {
+    "<pre>{{ string_html|raw }} [and] {{ string_html }}</pre>",
+    "<pre><b>Hello</b> [and] &lt;b&gt;Hello&lt;&#47;b&gt;</pre>",
+    nil,
+    { autoescape = true }
+}
+
+templates["autoescape_02"] = {
+    "<pre>{{ 'yeah, ' ~ string_html|raw }}</pre>",
+    "<pre>yeah, &lt;b&gt;Hello&lt;&#47;b&gt;</pre>",
+    nil,
+    { autoescape = true }
+}
+
+templates["autoescape_03"] = {
+    "{% autoescape %}<pre>{{ string_html }}</pre>{% endautoescape %}",
+    "<pre>&lt;b&gt;Hello&lt;&#47;b&gt;</pre>",
+}
+
+templates["autoescape_04"] = {
+    "{% autoescape false%}<pre>{{ string_html }}</pre>{% endautoescape %}",
+    "<pre><b>Hello</b></pre>",
+}
+
+templates["autoescape_05"] = {
+    "{% autoescape false%}<pre>{{ string_html }}</pre>{% endautoescape %}",
+    "<pre><b>Hello</b></pre>",
+    nil,
+    { autoescape = true }
+}
+
+
 templates["filter:first_last_01"] = {
     "{{ list_1|first }} | {{ list_1|last }} || "
         .. "{{ range(1, 5, 2)|first }} | {{ range(1, 5, 2)|last }} || "
@@ -548,6 +588,14 @@ templates["filter:trim_01"] = {
 }
 
 
+templates["function:dump_01"] = {
+    "{{ dump(list_1) }}",
+    "function:dump_01:1: { (string) item1 (string) item2 (string) item3 } Stack: begin function:dump_01:1"
+}
+
+
+
+
 describe("Testing compiler.", function()
     it("Checks tokenizer", function()
         local str = "for i,j in vers|select('this', \"oh\") %}"
@@ -557,6 +605,8 @@ describe("Testing compiler.", function()
 
         tok:next() -- i
         assert.are.equals(tok:get_token(), "i")
+        tok:require("i")
+        tok:require_type("word")
         assert.is.True(tok:is_word())
         assert.is.True(tok:is_seq({"word", ",", "word", "word", "word", "|", "word", "(", "string"}))
 
@@ -634,20 +684,19 @@ describe("Testing compiler.", function()
 end)
 
 describe("Testing template.", function ()
-    local template = aspect.new()
-    template.loader = function(tpl, name)
-        if templates[name] then
-            return templates[name][1]
-        else
-            return nil
-        end
-    end
-    local compiled = {}
-    template.luacode_save = function (tpl, name, code)
-        compiled[#compiled + 1] = "\n==== Compiled template " .. name .. ":\n" .. code
-    end
-
     for k, v in tablex.sort(templates) do
+        local template = aspect.new(v[4] or {})
+        template.loader = function(tpl, name)
+            if templates[name] then
+                return templates[name][1]
+            else
+                return nil
+            end
+        end
+        local compiled = {}
+        template.luacode_save = function (tpl, name, code)
+            compiled[#compiled + 1] = "\n==== Compiled template " .. name .. ":\n" .. code
+        end
         it("Run template " .. k, function ()
             compiled = {}
             local result, err = template:render(k, vars)

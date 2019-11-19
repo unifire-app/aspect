@@ -84,7 +84,7 @@ Tags
 * [extends](./docs/tags/extends.md), [block](./docs/tags/extends.md#block), [use](./docs/tags/extends.md#use) — 
   template inheritance ([read more](./docs/syntax.md#template-inheritance))
 * apply
-* autoescape
+* [autoescape](./docs/tags/autoescape.md)
 * verbatim aka ignore
 
 Filters

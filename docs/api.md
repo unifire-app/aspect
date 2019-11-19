@@ -143,11 +143,26 @@ local template = aspect.new({
 Loaders
 -------
 
+Loader should be callback or callable object.
+
 ### File system loader
+
+```lua
+aspect.loader = require("aspect.loader.filesystem").new(project_root .. "/templates")
+```
 
 ### Resty loader
 
 ### Array loader
+
+```lua
+local tpls = require("aspect.loader.array").new()
+
+tpls["dashboard.tpl"] = [[ ... template ... ]]
+tpls["theme.tpl"] = [[<html> ... template ... </html>]]
+
+aspect.loader = tpls
+```
 
 Add tags
 --------

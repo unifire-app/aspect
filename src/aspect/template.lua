@@ -248,7 +248,7 @@ function template:render(name, vars)
     if not view then
         return nil, err.new(error or "Template '" .. tostring(name) .. "' not found")
     end
-    local out, ok = output.new(self.opts), nil
+    local out, ok = output.new(self.opts, vars), nil
     out:add_blocks(view)
     while view.extends do
         if view.extends == true then -- dynamic extends
@@ -284,7 +284,7 @@ end
 --- @return string macro result
 --- @return aspect.error if error occur
 function template:render_macro(name, macro_name, arguments)
-    local out, ok = output.new(self.opts), nil
+    local out, ok = output.new(self.opts, arguments), nil
     local view, error = self:get_view(name)
     if not view then
         return nil, err.new(error or "Template '" .. tostring(name) .. "' not found")
@@ -311,7 +311,7 @@ end
 --- @return string block result
 --- @return aspect.error if error occur
 function template:render_block(name, block_name, vars)
-    local out, ok = output.new(self.opts), nil
+    local out, ok = output.new(self.opts, vars), nil
     local view, error = self:get_view(name)
     if not view then
         return nil, err.new(error or "Template '" .. tostring(name) .. "' not found")

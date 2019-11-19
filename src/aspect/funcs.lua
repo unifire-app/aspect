@@ -208,15 +208,17 @@ function func.fn.date(__, args)
     return date(args.date or false) or date(false)
 end
 
-func.args.dump = {"..."}
+func.args.dump = {"value"}
 
 --- {% dump(...) %}
 --- @param __ aspect.output
 --- @param args table|nil
 function func.fn.dump(__, args)
     local out = {__.view.name .. ":"..__.line .. ":"}
-    if args then
-        out[#out + 1] = dump(unpack(args))
+    if args.value then
+        out[#out + 1] = dump(args.value)
+    else
+        out[#out + 1] = dump(__.ctx)
     end
     out[#out + 1] = "\nStack:\n" .. __:get_callstack()
     return concat(out, "\n")

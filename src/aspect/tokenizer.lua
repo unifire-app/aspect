@@ -204,6 +204,7 @@ function tokenizer:is_seq(seq)
 end
 
 --- Checks the token value and if token value incorrect throw an error
+--- @param token string
 --- @return aspect.tokenizer
 function tokenizer:require(token)
     if self.token ~= token then
@@ -212,10 +213,29 @@ function tokenizer:require(token)
     return self
 end
 
+
+--- Checks the token type and if token type incorrect throw an error
+--- @param typ string
+--- @return aspect.tokenizer
+function tokenizer:require_type(typ)
+    if self.typ ~= typ then
+        compiler_error(self, "syntax", "expecting of " .. typ .. " type token")
+    end
+    return self
+end
+
 --- Checks if the token is simple word
 --- @return boolean
 function tokenizer:is_word()
     return self.typ == "word"
+end
+
+--- @return boolean
+function tokenizer:is_boolean()
+    if self.token and compiler.boolean[self.token:lower()] then
+        return true
+    end
+    return false
 end
 
 --- Checks if the next token is simple word

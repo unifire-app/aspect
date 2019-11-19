@@ -182,7 +182,9 @@ function compiler:parse(source)
         if t == "{" then -- '{{'
             self.tag_type = tag_type.EXPRESSION
             local tok = tokenizer.new(sub(source, tag_pos + 2))
-            self:append_expr(self:parse_expression(tok))
+            local info = {}
+            local expr = self:parse_expression(tok, info)
+            self:append_expr(expr, info.raw)
             if tok:is_valid() then
                 compiler_error(tok, "syntax", "expecting end of tag")
             end
@@ -206,7 +208,7 @@ function compiler:parse(source)
             l = tag_pos + 2 + strlen(path) + strlen(tok.finished_token) -- start tag pos + '{%' + tag length + '%}'
             self.line = self.line + strcount(path, "\n")
             tok = nil
-        elseif t == "#" then
+        elseif t == "#" then -- '{#'
             tag_pos = find(source, "#}", p, true)
             l = tag_pos + 2
         end
@@ -520,6 +522,7 @@ end
 --- @return string
 function compiler:parse_filters(tok, var, info)
     info = info or {}
+    info.raw = false
     while tok:is("|") do -- parse pipeline filter
         if tok:next():is_word() then
             local filter = tok:get_token()
@@ -556,12 +559,14 @@ function compiler:parse_filters(tok, var, info)
     return var
 end
 
+--- Parse operand of the expression
 --- @param tok aspect.tokenizer
 --- @param info table
 function compiler:parse_value(tok, info)
     local var
     info = info or {}
     info.type = nil
+    info.raw = false
     if tok:is_word() then -- is variable name
         if special[tok:get_token()] then
             if tok:is("true") or tok:is("false") then -- is regular true/false/nil
@@ -612,16 +617,21 @@ function compiler:parse_value(tok, info)
         compiler_error(tok, "syntax", "expecting any value")
     end
     if tok:is("|") then
-        var = self:parse_filters(tok, var)
+        var = self:parse_filters(tok, var, info)
         info.type = "any"
     end
     return var
 end
+
+--- Parse any expression
+--- @param tok aspect.tokenizer
+--- @param opts table
 function compiler:parse_expression(tok, opts)
     opts = opts or {}
     local expr = ast.new():parse(self, tok):pack()
     opts.type = expr.type
     opts.bracket = expr.bracket
+    opts.raw = expr.raw
     return expr.value
 end
 
@@ -661,7 +671,7 @@ function compiler:append_text(text)
     end
 end
 
-function compiler:append_expr(lua)
+function compiler:append_expr(lua, raw)
     local tag = self:get_last_tag()
     local line = self:get_checkpoint()
     local code = self.code[#self.code]
@@ -670,7 +680,9 @@ function compiler:append_expr(lua)
     end
     if lua then
         if tag and tag.append_expr then
-            insert(code, tag.append_expr(tag, lua))
+            insert(code, tag.append_expr(tag, lua, raw))
+        elseif raw then
+            insert(code, "__(" .. lua .. ")")
         else
             insert(code, "__:e(" .. lua .. ")")
         end

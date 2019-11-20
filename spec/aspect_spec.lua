@@ -4,6 +4,8 @@ local tokenizer = require("aspect.tokenizer")
 local astree = require("aspect.ast")
 local compiler = require("aspect.compiler")
 local filters = require("aspect.filters")
+local var_dump = require("aspect.utils").var_dump
+local batch = require("aspect.utils.batch")
 local err = require("aspect.err")
 local dump = require("pl.pretty").dump
 local tablex = require("pl.tablex")
@@ -20,9 +22,11 @@ local vars = {
     integer_1 = 1,
     integer_2 = 2,
     integer_3 = 3,
+    integer_4 = -4,
 
     float_1 = 1.1,
     float_2 = 1e5,
+    float_3 = 2.7,
 
     nil_value = nil,
 
@@ -38,6 +42,7 @@ local vars = {
 
     list_empty = {},
     list_1 = {"item1", "item2", "item3"},
+    list_2 = { {name = "item2.1"}, {name = "item2.2"}, {name = "item2.3"} },
 
     table_1 = {
         float_value = 2.1,
@@ -178,6 +183,7 @@ templates["for_01"] = {
     ]],
     "1: item1 3: item3"
 }
+
 templates["for_02"] = {
     [[
         {% for k, v in list_1 %}
@@ -186,7 +192,6 @@ templates["for_02"] = {
     ]],
     "1: item1 | 2: item2 | 3: item3"
 }
-
 
 templates["set_00"] = {
     [[
@@ -577,6 +582,11 @@ templates["filter:escape_03"] = {
     "string+value"
 }
 
+templates["filter:escape_04"] = {
+    "{{ string_html|escape }}",
+    "&lt;b&gt;Hello&lt;&#47;b&gt;"
+}
+
 templates["filter:default_01"] = {
     "{{ nil_value|default('empty') }} [and] {{ nil_value|default('empty', true) }}",
     "empty [and] empty"
@@ -593,6 +603,20 @@ templates["filter:trim_01"] = {
     ".spaced . spaced.spaced"
 }
 
+templates["filter:abs_00"] = {
+    "{{ integer_3|abs }} [and] {{ integer_4|abs }}",
+    "3 [and] 4"
+}
+
+templates["filter:round_00"] = {
+    "{{ float_1|round }} [and] {{ float_3|round }}",
+    "1 [and] 3"
+}
+
+templates["filter:column_00"] = {
+    "{{ list_2|column('name')|join(',') }}",
+    "item2.1,item2.2,item2.3"
+}
 
 templates["function:dump_01"] = {
     "{{ dump(list_1) }}",
@@ -757,6 +781,19 @@ describe("Testing template.", function ()
             end
         end)
     end
+
+    it("Test batch filter", function()
+        local m = {}
+        local iter = batch.new({"a", "b", "c", "d", "e"}, 2)
+        for k, list in getmetatable(iter).__pairs(iter) do
+            local n = {}
+            for i,j in pairs(list) do
+                table.insert(n, i .. ":" .. j)
+            end
+            table.insert(m, table.concat(n, ","))
+        end
+        assert.is.equals("1:a,2:b [and] 3:c,4:d [and] 5:e", table.concat(m, " [and] "))
+    end)
 
     it("Render block", function ()
         local template = aspect.new()

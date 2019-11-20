@@ -44,7 +44,9 @@ function filters.abs(v)
 end
 
 function filters.batch(v, c)
-    return batch.new(v, output.n(c))
+    if type(v) == "table" then
+        return batch.new(v, output.n(c))
+    end
 end
 
 function filters.round(v)
@@ -133,7 +135,7 @@ function filters.e(v, typ)
         v = v:gsub(" ", "+")
         return v
     elseif escapers[typ] then
-        return escapers(v)
+        return escapers[type](v)
     end
 end
 

@@ -220,12 +220,12 @@ function template:load(name)
             if self.luacode_save then
                 self:luacode_save(name, luacode)
             end
-            if self.binary_save then
+            if self.bytecode_save then
                 f, error = (loadstring or load)(luacode, name .. ".lua")
                 if not f then
                     return nil, err.new(error or "Failed to dump a view " .. name)
                 end
-                self:binary_save(name, function_dump(f))
+                self:bytecode_save(name, function_dump(f))
             end
             return loadcode(self, luacode, name .. ".lua")
         else

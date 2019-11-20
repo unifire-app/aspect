@@ -795,6 +795,7 @@ describe("Testing cache.", function ()
                 return nil
             end
         end
+
         template.bytecode_load = function (tpl, name)
             assert.is.equals("basic_00", name)
             return nil

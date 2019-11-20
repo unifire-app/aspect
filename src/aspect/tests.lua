@@ -24,7 +24,7 @@ function tests.fn.is_nil(__, v)
 end
 
 function tests.fn.is_divisible_by(__, v, number)
-    return tonumber(v) % number == 0
+    return tonumber(v) % tonumber(number) == 0
 end
 
 function tests.fn.is_constant(__, v, const)

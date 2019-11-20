@@ -132,11 +132,11 @@ Tests
 * [is defined](./docs/tests/defined.md)
 * [is odd](./docs/tests/odd.md)
 * [is even](./docs/tests/even.md)
-* [is iterator](./docs/tests/iterator.md)
+* [is iterable](./docs/tests/iterable.md)
 * [is empty](./docs/tests/empty.md)
-* [is divisible by()](./docs/tests/divisible_by.md)
+* [is divisible by()](./docs/tests/divisibleby.md)
 * [is null, is nil](./docs/tests/null.md)
-* [is same as()](./docs/tests/same_as.md)
+* [is same as()](./docs/tests/sameas.md)
 
 Extending
 ---------

@@ -599,8 +599,49 @@ templates["function:dump_01"] = {
     "function:dump_01:1: { (string) item1 (string) item2 (string) item3 } Stack: begin function:dump_01:1"
 }
 
+templates["tests_00"] = {
+    "{% if none is defined %} defined {% endif %} [and] {% if none is not defined %} not defined {% endif %}",
+    "[and] not defined"
+}
 
+templates["tests_01"] = {
+    "{% if none is null %} null {% endif %} [and] {% if none is nil %} nil {% endif %} [and] {% if integer_0 is nil %} nil {% endif %}",
+    "null [and] nil [and]"
+}
 
+templates["tests_02"] = {
+    "{% if 4 is divisible by(2) %} divisible {% endif %} [and] {% if 5 is divisible by(2) %} divisible {% endif %}",
+    "divisible [and]"
+}
+
+templates["tests_03"] = {
+    "{% if integer_0 is empty %} empty {% endif %} [and] {% if integer_1 is empty %} empty {% endif %}",
+    "empty [and]"
+}
+
+templates["tests_04"] = {
+    "{% if 4 is odd %} odd {% endif %} [and] {% if 5 is odd %} odd {% endif %}",
+    "[and] odd"
+}
+
+templates["tests_05"] = {
+    "{% if 4 is even %} even {% endif %} [and] {% if 5 is even %} even {% endif %}",
+    "even [and]"
+}
+
+templates["tests_06"] = {
+    [[{% if 4 is iterable %} iterable {% endif %} [and]
+    {% if list_1 is iterable %} iterable {% endif %} [and]
+    {% if table_1 is iterable %} iterable {% endif %} [and]
+    {% if range(1,2) is iterable %} iterable {% endif %}
+    ]],
+    "[and] iterable [and] iterable [and] iterable"
+}
+
+templates["tests_07"] = {
+    "{% if 4 is same as(4) %} same {% endif %} [and] {% if table_1 is same as(table_1) %} same {% endif %} [and] {% if 'wow' is same as(table_1) %} same {% endif %}",
+    "same [and] same [and]"
+}
 
 describe("Testing compiler.", function()
     it("Checks tokenizer", function()
@@ -716,4 +757,63 @@ describe("Testing template.", function ()
             end
         end)
     end
+
+    it("Render block", function ()
+        local template = aspect.new()
+        template.loader = function(tpl, name)
+            if templates[name] then
+                return templates[name][1]
+            else
+                return nil
+            end
+        end
+
+        assert.is.equals("block one", strip(template:render_block("extends_01", "one", vars)))
+    end)
+
+    it("Render macro", function ()
+        local template = aspect.new()
+        template.loader = function(tpl, name)
+            if templates[name] then
+                return templates[name][1]
+            else
+                return nil
+            end
+        end
+
+        assert.is.equals("[macro: check]", strip(template:render_macro("macro_01", "key_value", {key = "macro", value = "check"})))
+    end)
+end)
+
+describe("Testing cache.", function ()
+    it("bytecode and luacode cache", function ()
+        local template = aspect.new()
+        template.loader = function(tpl, name)
+            if templates[name] then
+                return templates[name][1]
+            else
+                return nil
+            end
+        end
+        template.bytecode_load = function (tpl, name)
+            assert.is.equals("basic_00", name)
+            return nil
+        end
+        template.luacode_load = function (tpl, name)
+            assert.is.equals("basic_00", name)
+            return nil
+        end
+        template.bytecode_save = function (tpl, name, code)
+            assert.is.equals("basic_00", name)
+            assert.is_true(string.len(code) > 0)
+            return nil
+        end
+        template.luacode_save = function (tpl, name, code)
+            assert.is.equals("basic_00", name)
+            assert.is_true(string.len(code) > 0)
+            return nil
+        end
+
+        assert.is.equals("1 and 2 and string and 17", strip(template:render("basic_00", vars)))
+    end)
 end)

@@ -644,13 +644,17 @@ function compiler:parse_is(tok)
         tok:next()
     end
     test.name = tok:get_token()
-    if not tests.fn["is_" .. test.name] then
-        compiler_error(tok, "syntax", "expecting valid test name")
-    end
     tok:next()
     if tests.args[test.name] then
+        if type(tests.args[test.name]) == "string" then -- has function: is divisible by(expr)
+            tok:require(tests.args[test.name]):next()
+            test.name = test.name .. "_" .. tests.args[test.name]
+        end
         test.expr = self:parse_expression(tok:require("("):next())
-        tok:require(")"):next()
+        tok:next()
+    end
+    if not tests.fn["is_" .. test.name] then
+        compiler_error(tok, "syntax", "expecting valid test name")
     end
     return test
 end

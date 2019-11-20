@@ -317,11 +317,11 @@ function template:render_block(name, block_name, vars)
         return nil, err.new(error or "Template '" .. tostring(name) .. "' not found")
     end
     if view.blocks and view.blocks[block_name] then
-        ok, error = pcall(view.blocks[block_name], out, vars)
+        ok, error = pcall(view.blocks[block_name].body, out, vars)
         if ok then
             return tostring(out)
         else
-            return nil, err.runtime_error(out, error, "In the " .. view.name .. " an error occurred: ")
+            return nil, err.runtime_error(out, error)
         end
     else
         return nil, err.new{

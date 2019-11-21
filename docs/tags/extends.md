@@ -207,3 +207,6 @@ If you want the output to be displayed conditionally, use the following instead:
     {% endif %}
 {% endblock head %}
 ```
+
+Use
+---

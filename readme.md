@@ -121,6 +121,7 @@ Functions
 ---------
 
 * [parent()](./docs/tags/extends.md#parent)
+* [include()](./docs/funcs/include.md)
 * [block(name, template)](./docs/tags/extends.md#block-function)
 * [range(low, high, step)](./docs/funcs/range.md)
 * [date(date)](./docs/funcs/date.md)

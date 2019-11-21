@@ -67,6 +67,8 @@ local matches = {
     {patterns.STRING3,sdump},
     {'^}}',tstop},
     {'^%%}',tstop},
+    {'^%-}}',tstop},
+    {'^%-%%}',tstop},
     {'^==',tdump},
     {'^!=',tdump},
     {'^%?:',tdump},
@@ -109,7 +111,7 @@ function tokenizer.new(s)
         i = 1,
         token = tokens[1][2],
         typ = tokens[1][1],
-        finished_token = finished_token,
+        finish_token = finished_token,
         parsed_len = parsed_len,
         indent = indent
     }, mt)

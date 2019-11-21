@@ -14,6 +14,8 @@ local err = require("aspect.err")
 local write = require("pl.pretty").write
 local quote_string = require("pl.stringx").quote_string
 local strcount = require("pl.stringx").count
+local rstrip = require("pl.stringx").rstrip
+local lstrip = require("pl.stringx").lstrip
 local tablex = require("pl.tablex")
 local compiler_error = err.compiler_error
 local sub = string.sub
@@ -167,6 +169,7 @@ end
 function compiler:parse(source)
     local l = 1
     local tag_pos = find(source, "{", l, true)
+    local strip = false
     self.body = {}
     self.code = {self.body}
     self.vars = {{}}
@@ -175,10 +178,23 @@ function compiler:parse(source)
     while tag_pos do
         if l <= tag_pos - 1 then -- cut text before tag
             local frag = sub(source, l, tag_pos - 1)
-            self:append_text(frag)
             self.line = self.line + strcount(frag, "\n")
+            if strip then
+                frag = lstrip(frag)
+                strip = false
+            end
+            if sub(source, tag_pos + 2, tag_pos + 2) == "-" then -- checks if tag has space control
+                frag = rstrip(frag)
+            end
+            if frag ~= "" then
+                self:append_text(frag)
+            end
         end
-        local t, p = sub(source, tag_pos + 1, tag_pos + 1), tag_pos + 2
+        local t, trim, p = sub(source, tag_pos + 1, tag_pos + 1), sub(source, tag_pos + 2, tag_pos + 2), tag_pos + 2
+        if trim == "-" then
+            self:strip_text()
+            tag_pos = tag_pos + 1
+        end
         if t == "{" then -- '{{'
             self.tag_type = tag_type.EXPRESSION
             local tok = tokenizer.new(sub(source, tag_pos + 2))
@@ -189,8 +205,11 @@ function compiler:parse(source)
                 compiler_error(tok, "syntax", "expecting end of tag")
             end
             local path = tok:get_path_as_string()
-            l = tag_pos + 2 + strlen(path) + strlen(tok.finished_token) -- start tag pos + '{{' +  tag length + '}}'
+            l = tag_pos + 2 + strlen(path) + strlen(tok.finish_token) -- start tag pos + '{{' +  tag length + '}}'
             self.line = self.line + strcount(path, "\n")
+            if sub(tok.finish_token, 1, 1) == "-" then
+                strip = true
+            end
             tok = nil
         elseif t == "%" then -- '{%'
             self.tag_type = tag_type.CONTROL
@@ -205,8 +224,11 @@ function compiler:parse(source)
                 compiler_error(nil, "syntax", "unknown tag '" .. tok:get_token() .. "'")
             end
             local path = tok:get_path_as_string()
-            l = tag_pos + 2 + strlen(path) + strlen(tok.finished_token) -- start tag pos + '{%' + tag length + '%}'
+            l = tag_pos + 2 + strlen(path) + strlen(tok.finish_token) -- start tag pos + '{%' + tag length + '%}'
             self.line = self.line + strcount(path, "\n")
+            if sub(tok.finish_token, 1, 1) == "-" then
+                strip = true
+            end
             tok = nil
         elseif t == "#" then -- '{#'
             tag_pos = find(source, "#}", p, true)
@@ -215,7 +237,13 @@ function compiler:parse(source)
         self.tag_type = nil
         tag_pos = find(source, "{", tag_pos + 1, true)
     end
-    self:append_text(sub(source, l))
+    local frag = sub(source, l)
+    if strip then
+        frag = lstrip(frag)
+    end
+    if frag ~= "" then
+        self:append_text(frag)
+    end
 end
 
 function compiler:parse_var_name(tok, opts)
@@ -673,6 +701,12 @@ function compiler:append_text(text)
     else
         insert(code, "__(" .. quote_string(text) .. ")")
     end
+end
+
+function compiler:strip_text()
+    local code = self.code[#self.code]
+    local text = code[#code]
+
 end
 
 function compiler:append_expr(lua, raw)

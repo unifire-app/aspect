@@ -667,6 +667,25 @@ templates["tests_07"] = {
     "same [and] same [and]"
 }
 
+templates["strip_00"] = {
+    "one\n  {{- 1 -}}  \ntwo\n  {{ 2 -}}  \ntree\n  {{- 3 }}  \nfour\n  {{ 4 }}  \nfive",
+    "one1two 2tree3 four 4 five",
+    expected = "one1two\n  2tree3  \nfour\n  4  \nfive",
+}
+
+
+local function factory(ops)
+    local template = aspect.new(ops or {})
+    template.loader = function(tpl, name)
+        if templates[name] then
+            return templates[name][1]
+        else
+            return nil
+        end
+    end
+    return template
+end
+
 describe("Testing compiler.", function()
     it("Checks tokenizer", function()
         local str = "for i,j in vers|select('this', \"oh\") %}"
@@ -727,11 +746,9 @@ describe("Testing compiler.", function()
         assert.are.equals(tok:get_path_as_string() .. "%}", str)
     end)
 
-
-
     for _, e in ipairs(ast_expr) do
         it("Checks AST: " .. e.expr, function ()
-            local template = aspect.new()
+            local template = factory()
             local ast = astree.new()
             local ok, f = pcall(ast.parse, ast, template:get_compiler("runtime"), tokenizer.new(e.expr))
             if not ok then
@@ -754,16 +771,9 @@ describe("Testing compiler.", function()
     end
 end)
 
-describe("Testing template.", function ()
+describe("Testing template syntax.", function ()
     for k, v in tablex.sort(templates) do
-        local template = aspect.new(v[4] or {})
-        template.loader = function(tpl, name)
-            if templates[name] then
-                return templates[name][1]
-            else
-                return nil
-            end
-        end
+        local template = factory(v[4] or {})
         local compiled = {}
         template.luacode_save = function (tpl, name, code)
             compiled[#compiled + 1] = "\n==== Compiled template " .. name .. ":\n" .. code
@@ -785,9 +795,9 @@ describe("Testing template.", function ()
     it("Test batch filter", function()
         local m = {}
         local iter = batch.new({"a", "b", "c", "d", "e"}, 2)
-        for k, list in getmetatable(iter).__pairs(iter) do
+        for _, list in getmetatable(iter).__pairs(iter) do
             local n = {}
-            for i,j in pairs(list) do
+            for i,j in tablex.sortv(list) do
                 table.insert(n, i .. ":" .. j)
             end
             table.insert(m, table.concat(n, ","))
@@ -796,29 +806,21 @@ describe("Testing template.", function ()
     end)
 
     it("Render block", function ()
-        local template = aspect.new()
-        template.loader = function(tpl, name)
-            if templates[name] then
-                return templates[name][1]
-            else
-                return nil
-            end
-        end
+        local template = factory()
 
         assert.is.equals("block one", strip(template:render_block("extends_01", "one", vars)))
     end)
 
     it("Render macro", function ()
-        local template = aspect.new()
-        template.loader = function(tpl, name)
-            if templates[name] then
-                return templates[name][1]
-            else
-                return nil
-            end
-        end
+        local template = factory()
 
         assert.is.equals("[macro: check]", strip(template:render_macro("macro_01", "key_value", {key = "macro", value = "check"})))
+    end)
+
+    it("Strip spaces", function ()
+        local template = factory()
+
+        assert.is.equals(templates["strip_00"].expected, template:render("strip_00", vars))
     end)
 end)
 

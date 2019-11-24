@@ -1,5 +1,5 @@
 package = "aspect"
-version = "git-1"
+version = "dev-1"
 source = {
     url = "https://github.com/unifire-app/aspect/-/archive/master/aspect-master.zip"
 }

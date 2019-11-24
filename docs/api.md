@@ -65,6 +65,9 @@ Rendering Templates
   * `chunk_size` (number) - buffer size before sending data to `print`. By default - `nil`, buffer disabled.
   * `print` (callable) - callback used to send data. By default - `ngx.print or print`.
 
+**Note**. `render` functions and `display` functions returns `aspect.output` object with template result 
+(if result not displayed) and more useful information
+
 Options
 -------
 

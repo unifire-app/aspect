@@ -14,8 +14,6 @@ local err = require("aspect.err")
 local write = require("pl.pretty").write
 local quote_string = require("pl.stringx").quote_string
 local strcount = require("pl.stringx").count
-local rstrip = require("pl.stringx").rstrip
-local lstrip = require("pl.stringx").lstrip
 local tablex = require("pl.tablex")
 local compiler_error = err.compiler_error
 local sub = string.sub
@@ -25,9 +23,12 @@ local config = require("aspect.config")
 local import_type = config.macro.import_type
 local loop_keys = config.loop.keys
 local tag_type = config.compiler.tag_type
+local strip_pattern = config.compiler.strip
 local func = require("aspect.funcs")
 local ast = require("aspect.ast")
 local utils = require("aspect.utils")
+local rstrip = utils.rtrim
+local lstrip = utils.ltrim
 local special = config.compiler.special
 
 --local var_dump = require("aspect.utils").var_dump
@@ -180,19 +181,19 @@ function compiler:parse(source)
             local frag = sub(source, l, tag_pos - 1)
             self.line = self.line + strcount(frag, "\n")
             if strip then
-                frag = lstrip(frag)
-                strip = false
+                frag = lstrip(frag, strip)
+                strip = nil
             end
-            if sub(source, tag_pos + 2, tag_pos + 2) == "-" then -- checks if tag has space control
-                frag = rstrip(frag)
+            local wcp = strip_pattern[sub(source, tag_pos + 2, tag_pos + 2)]
+            if wcp then -- checks if tag has space control
+                frag = rstrip(frag, wcp)
             end
             if frag ~= "" then
                 self:append_text(frag)
             end
         end
-        local t, trim, p = sub(source, tag_pos + 1, tag_pos + 1), sub(source, tag_pos + 2, tag_pos + 2), tag_pos + 2
-        if trim == "-" then
-            self:strip_text()
+        local t, p = sub(source, tag_pos + 1, tag_pos + 1), tag_pos + 2
+        if strip_pattern[sub(source, tag_pos + 2, tag_pos + 2)] then
             tag_pos = tag_pos + 1
         end
         if t == "{" then -- '{{'
@@ -207,9 +208,7 @@ function compiler:parse(source)
             local path = tok:get_path_as_string()
             l = tag_pos + 2 + strlen(path) + strlen(tok.finish_token) -- start tag pos + '{{' +  tag length + '}}'
             self.line = self.line + strcount(path, "\n")
-            if sub(tok.finish_token, 1, 1) == "-" then
-                strip = true
-            end
+            strip = strip_pattern[sub(tok.finish_token, 1, 1)]
             tok = nil
         elseif t == "%" then -- '{%'
             self.tag_type = tag_type.CONTROL
@@ -226,9 +225,7 @@ function compiler:parse(source)
             local path = tok:get_path_as_string()
             l = tag_pos + 2 + strlen(path) + strlen(tok.finish_token) -- start tag pos + '{%' + tag length + '%}'
             self.line = self.line + strcount(path, "\n")
-            if sub(tok.finish_token, 1, 1) == "-" then
-                strip = true
-            end
+            strip = strip_pattern[sub(tok.finish_token, 1, 1)]
             tok = nil
         elseif t == "#" then -- '{#'
             tag_pos = find(source, "#}", p, true)
@@ -239,7 +236,7 @@ function compiler:parse(source)
     end
     local frag = sub(source, l)
     if strip then
-        frag = lstrip(frag)
+        frag = lstrip(frag, strip)
     end
     if frag ~= "" then
         self:append_text(frag)
@@ -701,12 +698,6 @@ function compiler:append_text(text)
     else
         insert(code, "__(" .. quote_string(text) .. ")")
     end
-end
-
-function compiler:strip_text()
-    local code = self.code[#self.code]
-    local text = code[#code]
-
 end
 
 function compiler:append_expr(lua, raw)

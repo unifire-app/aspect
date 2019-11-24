@@ -38,7 +38,9 @@ Synopsis
         {% block content %}
             <ul id="navigation">
             {% for item in navigation %}
-                <li><a href="{{ item.href }}">{{ item.caption }}</a></li>
+                <li><a href="{{ item.href }}">
+                    {{- item.caption|escape -}}
+                </a></li>
             {% endfor %}
             </ul>
     
@@ -71,6 +73,7 @@ Syntax
 * [Macros](./docs/syntax.md#macros)
 * [Expressions](./docs/syntax.md#expressions)
 * [Operators](./docs/syntax.md#operators)
+* [Whitespace control](./docs/syntax.md#whitespace-control)
 
 Tags
 ----

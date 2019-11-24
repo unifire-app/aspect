@@ -31,6 +31,9 @@ Below is a minimal template that illustrates a few basics. We will cover further
 There are two kinds of delimiters: `{% ... %}` and `{{ ... }}`. 
 The first one is used to execute statements such as for-loops, the latter outputs the result of an expression.
 
+Table Of Content
+----------------
+
 
 Variables
 ---------
@@ -417,3 +420,40 @@ Operator precedence, from the higher to the lower priority:
 12. `? ... : ...` (any)
 13. `and` (boolean)
 14. `or` (boolean)
+
+
+### Whitespace Control
+
+Whitespace is not further modified by the template engine, so each whitespace (spaces, tabs, newlines etc.) is returned unchanged.
+
+You can also control whitespace on a per tag level. 
+By using the whitespace control modifiers on your tags, you can trim leading and or trailing whitespace.
+
+Aspect supports two modifiers:
+
+* Whitespace trimming via the - modifier: Removes all whitespace (including newlines);
+* Line whitespace trimming via the ~ modifier: Removes all whitespace (excluding newlines). 
+
+The modifiers can be used on either side of the tags like in `{%-` or `-%}` and they consume all whitespace for that side of the tag. 
+It is possible to use the modifiers on one side of a tag or on both sides:
+
+```twig
+{% set value = 'no spaces' %}
+{#- No leading/trailing whitespace -#}
+{%- if true -%}
+    {{- value -}}
+{%- endif -%}
+{# output 'no spaces' #}
+
+<li>
+    {{ value }}    </li>
+{# outputs '<li>\n    no spaces    </li>' #}
+
+<li>
+    {{- value }}    </li>
+{# outputs '<li>no spaces    </li>' #}
+
+<li>
+    {{~ value }}    </li>
+{# outputs '<li>\nno spaces    </li>' #}
+```

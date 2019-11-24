@@ -241,34 +241,46 @@ end
 --- Returns template result as string
 --- @param name string
 --- @param vars table
---- @return string template result
+--- @return aspect.output template result
 --- @return aspect.error if error occur
-function template:render(name, vars)
+function template:render(name, vars, options)
+    local out, ok = output.new(self.opts, vars, options or {}), nil
     local view, error = self:get_view(name)
     if not view then
-        return nil, err.new(error or "Template '" .. tostring(name) .. "' not found")
+        return out, err.new(error or "Template '" .. tostring(name) .. "' not found")
     end
-    local out, ok = output.new(self.opts, vars), nil
     out:add_blocks(view)
     while view.extends do
-        if view.extends == true then -- dynamic extends
-            -- @todo
-        else -- static extends
-            local v, e = self:get_view(view.extends)
-            if not v then
-                return nil, err.new(e or "Template '" .. view.extends .. "' not found while extending " .. name)
+        local extends = view.extends
+        if extends == true then -- dynamic extends
+            ok, extends = pcall(view.body, out, vars)
+            if not ok then
+                if err.is(extends) then
+                    return out, extends
+                else
+                    return out, err.new({
+                        code = "runtime",
+                        name = view.name,
+                        line = out.line,
+                        message = tostring(extends)
+                    })
+                end
             end
-            view = v
         end
+        local v, e = self:get_view(extends)
+        if not v then
+            return nil, err.new(e or "Template '" .. view.extends .. "' not found while extending " .. name)
+        end
+        view = v
         out:add_blocks(view)
     end
     ok, error = pcall(view.body, out, vars)
     if ok then
-        return tostring(out)
+        return out:finish()
     elseif err.is(error) then
-        return nil, error
+        return out:finish(), error
     else
-        return nil, err.new({
+        return out:finish(), err.new({
             code = "runtime",
             name = view.name,
             line = out.line,
@@ -281,10 +293,10 @@ end
 --- @param name string the template name
 --- @param macro_name string the macro name
 --- @param arguments table of arguments for macro
---- @return string macro result
+--- @return aspect.output macro result
 --- @return aspect.error if error occur
 function template:render_macro(name, macro_name, arguments)
-    local out, ok = output.new(self.opts, arguments), nil
+    local out, ok = output.new(self.opts, arguments, {}), nil
     local view, error = self:get_view(name)
     if not view then
         return nil, err.new(error or "Template '" .. tostring(name) .. "' not found")
@@ -294,10 +306,10 @@ function template:render_macro(name, macro_name, arguments)
         if ok then
             return tostring(out)
         else
-            return nil, err.runtime_error(out, error)
+            return out:finish(), err.runtime_error(out, error)
         end
     else
-        return nil, err.new({
+        return out:finish(), err.new({
             name = view.name,
             message = "Macro '" .. macro_name .. "' not found"
         })
@@ -308,10 +320,10 @@ end
 --- @param name string the template name
 --- @param block_name string the block name
 --- @param vars table of arguments for block
---- @return string block result
+--- @return aspect.output block result
 --- @return aspect.error if error occur
 function template:render_block(name, block_name, vars)
-    local out, ok = output.new(self.opts, vars), nil
+    local out, ok = output.new(self.opts, vars, {}), nil
     local view, error = self:get_view(name)
     if not view then
         return nil, err.new(error or "Template '" .. tostring(name) .. "' not found")
@@ -321,14 +333,39 @@ function template:render_block(name, block_name, vars)
         if ok then
             return tostring(out)
         else
-            return nil, err.runtime_error(out, error)
+            return out:finish(), err.runtime_error(out, error)
         end
     else
-        return nil, err.new{
+        return out:finish(), err.new{
             name = name,
             message = "Block '" .. block_name .. "' not found"
         }
     end
+end
+
+--- Print template result
+--- @param name string|table
+--- @param vars table
+--- @param chunk_size number
+--- @return aspect.output
+function template:display(name, vars, chunk_size)
+    return self:render(name, vars, {
+        chunk_size = chunk_size,
+        print = true
+    })
+end
+
+--- Generate template result send into callback chunk by chunk
+--- @param name string|table
+--- @param vars table
+--- @param callback fun<out:aspect.output, chunk:string>
+--- @param chunk_size number
+--- @return aspect.output
+function template:generate(name, vars, callback, chunk_size)
+    return self:render(name, vars, {
+        chunk_size = chunk_size,
+        print = callback
+    })
 end
 
 return template

@@ -5,6 +5,8 @@ local type = type
 local concat = table.concat
 local insert = table.insert
 local str_rep  = string.rep
+local sub = string.sub
+local find = string.find
 local getmetatable = getmetatable
 local tablex = require("pl.tablex")
 
@@ -148,5 +150,30 @@ function utils.table_export(tbl, indent, tables)
         return "{}"
     end
 end
+
+---
+--- @param s string
+--- @param chrs string|nil
+--- @return string
+function utils.ltrim(s, chrs)
+    local i1,i2 = find(s,'^'.. (chrs or "%s")..'*')
+    if i2 >= i1 then
+        return sub(s,i2+1)
+    end
+    return s
+end
+
+---
+--- @param s string
+--- @param chrs string|nil
+--- @return string
+function utils.rtrim(s, chrs)
+    local i1,i2 = find(s, (chrs or "%s")..'*$')
+    if i2 >= i1 then
+        s = sub(s,1,i1-1)
+    end
+    return s
+end
+
 
 return utils

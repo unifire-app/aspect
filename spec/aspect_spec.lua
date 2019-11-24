@@ -781,8 +781,8 @@ describe("Testing template syntax.", function ()
         it("Run template " .. k, function ()
             compiled = {}
             local result, err = template:render(k, vars)
-            if result then
-                result = string.gsub(result, "%s+", " ")
+            if result and not err then
+                result = string.gsub(result.result, "%s+", " ")
                 assert.is.equals(v[2], strip(result), "Test template ".. k ..":\n" .. v[1] .. "\nCompiled template:\n" .. table.concat(compiled))
             elseif not v[2] and v[3] then
                 assert.is.equals(err.message, v[3])
@@ -820,7 +820,7 @@ describe("Testing template syntax.", function ()
     it("Strip spaces", function ()
         local template = factory()
 
-        assert.is.equals(templates["strip_00"].expected, template:render("strip_00", vars))
+        assert.is.equals(templates["strip_00"].expected, template:render("strip_00", vars).result)
     end)
 end)
 
@@ -854,6 +854,6 @@ describe("Testing cache.", function ()
             return nil
         end
 
-        assert.is.equals("1 and 2 and string and 17", strip(template:render("basic_00", vars)))
+        assert.is.equals("1 and 2 and string and 17", strip(template:render("basic_00", vars).result))
     end)
 end)

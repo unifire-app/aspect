@@ -162,6 +162,11 @@ config.compiler = {
         CONTROL = 2,
         COMMENT = 3,
     },
+
+    strip = {
+        ["-"] = "%s",
+        ["~"] = "[ \t]"
+    }
 }
 
 config.tokenizer = {

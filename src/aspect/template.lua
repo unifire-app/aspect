@@ -223,8 +223,8 @@ end
 --- @return aspect.error|nil
 function template:load(name)
     local bytecode, luacode, source, build, ok, error, f
-    if self.binary_load then
-        bytecode, error = self:binary_load(name)
+    if self.bytecode_load then
+        bytecode, error = self:bytecode_load(name)
         if bytecode then
             return loadcode(self, bytecode, name .. ".lua")
         elseif error then
@@ -297,7 +297,7 @@ function template:render(name, vars, options)
         end
         local v, e = self:get_view(extends)
         if not v then
-            return nil, err.new(e or "Template '" .. view.extends .. "' not found while extending " .. name)
+            return nil, err.new(e or "Template '" .. tostring(view.extends) .. "' not found while extending " .. name)
         end
         view = v
         out:add_blocks(view)

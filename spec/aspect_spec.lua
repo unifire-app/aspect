@@ -373,6 +373,17 @@ templates["extends_06"] = {
     "block one from extends_05 [and] block one"
 }
 
+templates["extends_07"] = {
+    [[
+    {% extends true_value ? "extends_01" : "tpl_none" %}
+    {% block one %}
+        block one from extends_02
+    {% endblock %}
+    invalid content
+    ]],
+    "block one from extends_02 [and] block two"
+}
+
 
 templates["range_01"] = {
     [[

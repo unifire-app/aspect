@@ -349,6 +349,31 @@ templates["extends_04"] = {
     "block one from extends_02 [and] block one [and] block two"
 }
 
+templates["extends_05"] = {
+    [[
+    {% use "extends_01" %}
+    {% block one %}
+        block one from extends_05
+    {% endblock %}
+    [and]
+    {{ block("two") }}
+    ]],
+    "block one from extends_05 [and] block two"
+}
+
+templates["extends_06"] = {
+    [[
+    {% use "extends_01" with one as two %}
+    {% block one %}
+        block one from extends_05
+    {% endblock %}
+    [and]
+    {{ block("two") }}
+    ]],
+    "block one from extends_05 [and] block one"
+}
+
+
 templates["range_01"] = {
     [[
     {% for k,v in range(1,3) %}

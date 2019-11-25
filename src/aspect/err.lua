@@ -115,7 +115,9 @@ function err:set_name(name, line, callstack)
     return self
 end
 
-
+function err:get_message()
+    return self.message
+end
 
 
 return err

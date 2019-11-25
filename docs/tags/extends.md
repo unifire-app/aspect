@@ -210,3 +210,45 @@ If you want the output to be displayed conditionally, use the following instead:
 
 Use
 ---
+
+Template inheritance is one of the most powerful features of Twig but it is limited to single inheritance; 
+a template can only extend one other template. 
+This limitation makes template inheritance simple to understand and easy to debug:
+
+```twig
+{% extends "base.html" %}
+
+{% block title %}{% endblock %}
+{% block content %}{% endblock %}
+```
+
+Horizontal reuse is a way to achieve the same goal as multiple inheritance, but without the associated complexity:
+
+```twig
+{% extends "base.html" %}
+
+{% use "blocks.html" %}
+
+{% block title %}{% endblock %}
+{% block content %}{% endblock %}
+```
+
+The `use` statement tells Twig to import the blocks defined in `blocks.html` into the current template 
+(it's like `macros`, but for blocks):
+
+```twig
+{# blocks.html #}
+
+{% block sidebar %}{% endblock %}
+```
+
+In this example, the `use` statement imports the `sidebar` block into the main template. 
+The code is mostly equivalent to the following one (the imported blocks are not outputted automatically):
+
+```twig
+{% extends "base.html" %}
+
+{% block sidebar %}{% endblock %}
+{% block title %}{% endblock %}
+{% block content %}{% endblock %}
+```

@@ -54,6 +54,7 @@ local _tag = {}
 --- @field extends string|fun
 --- @field extends_expr boolean
 --- @field import table
+--- @field uses table
 --- @field line number
 --- @field tok aspect.tokenizer
 --- @field code table stack of code. Each level is isolated code (block or macro). 0 level is body
@@ -120,6 +121,19 @@ function compiler:get_code()
         else
             insert(code,"\textends = true")
         end
+    end
+    if self.uses and #self.uses > 0 then
+        insert(code,"\tuses = {")
+        for _, use in ipairs(self.uses) do
+            insert(code,"\t\t{")
+            insert(code,"\t\t\tname = " .. use.name .. ", ")
+            insert(code,"\t\t\tline = " .. use.line .. ", ")
+            if use.with then
+                insert(code,"\t\t\twith = { " .. utils.implode_hashes(use.with) .. " }, ")
+            end
+            insert(code,"\t\t}")
+        end
+        insert(code,"\t}")
     end
     insert(code, "}\n")
 

@@ -293,8 +293,8 @@ function filters.split(v, delim, c)
     return stringx.split(tostring(v), delim, c)
 end
 
-function filters.striptags(v, tags)
-
+function filters.striptags(v)
+    return gsub(output.s(v), "%b<>", " ")
 end
 
 function filters.url_encode(v)

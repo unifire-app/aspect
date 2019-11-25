@@ -32,7 +32,7 @@ local jit = jit
 --- @field uses table<string>
 --- @field extends string|boolean
 --- @field cached string (dynamic)
---- @field has_blocs boolean (dynamic)
+--- @field has_blocks boolean (dynamic)
 --- @field has_macros boolean (dynamic)
 local _view = {}
 
@@ -179,13 +179,41 @@ function template:get_view(name)
         return self.cache[name]
     end
     local view, error = self:load(name)
-    if self.cache and view then
-        self.cache[name] = view
-    end
-    if not view and error then
+    if view then
+        if view.uses then -- lazy load the {%use%} tag
+            for _, use in ipairs(view.uses) do
+                local use_view, use_error = self:get_view(use.name)
+                if use_view then -- use template loaded
+                    if use_view.has_blocks then -- loaded template has blocks
+                        if use.with then -- we use peace of blocks
+                            for n, a in pairs(use.with) do
+                                if not view.blocks[a] and use_view.blocks[n] then
+                                    view.blocks[a] = use_view.blocks[n]
+                                end
+                            end
+                        else
+                            for n, b in pairs(use_view.blocks) do
+                                if not view.blocks[n] then
+                                    view.blocks[n] = b
+                                end
+                            end
+                        end
+                    end
+                else
+                    return nil, err.new("Failed to load block from template " .. name .. ": " .. err.new(use_error):get_message())
+                        :set_name(self.name, use_view.line)
+                end
+            end
+        end
+        if self.cache then -- if cache are enabled
+            self.cache[name] = view
+        end
+        return view
+    elseif error then
         return nil, err.new(error)
+    else
+        return nil
     end
-    return view
 end
 
 --- Load template and compile template if needed.

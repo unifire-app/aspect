@@ -140,7 +140,28 @@ end
 --- @param compiler aspect.compiler
 --- @param tok aspect.tokenizer
 function tags.tag_use(compiler, tok)
-
+    if tok:is_string() then
+        local uses = {
+            name = tok:get_token(),
+            line = compiler.line
+        }
+        compiler.uses[#compiler.uses + 1] = uses
+        tok:next()
+        if tok:is('with') then
+            uses.with = {}
+            tok:next()
+            while tok:is_valid() do
+                local block_name = tok:get_token()
+                local alias_name = tok:next():require("as"):next():get_token()
+                uses.with[block_name] = quote_string(alias_name)
+                if not tok:next():is(",") then
+                    break
+                end
+            end
+        end
+    else
+        compiler_error(tok, "syntax", "the template name")
+    end
 end
 
 --- {% macro %}
@@ -379,6 +400,18 @@ function tags.tag_for(compiler, tok)
             break
         end
     end
+end
+
+--- {% break  %}
+function tags.tag_break(compiler, tok)
+    local tag = compiler:get_last_tag()
+    if not tag then
+        compiler_error(tok, "syntax")
+    end
+    if tag.name ~= "for" then
+        compiler_error(tok, "syntax", "'break' allows only in 'for' tag")
+    end
+    return 'break'
 end
 
 --- {% endfor %}

@@ -84,7 +84,7 @@ Tags
 * [for, else](./docs/tags/for.md) — loop over each item in a sequence.
 * [macro](./docs/tags/macro.md), [import](./docs/tags/macro.md#importing-macros), [from](./docs/tags/macro.md#importing-macros)
 * [include](./docs/tags/include.md) — includes a template and returns the rendered content
-* [extends](./docs/tags/extends.md), [block](./docs/tags/extends.md#block), [use](./docs/tags/extends.md#use) — 
+* [extends](./docs/tags/extends.md), [block](./docs/tags/extends.md#block), [use](./docs/tags/extends.md#use) - 
   template inheritance ([read more](./docs/syntax.md#template-inheritance))
 * apply
 * [autoescape](./docs/tags/autoescape.md)
@@ -115,7 +115,7 @@ Filters
 * [raw](./docs/filters/raw.md)
 * [replace()](./docs/filters/replace.md)
 * split(delim, count)
-* striptags(tags)
+* [striptags](./docs/filters/striptags.md)
 * [trim](./docs/filters/trim.md)
 * url_encode
 * strip

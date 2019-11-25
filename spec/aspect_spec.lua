@@ -35,6 +35,7 @@ local vars = {
 
     string_empty = "",
     string_1 = [[string value]],
+    string_2 = [[Hello, World]],
     string_html = [[<b>Hello</b>]],
 
     date_1 = "2019-11-11 09:55:30",
@@ -652,6 +653,29 @@ templates["filter:round_00"] = {
 templates["filter:column_00"] = {
     "{{ list_2|column('name')|join(',') }}",
     "item2.1,item2.2,item2.3"
+}
+
+templates["filter:upper_lower_00"] = {
+    "{{ string_2|upper }} [and] {{ string_2|lower }}",
+    "HELLO, WORLD [and] hello, world"
+}
+
+templates["filter:replace_00"] = {
+    "{{ string_2|replace({World: 'User', Hello: 'Hi'}) }}",
+    "Hi, User"
+}
+
+templates["filter:striptags_00"] = {
+    "{{ string_html|striptags }}",
+    "Hello"
+}
+
+templates["filter:merge_00"] = {
+    [[
+    {% for k, v in table_1|merge(list_1) %}
+    {% endfor %}
+    ]],
+    "" -- keys in tables are sorted randomly.
 }
 
 templates["function:dump_01"] = {

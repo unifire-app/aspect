@@ -267,7 +267,7 @@ function filters.merge(v, items)
     if type(v) == "table" and type(items) == "table" then
         return tablex.merge(v, items)
     else
-        return v
+        return v or items or {}
     end
 end
 
@@ -282,11 +282,10 @@ end
 function filters.replace(v, from)
     if type(from) == "table" then
         for k, e in pairs(from) do
-            v = stringx.replace(v, tostring(k), tostring(e))
+            v = stringx.replace(v, tostring(k), output.s(e))
         end
-    else
-        return v
     end
+    return v
 end
 
 function filters.split(v, delim, c)

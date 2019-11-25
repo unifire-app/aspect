@@ -575,7 +575,7 @@ function compiler:parse_filters(tok, var, info)
                 while not tok:is(")") and tok:is_valid() do -- parse arguments of the filter
                     tok:next()
                     local key
-                    if tok:is_word() and not special[tok:get_token()] then
+                    if tok:is_word() and not special[tok:get_token()] and tok:is_next("=") then
                         key = tok:get_token()
                         tok:next():require("="):next()
                         args[key] = self:parse_expression(tok)

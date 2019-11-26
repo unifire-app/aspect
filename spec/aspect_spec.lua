@@ -4,6 +4,7 @@ local tokenizer = require("aspect.tokenizer")
 local astree = require("aspect.ast")
 local compiler = require("aspect.compiler")
 local filters = require("aspect.filters")
+local funcs = require("aspect.funcs")
 local var_dump = require("aspect.utils").var_dump
 local batch = require("aspect.utils.batch")
 local err = require("aspect.err")
@@ -16,6 +17,10 @@ local cjson = require("cjson.safe")
 
 require('busted.runner')()
 
+local function spaceless(v)
+    local v = string.gsub(v, "%s+", " ")
+    return strip(v)
+end
 
 local vars = {
     integer_0 = 0,
@@ -683,10 +688,15 @@ templates["function:dump_01"] = {
     "function:dump_01:1: { (string) item1 (string) item2 (string) item3 } Stack: begin function:dump_01:1"
 }
 
-templates["function:dump_02"] = {
-    "{{ dump(table_1) }}",
-    "function:dump_02:1: { float_value = (number) 2.1 integer_value = (number) 7 string_value = (string) is table value } Stack: begin function:dump_02:1"
-}
+--templates["function:dump_02"] = {
+--    "{{ dump(table_1) }}",
+--    spaceless(funcs.fn.dump(vars.table_1))
+--}
+--
+--templates["function:dump_03"] = {
+--    "{{ dump(table_inf) }}",
+--    spaceless(funcs.fn.dump(vars.table_inf))
+--}
 
 templates["tests_00"] = {
     "{% if none is defined %} defined {% endif %} [and] {% if none is not defined %} not defined {% endif %}",
@@ -915,8 +925,7 @@ describe("Testing template syntax.", function ()
             compiled = {}
             local result, err = template:render(k, vars)
             if result and not err then
-                result = string.gsub(result.result, "%s+", " ")
-                assert.is.equals(v[2], strip(result), "Test template ".. k ..":\n" .. v[1] .. "\nCompiled template:\n" .. table.concat(compiled))
+                assert.is.equals(v[2], spaceless(result.result), "Test template ".. k ..":\n" .. v[1] .. "\nCompiled template:\n" .. table.concat(compiled))
             elseif not v[2] and v[3] then
                 assert.is.equals(err.message, v[3])
             else

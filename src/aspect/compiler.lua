@@ -56,7 +56,9 @@ local _tag = {}
 --- @field import table
 --- @field uses table
 --- @field line number
+--- @field ignore string|nil
 --- @field tok aspect.tokenizer
+--- @field tags table<aspect.tag>
 --- @field code table stack of code. Each level is isolated code (block or macro). 0 level is body
 local compiler = {
     version = 1,
@@ -88,7 +90,8 @@ function compiler.new(aspect, name)
         idx  = 0,
         use_vars = {},
         tag_type = nil,
-        import = {}
+        import = {},
+        ignore = nil,
     }, mt)
 end
 
@@ -181,6 +184,8 @@ function compiler:get_code()
     return concat(code, "\n")
 end
 
+--- Main parse function
+--- @param source string the template source code
 function compiler:parse(source)
     local l = 1
     local tag_pos = find(source, "{", l, true)
@@ -247,6 +252,20 @@ function compiler:parse(source)
         end
         self.tag_type = nil
         tag_pos = find(source, "{", tag_pos + 1, true)
+        if self.ignore and tag_pos then
+            while tag_pos do -- skip all tags until self.ignore
+                if find(source, "^{%%[-~]?%s*" .. self.ignore, tag_pos) == tag_pos then
+                    self.ignore = nil
+                    break
+                end
+                tag_pos = find(source, "{", tag_pos + 1, true)
+            end
+        end
+    end
+    if #self.tags > 0  then
+        local tag = self.tags[#self.tags]
+        compiler_error(nil, "syntax", "Unexpected end of the template '" ..
+            self.name .. "', expecting tag 'end" .. tag.name .. "' (opened on line " .. tag.line .. ")")
     end
     local frag = sub(source, l)
     if strip then
@@ -813,7 +832,7 @@ function compiler:has_local_var(name)
     return self.vars[ #self.vars ][name] ~= nil
 end
 
---- Push the tag in tag's stacks
+--- Push the tag into scope stack
 --- @param name string the tag name
 --- @param code_space table|nil for lua code
 --- @return aspect.tag

@@ -10,6 +10,7 @@ local import_type = config.macro.import_type
 local concat = table.concat
 local insert = table.insert
 local tostring = tostring
+local pairs = pairs
 
 local tags = {}
 
@@ -583,5 +584,69 @@ function tags.tag_endautoescape(compiler)
     return "__:autoescape(__" .. tag.id .. ")"
 end
 
+--- {% verbatim %}
+--- @param compiler aspect.compiler
+function tags.tag_verbatim(compiler)
+    compiler.ignore = "endverbatim"
+    compiler:push_tag("verbatim")
+end
+
+--- {% endverbatim %}
+--- @param compiler aspect.compiler
+function tags.tag_endverbatim(compiler)
+    compiler:pop_tag("verbatim")
+    return "local z=1"
+end
+
+--- {% with %}
+--- @param compiler aspect.compiler
+--- @param tok aspect.tokenizer
+--- @return string
+function tags.tag_with(compiler, tok)
+    local code = {"do"}
+    local dynamic = false -- all variables for scope from variable e.g. {% with vars %}
+    local vars
+    if tok:is("{") then
+        vars = compiler:parse_hash(tok)
+
+    elseif tok:is_word() then
+        dynamic = tok:get_token()
+        tok:next()
+    end
+    if tok:is("only") then
+        compiler:push_tag("with", nil, nil, {})
+        tok:next()
+        if dynamic then
+            code[#code + 1] = "local _context = __.t(" .. dynamic .. ")"
+        elseif vars then
+            code[#code + 1] = "local _context = {" .. utils.implode_hashes(vars) .. "}"
+        else
+            code[#code + 1] = "local _context = {}"
+        end
+    else
+        compiler:push_tag("with")
+        if vars then
+            for k, v in pairs(vars) do
+                code[#code + 1] = "local " .. k .. " = " .. v
+                compiler:push_var(k)
+            end
+        end
+        if dynamic then
+            code[#code + 1] = "local _context = __.setmetatable(__.t(" .. dynamic .. "), { __index = _context })"
+        else
+            -- allows __context
+        end
+    end
+
+    return code
+end
+
+--- {% endwith %}
+--- @param compiler aspect.compiler
+--- @return string
+function tags.tag_endwith(compiler)
+    compiler:pop_tag("with")
+    return "end"
+end
 
 return tags

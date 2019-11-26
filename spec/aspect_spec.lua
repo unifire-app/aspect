@@ -683,6 +683,16 @@ templates["function:dump_01"] = {
     "function:dump_01:1: { (string) item1 (string) item2 (string) item3 } Stack: begin function:dump_01:1"
 }
 
+templates["function:dump_02"] = {
+    "{{ dump(table_1) }}",
+    "function:dump_02:1: { float_value = (number) 2.1 integer_value = (number) 7 string_value = (string) is table value } Stack: begin function:dump_02:1"
+}
+
+templates["function:dump_03"] = {
+    "{{ dump(table_inf) }}",
+    "function:dump_03:1: { date_2 = (string) 2019-11-11 09:56:30 integer_0 = (number) 0 integer_2 = (number) 2 false_value = (boolean) false integer_4 = (number) -4 float_3 = (number) 2.7 float_2 = (number) 100000 true_value = (boolean) true integer_1 = (number) 1 table_inf = *** recursive *** table_1 = { float_value = (number) 2.1 integer_value = (number) 7 string_value = (string) is table value } list_2 = { { name = (string) item2.1 } { name = (string) item2.2 } { name = (string) item2.3 } } float_1 = (number) 1.1 string_2 = (string) Hello, World list_1 = { (string) item1 (string) item2 (string) item3 } list_empty = {} date_1 = (string) 2019-11-11 09:55:30 integer_3 = (number) 3 string_empty = (string) string_html = (string) <b>Hello</b> string_1 = (string) string value } Stack: begin function:dump_03:1"
+}
+
 templates["tests_00"] = {
     "{% if none is defined %} defined {% endif %} [and] {% if none is not defined %} not defined {% endif %}",
     "[and] not defined"
@@ -731,6 +741,74 @@ templates["strip_00"] = {
     "one\n  {{- 1 -}}  \ntwo\n  {{ 2 -}}  \ntree\n  {{- 3 }}  \nfour\n  {{ 4 }}  \nfive",
     "one1two 2tree3 four 4 five",
     expected = "one1two\n  2tree3  \nfour\n  4  \nfive",
+}
+
+templates["verbatim_00"] = {
+    [[
+        [begin]
+        {% verbatim %}
+            pre if
+            {%- if integer_0 -%}
+                if body
+            {% endif %}
+            post if
+        {%- endverbatim -%}
+        [end]
+    ]],
+    "[begin] pre if {%- if integer_0 -%} if body {% endif %} post if[end]"
+}
+
+templates["with_00"] = {
+    [[
+        {% with %}
+            {% set test = "one" %}
+            {{ test }} [and] {{ integer_1 }} [and]
+        {% endwith %}
+        {{ test }}
+    ]],
+    "one [and] 1 [and]"
+}
+
+templates["with_01"] = {
+    [[
+        {% with { test: "one" } %}
+            {{ test }} [and] {{ integer_1 }} [and]
+        {% endwith %}
+        {{ test }}
+    ]],
+    "one [and] 1 [and]"
+}
+
+templates["with_02"] = {
+    [[
+        {% with { test: "one" } only %}
+            {{ test }} [and] {{ integer_1 }} [and]
+        {% endwith %}
+        {{ test }}
+    ]],
+    "one [and] [and]"
+}
+
+templates["with_03"] = {
+    [[
+        {% set scope = { test: "one" } %}
+        {% with scope %}
+            {{ test }} [and] {{ integer_1 }} [and]
+        {% endwith %}
+        {{ test }}
+    ]],
+    "one [and] 1 [and]"
+}
+
+templates["with_04"] = {
+    [[
+        {% set scope = { test: "one" } %}
+        {% with scope only %}
+            {{ test }} [and] {{ integer_1 }} [and]
+        {% endwith %}
+        {{ test }}
+    ]],
+    "one [and] [and]"
 }
 
 

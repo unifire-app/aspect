@@ -300,6 +300,14 @@ function output.n(v)
     end
 end
 
+function output.t(v)
+    if type(v) == "table" then
+        return v
+    else
+        return {}
+    end
+end
+
 --- Get iterator of the v
 --- @param v any
 --- @return fun iterator

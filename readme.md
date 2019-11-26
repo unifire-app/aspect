@@ -88,7 +88,8 @@ Tags
   template inheritance ([read more](./docs/syntax.md#template-inheritance))
 * apply
 * [autoescape](./docs/tags/autoescape.md)
-* verbatim aka ignore
+* [verbatim](./docs/tags/verbatim.md)
+* [with](./docs/tags/with.md)
 
 Filters
 -------

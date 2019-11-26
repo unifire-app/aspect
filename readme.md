@@ -119,7 +119,6 @@ Filters
 * [striptags](./docs/filters/striptags.md)
 * [trim](./docs/filters/trim.md)
 * url_encode
-* strip
 
 Functions
 ---------

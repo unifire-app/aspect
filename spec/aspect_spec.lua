@@ -688,11 +688,6 @@ templates["function:dump_02"] = {
     "function:dump_02:1: { float_value = (number) 2.1 integer_value = (number) 7 string_value = (string) is table value } Stack: begin function:dump_02:1"
 }
 
-templates["function:dump_03"] = {
-    "{{ dump(table_inf) }}",
-    "function:dump_03:1: { date_2 = (string) 2019-11-11 09:56:30 integer_0 = (number) 0 integer_2 = (number) 2 false_value = (boolean) false integer_4 = (number) -4 float_3 = (number) 2.7 float_2 = (number) 100000 true_value = (boolean) true integer_1 = (number) 1 table_inf = *** recursive *** table_1 = { float_value = (number) 2.1 integer_value = (number) 7 string_value = (string) is table value } list_2 = { { name = (string) item2.1 } { name = (string) item2.2 } { name = (string) item2.3 } } float_1 = (number) 1.1 string_2 = (string) Hello, World list_1 = { (string) item1 (string) item2 (string) item3 } list_empty = {} date_1 = (string) 2019-11-11 09:55:30 integer_3 = (number) 3 string_empty = (string) string_html = (string) <b>Hello</b> string_1 = (string) string value } Stack: begin function:dump_03:1"
-}
-
 templates["tests_00"] = {
     "{% if none is defined %} defined {% endif %} [and] {% if none is not defined %} not defined {% endif %}",
     "[and] not defined"

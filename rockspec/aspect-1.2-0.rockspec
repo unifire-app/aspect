@@ -1,7 +1,8 @@
 package = "aspect"
 version = "1.2-0"
 source = {
-    url = "https://github.com/unifire-app/aspect/archive/1.1.zip"
+    url = "https://github.com/unifire-app/aspect/archive/1.2.zip",
+    dir = "aspect-1.2"
 }
 description = {
     summary = "Aspect is a compiling templating engine for Lua and OpenResty with syntax Twig/Django/Jinja.",

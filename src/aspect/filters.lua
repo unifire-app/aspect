@@ -37,19 +37,42 @@ if has_utf8 then
     sub   = utf8.sub
 end
 
-local filters = {}
+--- @class aspect.filters
+local filters = {
+    info = {},
+    fn = {}
+}
 
-function filters.abs(v)
+--- Add filter
+--- @param name string the filter name
+--- @param args table the filter argument list
+--- @param func fun the filter function
+function filters.add(name, val_type, ret_type, args, func)
+    filters.info[name] = {
+        val = val_type,
+        args = args,
+        ret = ret_type
+    }
+    filters.fn[name] = func
+end
+
+--filters.add("abs", "number", "number", {}, math.abs)
+
+function filters.fn.abs(v)
     return math.abs(output.n(v))
 end
 
-function filters.batch(v, c)
+--filters.add("abs", "table", "iterator", {
+--    {name = "count", type = "number"}
+--}, batch.new)
+
+function filters.fn.batch(v, c)
     if type(v) == "table" then
         return batch.new(v, output.n(c))
     end
 end
 
-function filters.round(v)
+function filters.fn.round(v)
     v = output.n(v)
     if v % 1 > 0.5 then
         return math.ceil(v)
@@ -58,7 +81,7 @@ function filters.round(v)
     end
 end
 
-function filters.column(v, column)
+function filters.fn.column(v, column)
     local ok, res = pcall(array2d.column, v, column)
     if ok then
         return res
@@ -67,7 +90,7 @@ function filters.column(v, column)
     end
 end
 
-function filters.date(v, fmt)
+function filters.fn.date(v, fmt)
     local dt = date(tostring(v))
     if dt then
         return dt:fmt(fmt)
@@ -95,7 +118,7 @@ local date_mods = {
     year    = "addyears",
 }
 
-function filters.date_modify(v, offset)
+function filters.fn.date_modify(v, offset)
     local dt = date(tostring(v))
 
     if dt then
@@ -115,15 +138,15 @@ function filters.date_modify(v, offset)
     end
 end
 
-function filters.escape(v, typ)
-    return filters.e(v, typ)
+function filters.fn.escape(v, typ)
+    return filters.fn.e(v, typ)
 end
 
 local function char_to_hex(c)
     return format("%%%02X", byte(c))
 end
 
-function filters.e(v, typ)
+function filters.fn.e(v, typ)
     v = tostring(v)
     if not typ or typ == "html" then
         return gsub(v, e_pattern, e_replaces)
@@ -139,7 +162,7 @@ function filters.e(v, typ)
     end
 end
 
-function filters.default(v, default, boolean)
+function filters.fn.default(v, default, boolean)
     if boolean then
         return output.b2(v) or default
     else
@@ -151,7 +174,7 @@ function filters.default(v, default, boolean)
     end
 end
 
-function filters.first(v)
+function filters.fn.first(v)
     local typ = type(v)
     if typ == "table" then
         local mt = getmetatable(v)
@@ -168,11 +191,11 @@ function filters.first(v)
     return nil
 end
 
-function filters.format(v, ...)
+function filters.fn.format(v, ...)
     return format(tostring(v), ...)
 end
 
-function filters.last(v)
+function filters.fn.last(v)
     local typ = type(v)
     if typ == "table" then
         local last
@@ -186,11 +209,7 @@ function filters.last(v)
     return nil
 end
 
-function filters.format_number(v, opts)
-
-end
-
-function filters.join(v, delim, last_delim)
+function filters.fn.join(v, delim, last_delim)
     if type(v) == "table" then
         local mt = getmetatable(v)
         if mt and mt.__pairs then
@@ -214,12 +233,12 @@ function filters.join(v, delim, last_delim)
 end
 
 --- https://twig.symfony.com/doc/2.x/filters/json_encode.html
-function filters.json_encode(v)
+function filters.fn.json_encode(v)
     return cjson.encode(v)
 end
 
 --- https://twig.symfony.com/doc/2.x/filters/keys.html
-function filters.keys(v)
+function filters.fn.keys(v)
     local typ = type(v)
     if typ == "table" then
         if v.__pairs and getmetatable(v).__pairs then
@@ -237,7 +256,7 @@ function filters.keys(v)
     end
 end
 
-function filters.length(v)
+function filters.fn.length(v)
     local typ = type(v)
     if typ == "table" then
         local mt = getmetatable(v)
@@ -255,15 +274,15 @@ function filters.length(v)
     end
 end
 
-function filters.lower(v)
+function filters.fn.lower(v)
     return lower(tostring(v))
 end
 
-function filters.upper(v)
+function filters.fn.upper(v)
     return upper(tostring(v))
 end
 
-function filters.merge(v, items)
+function filters.fn.merge(v, items)
     if type(v) == "table" and type(items) == "table" then
         return tablex.merge(v, items)
     else
@@ -271,15 +290,15 @@ function filters.merge(v, items)
     end
 end
 
-function filters.nl2br(v)
+function filters.fn.nl2br(v)
     return gsub(output.s(v), "\n", "<br/>\n")
 end
 
-function filters.raw(v)
+function filters.fn.raw(v)
     return v
 end
 
-function filters.replace(v, from)
+function filters.fn.replace(v, from)
     if type(from) == "table" then
         for k, e in pairs(from) do
             v = stringx.replace(v, tostring(k), output.s(e))
@@ -288,19 +307,15 @@ function filters.replace(v, from)
     return v
 end
 
-function filters.split(v, delim, c)
+function filters.fn.split(v, delim, c)
     return stringx.split(tostring(v), delim, c)
 end
 
-function filters.striptags(v)
+function filters.fn.striptags(v)
     return gsub(output.s(v), "%b<>", " ")
 end
 
-function filters.url_encode(v)
-
-end
-
-function filters.trim(v, what, side)
+function filters.fn.trim(v, what, side)
     if not side then
         return stringx.strip(v, what)
     elseif side == "right" then
@@ -312,12 +327,16 @@ function filters.trim(v, what, side)
     end
 end
 
-function filters.inthe(v, k)
+function filters.fn.inthe(v, k)
     if type(k) == "table" then
         return tablex.find(k, v) ~= nil
     else
         return stringx.lfind(k, output.s(v)) ~= nil
     end
+end
+
+function filters.fn.split(v, delim, limit)
+    return stringx.split(output.s(v), output.s(delim), limit) or {}
 end
 
 return filters

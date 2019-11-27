@@ -81,11 +81,13 @@ function tags.tag_extends(compiler, tok)
     if compiler.extends then
         compiler_error(tok, 'syntax', "Template already extended")
     end
-    if tok:is_string() and not tok:is_next_op() then
-        compiler.extends = {value = tok:get_token(), static = true}
-        tok:next()
+    local info = {}
+    local name = compiler:parse_expression(tok, info)
+    if info.type == "string" then
+        compiler.extends = {value = name, static = true}
+        compiler.uses_tpl[name] = true
     else
-        compiler.extends = {value = compiler:parse_expression(tok), static = false}
+        compiler.extends = {value = name, static = false}
     end
 end
 
@@ -146,6 +148,7 @@ function tags.tag_use(compiler, tok)
             name = tok:get_token(),
             line = compiler.line
         }
+        compiler.uses_tpl[uses.name] = true
         compiler.uses[#compiler.uses + 1] = uses
         tok:next()
         if tok:is('with') then
@@ -216,11 +219,15 @@ end
 --- @param compiler aspect.compiler
 --- @param tok aspect.tokenizer
 function tags.tag_include(compiler, tok, ...)
+    local info = {}
     local args = {
-        name = compiler:parse_expression(tok),
+        name = compiler:parse_expression(tok, info),
         with_vars = true,
         with_context = true
     }
+    if info.type == "string" then
+        compiler.uses_tpl[args.name] = true
+    end
     if tok:is('ignore') then
         tok:next():require('missing'):next()
         args.ignore_missing = true
@@ -293,7 +300,11 @@ end
 --- @param compiler aspect.compiler
 --- @param tok aspect.tokenizer
 function tags.tag_import(compiler, tok)
-    local from = compiler:parse_expression(tok)
+    local info = {}
+    local from = compiler:parse_expression(tok, info)
+    if info.type == "string" then
+        compiler.uses_tpl[from] = true
+    end
     tok:require("as"):next()
     local name = compiler:parse_var_name(tok)
     compiler.import[name] = import_type.GROUP
@@ -304,7 +315,11 @@ end
 --- @param compiler aspect.compiler
 --- @param tok aspect.tokenizer
 function tags.tag_from(compiler, tok)
-    local from = compiler:parse_expression(tok)
+    local info = {}
+    local from = compiler:parse_expression(tok, info)
+    if info.type == "string" then
+        compiler.uses_tpl[from] = true
+    end
     tok:require("import"):next()
     local names, aliases = {}, {}
     while tok:is_valid() do

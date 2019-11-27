@@ -122,7 +122,7 @@ function template.new(options)
         escape = options.autoescape or false,
         strip = options.autostrip or false,
         stack_size = 20,
-        f = filters,
+        f = filters.fn,
         fn = funcs.fn,
         t = tests.fn
     }

@@ -215,6 +215,10 @@ Add filters
 
 ```lua
 local filters = require("aspect.filters")
+
+filters.add("foo", {"arg1", "arg2"}, function (v, arg1, arg2) 
+
+end)
 ```
 
 See [aspect.filters](../src/aspect/filters.lua) for more examples.

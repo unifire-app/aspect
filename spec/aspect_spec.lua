@@ -3,7 +3,7 @@ local aspect = require("aspect.template")
 local tokenizer = require("aspect.tokenizer")
 local astree = require("aspect.ast")
 local compiler = require("aspect.compiler")
-local filters = require("aspect.filters")
+local filters = require("aspect.filters").fn
 local funcs = require("aspect.funcs")
 local var_dump = require("aspect.utils").var_dump
 local batch = require("aspect.utils.batch")
@@ -18,7 +18,7 @@ local cjson = require("cjson.safe")
 require('busted.runner')()
 
 local function spaceless(v)
-    local v = string.gsub(v, "%s+", " ")
+    v = string.gsub(v, "%s+", " ")
     return strip(v)
 end
 

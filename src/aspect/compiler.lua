@@ -84,6 +84,7 @@ function compiler.new(aspect, name)
         extends = nil,
         blocks = {},
         uses = {},
+        uses_tpl = {},
         vars = {},
         deps = {},
         tags = {},

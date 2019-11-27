@@ -86,10 +86,12 @@ Tags
 * [include](./docs/tags/include.md) — includes a template and returns the rendered content
 * [extends](./docs/tags/extends.md), [block](./docs/tags/extends.md#block), [use](./docs/tags/extends.md#use) - 
   template inheritance ([read more](./docs/syntax.md#template-inheritance))
-* apply
 * [autoescape](./docs/tags/autoescape.md)
 * [verbatim](./docs/tags/verbatim.md)
 * [with](./docs/tags/with.md)
+* apply (todo)
+* embed (todo)
+
 
 Filters
 -------
@@ -104,7 +106,6 @@ Filters
 * [first](./docs/filters/first.md)
 * [last](./docs/filters/last.md)
 * [format(...)](./docs/filters/format.md)
-* format_number(opts)
 * [join(delim, last_delim)](./docs/filters/join.md)
 * [json_encode](./docs/filters/json_encode.md)
 * [keys](./docs/filters/keys.md)
@@ -115,10 +116,9 @@ Filters
 * [nl2br](./docs/filters/nl2br.md)
 * [raw](./docs/filters/raw.md)
 * [replace()](./docs/filters/replace.md)
-* split(delim, count)
+* [split(delimiter, limit)](./docs/filters/split.md)
 * [striptags](./docs/filters/striptags.md)
 * [trim](./docs/filters/trim.md)
-* url_encode
 
 Functions
 ---------

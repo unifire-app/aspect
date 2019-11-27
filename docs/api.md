@@ -102,9 +102,9 @@ Cache
 
 Aspect template has 3 level of cache:
 
-1. lua code cache - normal
-2. byte code cache — fast
-3. `aspect.view` object cache (in-memory) — fastest
+1. lua code cache — normal (Aspect's functions `luacode_load` and `luacode_save`).
+2. byte code cache — fast (Aspect's functions `bytecode_load` and `bytecode_save`).
+3. `aspect.view` object cache (internal) — fastest (Aspect's property `cache`)
 
 Cache stages:
 
@@ -125,17 +125,19 @@ local template = aspect.new({
     cache = true -- enable internal lua in-memory cache 
 })
 template.bytecode_load = function (t, name)
+    -- load bytecode from nginx shared dictionary
     return ngx.shared["cache"]:get(name)
 end
 template.luacode_load = function (t, name)
+    -- load lua code from redis
     return redis:get(name)
 end
 template.luacode_save = function (t, name, luacode)
-    -- save lua code into redis e.g.
+    -- save lua code into redis
     redis:set(name, luacode)
 end
 template.bytecode_save = function (t, name, bytecode)
-    -- cache bytecode into nginx shared dictionary
+    -- save bytecode into nginx shared dictionary
     ngx.shared["cache"]:set(name, bytecode)
 end
 ```
@@ -145,7 +147,7 @@ Use custom table for internal cache:
 ```lua
 local aspect = require("aspect.template")
 local template = aspect.new({
-    cache = _G.tpls -- use global tpls table for storing aspect.view
+    cache = app.views -- use own app.views table for storing aspect.view objects
 })
 ```
 

@@ -11,9 +11,9 @@ Aspect Lua Template
 
 The key-features are...
 * _Well known_: The most popular Django-like syntax is used - 
-  [Twig2](https://twig.symfony.com/doc/2.x/templates.html) compatible and [Jinja2](https://jinja.palletsprojects.com/en/2.10.x/templates/) like.
+  [Twig](https://twig.symfony.com/doc/2.x/templates.html) compatible and [Jinja](https://jinja.palletsprojects.com/en/2.10.x/templates/) like.
 * _Fast_: Aspect compiles templates down to plain optimized Lua code. 
-  Moreover, Lua cod compiles into bytecode - the fastest representation of a template.
+  Moreover, Lua code compiles into bytecode - the fastest representation of a template.
 * _Secure_: Aspect has a sandbox mode to evaluate all template code. 
   This allows Aspect to be used as a template language for applications where users may modify the template design.
 * _Flexible_: Aspect is powered by a flexible lexer and parser. 
@@ -22,6 +22,7 @@ The key-features are...
   More intuitive behavior with special values such as a empty string, number zero and so on.
 * _Memory-safe_: The template is built in such a way as to save maximum memory when it is executed, 
   even if the iterator provides a lot of data.
+* _Supports_ lua 5.1/5.2/5.3 and luajit 2.0/2.1 (with OpenResty)
 
 Synopsis
 --------

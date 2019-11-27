@@ -100,13 +100,19 @@ The following options are available:
 Cache
 -----
 
+Aspect template has 3 level of cache:
+
+1. lua code cache - normal
+2. byte code cache — fast
+3. `aspect.view` object cache (in-memory) — fastest
+
 Cache stages:
 
 0. _Require the template_
 1. Get `aspect.view` from internal (table in the `aspect.template`) cache.
 2. Get bytcode using `bytecode_load` function.
 3. Get lua code using `luacode_load` function.
-4. _Get template source code using `loader` function._
+4. _Get template source code using `loader` function. Compile it._
 5. Save lua code using `luacode_save` function.
 6. Save bytcode using `bytecode_save` function.
 7. Save `aspect.view` into internal (table in the `aspect.template`) cache.

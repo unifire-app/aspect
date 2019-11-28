@@ -232,12 +232,10 @@ function filters.fn.join(v, delim, last_delim)
     end
 end
 
---- https://twig.symfony.com/doc/2.x/filters/json_encode.html
 function filters.fn.json_encode(v)
     return cjson.encode(v)
 end
 
---- https://twig.symfony.com/doc/2.x/filters/keys.html
 function filters.fn.keys(v)
     local typ = type(v)
     if typ == "table" then

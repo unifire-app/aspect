@@ -265,7 +265,7 @@ It's possible to render the contents of the parent block by using the [parent](.
 
 **Note.** The documentation page for the [extends](./tags/extends.md) tag describes more advanced features like block nesting, scope, dynamic inheritance, and conditional inheritance.
 
-**Note.** Twig also supports multiple inheritance via "horizontal reuse" with the help of the [use](./tags/extends.md#use) tag.
+**Note.** Aspect also supports multiple inheritance via "horizontal reuse" with the help of the [use](./tags/extends.md#use) tag.
 
 Macros
 ------

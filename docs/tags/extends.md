@@ -99,7 +99,7 @@ Use the `defined` test to check if a block exists in the context of the current 
 
 ## Named Block End-Tags
 
-Twig allows you to put the name of the block after the end tag for better readability 
+Aspect allows you to put the name of the block after the end tag for better readability 
 (the name after the `endblock` word must match the block name):
 
 ```twig
@@ -159,7 +159,7 @@ The `block` inside the `for` loop is just a way to make it overridable by a chil
 ```twig
 {# child.tpl #}
 
-{% extends "base.twig" %}
+{% extends "base.tpl" %}
 
 {% block post %}
     <article>
@@ -211,7 +211,7 @@ If you want the output to be displayed conditionally, use the following instead:
 Use
 ---
 
-Template inheritance is one of the most powerful features of Twig but it is limited to single inheritance; 
+Template inheritance is one of the most powerful features of Aspect but it is limited to single inheritance; 
 a template can only extend one other template. 
 This limitation makes template inheritance simple to understand and easy to debug:
 
@@ -233,7 +233,7 @@ Horizontal reuse is a way to achieve the same goal as multiple inheritance, but 
 {% block content %}{% endblock %}
 ```
 
-The `use` statement tells Twig to import the blocks defined in `blocks.html` into the current template 
+The `use` statement tells Aspect to import the blocks defined in `blocks.html` into the current template 
 (it's like `macros`, but for blocks):
 
 ```twig

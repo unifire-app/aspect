@@ -4,19 +4,19 @@ Filter `trim`
 The `trim` filter strips whitespace (or other characters) from the beginning and end of a string:
 
 ```twig
-{{ '  I like Twig.  '|trim }}
+{{ '  I like Aspect.  '|trim }}
 
-{# outputs 'I like Twig.' #}
+{# outputs 'I like Aspect.' #}
 
-{{ '  I like Twig.'|trim('.') }}
+{{ '  I like Aspect.'|trim('.') }}
 
-{# outputs '  I like Twig' #}
+{# outputs '  I like Aspect' #}
 
-{{ '  I like Twig.  '|trim(side='left') }}
+{{ '  I like Aspect.  '|trim(side='left') }}
 
-{# outputs 'I like Twig.  ' #}
+{# outputs 'I like Aspect.  ' #}
 
-{{ '  I like Twig.  '|trim(' ', 'right') }}
+{{ '  I like Aspect.  '|trim(' ', 'right') }}
 
-{# outputs '  I like Twig.' #}
+{# outputs '  I like Aspect.' #}
 ```

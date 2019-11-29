@@ -17,7 +17,7 @@ description = {
 * Custom behavior with userdata.
 * Supports work with OpenResty.
     ]],
-    license = "BSD 3",
+    license = "BSD-3-Clause",
 }
 dependencies = {
     "penlight",
@@ -29,7 +29,7 @@ build = {
     modules = {
         ["aspect.config"]      = "src/aspect/config.lua",
         ["aspect.template"]    = "src/aspect/template.lua",
-        ["aspect.output"]    = "src/aspect/output.lua",
+        ["aspect.output"]      = "src/aspect/output.lua",
         ["aspect.compiler"]    = "src/aspect/compiler.lua",
         ["aspect.tags"]        = "src/aspect/tags.lua",
         ["aspect.err"]         = "src/aspect/err.lua",

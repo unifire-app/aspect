@@ -18,7 +18,7 @@ description = {
 * Custom behavior with userdata.
 * Supports work with OpenResty.
     ]],
-    license = "Apache 2.0",
+    license = "BSD-3-Clause",
 }
 dependencies = {
     "penlight",

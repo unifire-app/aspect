@@ -286,7 +286,7 @@ The following literals exist:
 * `"Hello World"`: Everything between two double or single quotes is a string. 
   They are useful whenever you need a string in the template (for example as arguments to function calls, 
   filters or just to extend or include a template). A string can contain a delimiter 
-  if it is preceded by a backslash (`\`) -- like in `'`It\'s good'`. 
+  if it is preceded by a backslash (`\`) -- like in `'It\'s good'`. 
 * `42` / `42.23`: Integers and floating point numbers are created by writing the number down. 
   If a dot is present the number is a float, otherwise an integer.
 * `["foo", "bar"]`: Arrays (indexed tables) are defined by a sequence of expressions separated by a comma (`,`) 

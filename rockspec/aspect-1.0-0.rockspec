@@ -29,6 +29,7 @@ build = {
     modules = {
         ["aspect.config"]      = "src/aspect/config.lua",
         ["aspect.template"]    = "src/aspect/template.lua",
+        ["aspect.output"]    = "src/aspect/output.lua",
         ["aspect.compiler"]    = "src/aspect/compiler.lua",
         ["aspect.tags"]        = "src/aspect/tags.lua",
         ["aspect.err"]         = "src/aspect/err.lua",

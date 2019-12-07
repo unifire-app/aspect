@@ -223,9 +223,17 @@ end
 function output:get_callstack()
     local callstack = {"begin"}
     for _, c in ipairs(self.stack) do
-        callstack[#callstack + 1 ]= c[1] .. ":" .. c[2]
+        if c[3] then
+            callstack[#callstack + 1] = c[1].name .. ":" .. c[2] .. " " .. c[3]
+        else
+            callstack[#callstack + 1] = c[1].name .. ":" .. c[2]
+        end
     end
-    callstack[#callstack + 1 ]= (self.view and self.view.name or "<undef>") .. ":" .. self.line
+    if self.scope_name then
+        callstack[#callstack + 1] = (self.view and self.view.name or "<undef>") .. ":" .. self.line .. " " .. self.scope_name
+    else
+        callstack[#callstack + 1] = (self.view and self.view.name or "<undef>") .. ":" .. self.line
+    end
     return "\t" .. concat(callstack, "\n\t")
 end
 
@@ -337,7 +345,9 @@ function output.v(v, ...)
         if type(v) ~= "table" then
             return nil
         end
-        if v[k] ~= nil then
+        if v[k] == nil then
+            return nil
+        else
             v = v[k]
         end
     end

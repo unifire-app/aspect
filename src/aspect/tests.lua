@@ -11,6 +11,15 @@ local tests = {
     fn = {}
 }
 
+--- Add test
+--- @param name string the test name
+--- @param fn fun(__:aspect.output, v:any, arg:any):boolean the test function
+--- @param has_arg string|boolean test has an argument (boolean), or test has 'function' line 'same as(...)' (string)
+function tests.add(name, fn, has_arg)
+    tests.args[name] = has_arg
+    tests.fn[name] = fn
+end
+
 function tests.fn.is_defined(__, v)
     return v ~= nil
 end

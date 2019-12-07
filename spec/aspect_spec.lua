@@ -123,6 +123,11 @@ templates["basic_07"] = {
     "unexpected token '+', expecting any value"
 }
 
+templates["basic_08"] = {
+    [[{{ table_1.none }} and {{ non }} and {{ table_inf.table_inf.none }}]],
+    "and and"
+}
+
 templates["if_01"] = {
     [[
         {% if integer_1 and float_1 and true_value and string_1 and list_1 and table_1 %}

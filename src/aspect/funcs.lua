@@ -17,6 +17,18 @@ local func = {
     parsers = {}
 }
 
+--- Add function
+--- @param name string
+--- @param args table
+--- @param fn fun(...):any
+--- @param parser fun(compiler:aspect.compiler, args:table):string
+--- @param pre_parse boolean parse arguments before parser
+function func.add(name, args, fn, parser, pre_parse)
+    func.args[name] = args
+    func.fn[name] = fn
+    func.parsers[name] = {parser, pre_parse}
+end
+
 --- Args of {% parent() %}
 func.args.parent = {}
 

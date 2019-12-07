@@ -239,15 +239,21 @@ end
 function filters.fn.keys(v)
     local typ = type(v)
     if typ == "table" then
-        if v.__pairs and getmetatable(v).__pairs then
-            local keys, i = {}, 1
-            for k, _ in v:__pairs() do
-                keys[i] = k
+        local mt = getmetatable(v)
+        if mt and mt.__pairs then
+            local t, i = {}, 1
+            for k, _ in mt.__pairs(v) do
+                t[i] = k
                 i = i + 1
             end
-            return keys
+            return t
         else
-            return tablex.keys(v)
+            local t, i = {}, 1
+            for  k, _ in pairs(v) do
+                t[i] = k
+                i = i + 1
+            end
+            return t
         end
     else
         return {}

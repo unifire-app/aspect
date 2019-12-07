@@ -10,6 +10,7 @@ local tag_type = config.compiler.tag_type
 local dump = require("aspect.utils").dump
 local date = require("date")
 local utils = require("aspect.utils")
+local range = require("aspect.utils.range")
 
 local func = {
     args = {},
@@ -167,24 +168,33 @@ func.args.range = {"from", "to", "step"}
 --- @param args table
 function func.fn.range(__, args)
     if not args.from then
-        runtime_error(__, "range(): requires 'from' argument")
+        __:notice("range(): requires 'from' argument")
+        return {}
+        --runtime_error(__, "range(): requires 'from' argument")
     end
     if not args.to then
-        runtime_error(__, "range(): requires 'to' argument")
+        __:notice("range(): requires 'to' argument")
+        return {}
+        --runtime_error(__, "range(): requires 'to' argument")
     end
     if not args.step or args.step == 0 then
         args.step = 1
     end
     if args.step > 0 and args.to < args.from then
-        runtime_error(__, "range(): 'to' less than 'from' with positive step")
+        __:notice("range(): 'to' less than 'from' with positive step")
+        return {}
+        --runtime_error(__, "range(): 'to' less than 'from' with positive step")
     elseif args.step < 0 and args.to > args.from then
-        runtime_error(__, "range(): 'to' great than 'from' with negative step")
+        __:notice("range(): 'to' great than 'from' with negative step")
+        return {}
+        --runtime_error(__, "range(): 'to' great than 'from' with negative step")
     end
-    local t = {}
-    for i = args.from, args.to, args.step do
-        t[#t+1] = i
-    end
-    return t
+    --local t = {}
+    --for i = args.from, args.to, args.step do
+    --    t[#t+1] = i
+    --end
+    --return t
+    return range.new(args.from, args.to, args.step)
 end
 
 --- @param __ aspect.output

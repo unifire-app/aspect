@@ -335,7 +335,7 @@ function output.i(v)
         end
     end
 
-    return nil, nil, nil
+    return next, {}, nil
 end
 
 --- Get 'recursive' value from tables
@@ -366,6 +366,10 @@ function output:e(v)
     else
         return self(v)
     end
+end
+
+function output:notice(msg)
+
 end
 
 --- Set autoescape

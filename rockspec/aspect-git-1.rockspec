@@ -1,7 +1,7 @@
 package = "aspect"
-version = "1.0-0"
+version = "git-1"
 source = {
-    url = "https://github.com/unifire-app/aspect/archive/1.0.zip"
+    url = "https://github.com/unifire-app/aspect/-/archive/master/aspect-master.zip"
 }
 description = {
     summary = "Aspect is a compiling templating engine for Lua and OpenResty with syntax Twig/Django/Jinja.",
@@ -27,10 +27,11 @@ dependencies = {
 build = {
     type = "builtin",
     modules = {
+        ["aspect"]             = "src/aspect/init.lua",
         ["aspect.config"]      = "src/aspect/config.lua",
         ["aspect.template"]    = "src/aspect/template.lua",
-        ["aspect.output"]      = "src/aspect/output.lua",
         ["aspect.compiler"]    = "src/aspect/compiler.lua",
+        ["aspect.output"]      = "src/aspect/output.lua",
         ["aspect.tags"]        = "src/aspect/tags.lua",
         ["aspect.err"]         = "src/aspect/err.lua",
         ["aspect.filters"]     = "src/aspect/filters.lua",
@@ -42,5 +43,6 @@ build = {
         ["aspect.ast.ops"]     = "src/aspect/ast/ops.lua",
         ["aspect.utils.batch"] = "src/aspect/utils/batch.lua",
         ["aspect.utils.range"] = "src/aspect/utils/range.lua",
+        ["aspect.loader.array"] = "src/aspect/loader/array.lua",
     }
 }

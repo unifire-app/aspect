@@ -474,9 +474,9 @@ function tags.tag_endfor(compiler)
     end
 
     if tag.key then -- start of 'for'
-        before[#before + 1] = 'for ' .. tag.key .. ', ' .. tag.value .. ' in __.pairs(' .. tag.from .. ') do'
+        before[#before + 1] = 'for ' .. tag.key .. ', ' .. tag.value .. ' in __.i(' .. tag.from .. ') do'
     else
-        before[#before + 1] = 'for _, ' .. tag.value .. ' in __.pairs(' .. tag.from .. ') do'
+        before[#before + 1] = 'for _, ' .. tag.value .. ' in __.i(' .. tag.from .. ') do'
     end
     if tag.cond then -- start of 'if'
         before[#before + 1] = tag.cond

@@ -264,19 +264,22 @@ See [aspect.funcs](../src/aspect/funcs.lua) for more examples.
 Add tests
 ---------
 
-Add tests `foo` and `bar`
+Add tests `foo`, `bar` and `baz`
 
 ```lua
 local tests = require("aspect.tests")
 
-tests.fn.is_foo = function (v)
-   -- return boolean
-end
+tests.add('foo', function (__, v)
+    -- return boolean
+end)
 
-tests.args.is_bar = true -- bar tests has expression
-tests.fn.is_bar = function (v, expr)
-   -- return boolean
-end
+tests.add('bar', function (__, v, arg)
+    -- return boolean
+end, true)
+
+tests.add('baz', function (__, v, arg)
+    -- return boolean
+end, "quux")
 ```
 
 Result:
@@ -284,6 +287,7 @@ Result:
 ```twig
 {{ a is foo }}
 {{ a is bar(c) }}
+{{ a is baz quux(c) }}
 ```
 
 See [aspect.tests](../src/aspect/tests.lua) for more examples.
@@ -291,7 +295,7 @@ See [aspect.tests](../src/aspect/tests.lua) for more examples.
 Add operators
 -------------
 
-For example add bitwise operator `&`: 
+For example add bitwise operator `&` (using [bitop](http://bitop.luajit.org/) package): 
 
 ```lua
 local ops = require("aspect.ast.ops")
@@ -301,8 +305,8 @@ local ops = require("aspect.ast.ops")
 --- Define 'and' bitwise operator.
 --- @see aspect.ast.op
 table.insert(ops, {
-    token = "&", -- token for parser 
-    order = 7, -- operator precedence
+    token = "&", -- one-symbol-token for parser 
+    order = 7, -- operator precedence (1 - high priority, 14 - low priority)
     l = "number", -- left operand should be number
     r = "number", -- right operand should be number
     out = "number", -- result of the operator is number

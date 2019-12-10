@@ -31,8 +31,6 @@ local rstrip = utils.rtrim
 local lstrip = utils.ltrim
 local special = config.compiler.special
 
---local var_dump = require("aspect.utils").var_dump
-
 --- @class aspect.tag
 --- @field id number unique ID of the tag in compilation
 --- @field name string tag name
@@ -45,7 +43,7 @@ local special = config.compiler.special
 --- @field append_text fun(tpl:aspect.compiler, text:string)
 --- @field append_expr fun(tpl:aspect.compiler, expr:string)
 --- @field append_code fun(tpl:aspect.compiler, code:string)
-local _tag = {}
+local _ = {}
 
 --- @class aspect.compiler
 --- @field aspect aspect.template
@@ -63,9 +61,6 @@ local _tag = {}
 local compiler = {
     version = 1,
 }
-
---- @class aspect.compiler.utils
---local utils = {}
 
 local mt = {__index = compiler}
 
@@ -191,6 +186,11 @@ function compiler:parse(source)
     local l = 1
     local tag_pos = find(source, "{", l, true)
     local strip = false
+    local open = {
+        ["{{"] = tag_type.EXPRESSION,
+        ["{%"] = tag_type.CONTROL,
+        ["{#"] = tag_type.COMMENT,
+    }
     self.body = {}
     self.code = {self.body}
     self.vars = {{}}
@@ -209,6 +209,7 @@ function compiler:parse(source)
                 frag = rstrip(frag, wcp)
             end
             if frag ~= "" then
+                -- print("APPEND", frag)
                 self:append_text(frag)
             end
         end
@@ -250,11 +251,23 @@ function compiler:parse(source)
         elseif t == "#" then -- '{#'
             tag_pos = find(source, "#}", p, true)
             l = tag_pos + 2
+        else
+            print("Not a token", sub(source, 1, tag_pos + 1))
+            tag_pos = tag_pos + 2
         end
         self.tag_type = nil
-        tag_pos = find(source, "{", tag_pos + 1, true)
+        while true do
+            tag_pos = find(source, "{", tag_pos + 2, true)
+            if not tag_pos then
+                break
+            end
+            local delim = sub(source, tag_pos, tag_pos + 1)
+            if open[delim] then
+                break
+            end
+        end
         if self.ignore and tag_pos then
-            while tag_pos do -- skip all tags until self.ignore
+            while tag_pos do -- skip all tags until self.ignore tag
                 if find(source, "^{%%[-~]?%s*" .. self.ignore, tag_pos) == tag_pos then
                     self.ignore = nil
                     break

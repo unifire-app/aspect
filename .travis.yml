@@ -55,7 +55,7 @@ before_install:
     - luarocks install lua-cjson $LUA_CJSON
 
 install:
-    - luarocks make
+    - luarocks make rockspec/aspect-git-1.rockspec
 
 script:
 #    - luacheck src spec

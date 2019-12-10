@@ -6,6 +6,7 @@ local filters = require("aspect.filters")
 local tests = require("aspect.tests")
 local err = require("aspect.err")
 local utils = require("aspect.utils")
+local tag_type = require("aspect.config").compiler.tag_type
 local var_dump = utils.var_dump
 local loadcode
 local loadchunk

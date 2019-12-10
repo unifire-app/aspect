@@ -128,6 +128,11 @@ templates["basic_08"] = {
     "and and"
 }
 
+templates["basic_09"] = {
+    [[{{ table_1.integer_value }} and1 { not a tag } and2 {{ table_1.string_value }}]],
+    "7 and1 { not a tag } and2 is table value"
+}
+
 templates["if_01"] = {
     [[
         {% if integer_1 and float_1 and true_value and string_1 and list_1 and table_1 %}

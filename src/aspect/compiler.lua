@@ -252,7 +252,6 @@ function compiler:parse(source)
             tag_pos = find(source, "#}", p, true)
             l = tag_pos + 2
         else
-            print("Not a token", sub(source, 1, tag_pos + 1))
             tag_pos = tag_pos + 2
         end
         self.tag_type = nil

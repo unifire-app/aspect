@@ -162,6 +162,7 @@ end
 --- @param name string
 --- @param source string
 --- @return aspect.compiler
+--- @return aspect.error
 function template:compile_code(name, source)
     local tpl = self.compiler.new(self, name)
     local ok, error = tpl:run(source)

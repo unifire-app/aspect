@@ -47,57 +47,75 @@ local filters = {
 --- @param name string the filter name
 --- @param args table the filter argument list
 --- @param func fun the filter function
-function filters.add(name, val_type, ret_type, args, func)
+function filters.add(name, info, func)
     filters.info[name] = {
-        val = val_type,
-        args = args,
-        ret = ret_type
+        input = info.input or 'any',
+        args = info.args or {},
+        output = info.output or 'any'
     }
     filters.fn[name] = func
 end
 
---filters.add("abs", "number", "number", {}, math.abs)
-
-function filters.fn.abs(v)
+filters.add('abs', {
+    input = 'number',
+    output = 'number'
+}, function (v)
     return math.abs(output.n(v))
-end
+end)
 
---filters.add("abs", "table", "iterator", {
---    {name = "count", type = "number"}
---}, batch.new)
-
-function filters.fn.batch(v, c)
+filters.add('batch', {
+    input = 'iterator',
+    output = 'iterator',
+    args = {
+        [1] = {name = 'count', type = 'number'}
+    }
+}, function (v, c)
     if type(v) == "table" then
         return batch.new(v, output.n(c))
     end
-end
+end)
 
-function filters.fn.round(v)
+filters.add('round', {
+    input = 'number',
+    output = 'number',
+}, function (v)
     v = output.n(v)
     if v % 1 > 0.5 then
         return math.ceil(v)
     else
         return math.floor(v)
     end
-end
+end)
 
-function filters.fn.column(v, column)
+filters.add('column', {
+    input = 'iterator',
+    output = 'iterator',
+    args = {
+        [1] = {name = 'column', type = 'any'}
+    }
+}, function (v, column)
     local ok, res = pcall(array2d.column, v, column)
     if ok then
         return res
     else
         return nil
     end
-end
+end)
 
-function filters.fn.date(v, fmt)
+filters.add('date', {
+    input = 'any',
+    output = 'any',
+    args = {
+        [1] = {name = 'format', type = 'string'}
+    }
+}, function (v, column)
     local dt = date(tostring(v))
     if dt then
         return dt:fmt(fmt)
     else
         return ""
     end
-end
+end)
 
 local date_mods = {
     seconds = "addseconds",
@@ -118,7 +136,13 @@ local date_mods = {
     year    = "addyears",
 }
 
-function filters.fn.date_modify(v, offset)
+filters.add('date_modify', {
+    input = 'any',
+    output = 'any',
+    args = {
+        [1] = {name = 'offset', type = 'any'}
+    }
+}, function (v, offset)
     local dt = date(tostring(v))
 
     if dt then
@@ -136,17 +160,29 @@ function filters.fn.date_modify(v, offset)
     else
         return v
     end
-end
+end)
 
-function filters.fn.escape(v, typ)
+filters.add('escape', {
+    input = 'string',
+    output = 'string',
+    args = {
+        [1] = {name = 'type', type = 'string'}
+    }
+}, function (v, typ)
     return filters.fn.e(v, typ)
-end
+end)
 
 local function char_to_hex(c)
     return format("%%%02X", byte(c))
 end
 
-function filters.fn.e(v, typ)
+filters.add('e', {
+    input = 'string',
+    output = 'string',
+    args = {
+        [1] = {name = 'type', type = 'string'}
+    }
+}, function (v, typ)
     v = tostring(v)
     if not typ or typ == "html" then
         return gsub(v, e_pattern, e_replaces)
@@ -160,9 +196,16 @@ function filters.fn.e(v, typ)
     elseif escapers[typ] then
         return escapers[type](v)
     end
-end
+end)
 
-function filters.fn.default(v, default, boolean)
+filters.add('default', {
+    input = 'any',
+    output = 'any',
+    args = {
+        [1] = {name = 'default', type = 'any'},
+        [2] = {name = 'boolean', type = 'boolean'}
+    }
+}, function (v, default, boolean)
     if boolean then
         return output.b2(v) or default
     else
@@ -172,9 +215,13 @@ function filters.fn.default(v, default, boolean)
             return v
         end
     end
-end
+end)
 
-function filters.fn.first(v)
+filters.add('first', {
+    input = 'iterator',
+    output = 'any',
+    args = {}
+}, function (v)
     local typ = type(v)
     if typ == "table" then
         local mt = getmetatable(v)
@@ -189,13 +236,23 @@ function filters.fn.first(v)
         return sub(v, 1, 1)
     end
     return nil
-end
+end)
 
-function filters.fn.format(v, ...)
+filters.add('format', {
+    input = 'string',
+    output = 'string',
+    args = {
+        [1] = {name = '...', type = 'any'}
+    }
+}, function (v, ...)
     return format(tostring(v), ...)
-end
+end)
 
-function filters.fn.last(v)
+filters.add('last', {
+    input = 'iterator',
+    output = 'any',
+    args = {}
+}, function (v)
     local typ = type(v)
     if typ == "table" then
         local last
@@ -207,9 +264,16 @@ function filters.fn.last(v)
         return sub(v, -2, -1)
     end
     return nil
-end
+end)
 
-function filters.fn.join(v, delim, last_delim)
+filters.add('join', {
+    input = 'iterator',
+    output = 'string',
+    args = {
+        [1] = {name = 'delim', type = 'string'},
+        [2] = {name = 'last_delim', type = 'string'},
+    }
+}, function (v, delim, last_delim)
     if type(v) == "table" then
         local mt = getmetatable(v)
         if mt and mt.__pairs then
@@ -230,13 +294,21 @@ function filters.fn.join(v, delim, last_delim)
     else
         return tostring(v)
     end
-end
+end)
 
-function filters.fn.json_encode(v)
+filters.add('json_encode', {
+    input = 'any',
+    output = 'string',
+    args = {}
+}, function (v)
     return cjson.encode(v)
-end
+end)
 
-function filters.fn.keys(v)
+filters.add('keys', {
+    input = 'iterator',
+    output = 'iterator',
+    args = {}
+}, function (v)
     local typ = type(v)
     if typ == "table" then
         local mt = getmetatable(v)
@@ -258,9 +330,13 @@ function filters.fn.keys(v)
     else
         return {}
     end
-end
+end)
 
-function filters.fn.length(v)
+filters.add('length', {
+    input = 'iterator',
+    output = 'number',
+    args = {}
+}, function (v)
     local typ = type(v)
     if typ == "table" then
         local mt = getmetatable(v)
@@ -276,50 +352,96 @@ function filters.fn.length(v)
     else
         return 0
     end
-end
+end)
 
-function filters.fn.lower(v)
+filters.add('lower', {
+    input = 'string',
+    output = 'string',
+    args = {}
+}, function (v)
     return lower(tostring(v))
-end
+end)
 
-function filters.fn.upper(v)
+filters.add('upper', {
+    input = 'string',
+    output = 'string',
+    args = {}
+}, function (v)
     return upper(tostring(v))
-end
+end)
 
-function filters.fn.merge(v, items)
+filters.add('merge', {
+    input = 'table',
+    output = 'table',
+    args = {
+        [1] = {name = 'items', type = 'table'}
+    }
+}, function (v, items)
     if type(v) == "table" and type(items) == "table" then
         return tablex.merge(v, items)
     else
         return v or items or {}
     end
-end
+end)
 
-function filters.fn.nl2br(v)
+filters.add('nl2br', {
+    input = 'string',
+    output = 'string',
+    args = {}
+}, function (v)
     return gsub(output.s(v), "\n", "<br/>\n")
-end
+end)
 
-function filters.fn.raw(v)
+filters.add('raw', {
+    input = 'any',
+    output = 'any',
+    args = {}
+}, function (v)
     return v
-end
+end)
 
-function filters.fn.replace(v, from)
+filters.add('replace', {
+    input = 'string',
+    output = 'string',
+    args = {
+        [1] = {name = 'from', type = 'any'}
+    }
+}, function (v, from)
     if type(from) == "table" then
         for k, e in pairs(from) do
             v = stringx.replace(v, tostring(k), output.s(e))
         end
     end
     return v
-end
+end)
 
-function filters.fn.split(v, delim, c)
+filters.add('split', {
+    input = 'string',
+    output = 'iterator',
+    args = {
+        [1] = {name = 'delim', type = 'string'},
+        [2] = {name = 'count', type = 'number'}
+    }
+}, function (v, delim, c)
     return stringx.split(tostring(v), delim, c)
-end
+end)
 
-function filters.fn.striptags(v)
+filters.add('striptags', {
+    input = 'string',
+    output = 'string',
+    args = {}
+}, function (v)
     return gsub(output.s(v), "%b<>", " ")
-end
+end)
 
-function filters.fn.trim(v, what, side)
+filters.add('trim', {
+    input = 'string',
+    output = 'string',
+    args = {
+        [1] = {name = 'what', type = 'string'},
+        [2] = {name = 'side', type = 'string'},
+    }
+}, function (v, what, side)
     if not side then
         return stringx.strip(v, what)
     elseif side == "right" then
@@ -329,18 +451,20 @@ function filters.fn.trim(v, what, side)
     else
         return stringx.strip(v, what)
     end
-end
+end)
 
-function filters.fn.inthe(v, k)
-    if type(k) == "table" then
-        return tablex.find(k, v) ~= nil
+filters.add('inthe', {
+    input = 'any',
+    output = 'boolean',
+    args = {
+        [1] = {name = 'vals', type = 'any'},
+    }
+}, function (v, vals)
+    if type(vals) == "table" then
+        return tablex.find(vals, v) ~= nil
     else
-        return stringx.lfind(k, output.s(v)) ~= nil
+        return stringx.lfind(vals, output.s(v)) ~= nil
     end
-end
-
-function filters.fn.split(v, delim, limit)
-    return stringx.split(output.s(v), output.s(delim), limit) or {}
-end
+end)
 
 return filters

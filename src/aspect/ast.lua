@@ -6,7 +6,8 @@ local require = require
 local type = type
 local json_encode = require("cjson.safe").encode
 local utils = require("aspect.utils")
-local var_dump = require("aspect.utils").var_dump
+local cast = utils.cast_lua
+local var_dump = utils.var_dump
 
 --- Intermediate branch element
 --- @class aspect.ast.node
@@ -308,28 +309,6 @@ function ast:dump()
     return dump_visit(self:get_root(), "")
 end
 
---- @param leaf aspect.ast.leaf
---- @param typ string
---- @return aspect.ast.leaf
-local function cast(leaf, typ)
-    if leaf.type == typ or typ == "any" then
-        return leaf.value
-    elseif typ == "number" then
-        return "__.n(" .. leaf.value .. ")"
-    elseif typ == "string" then
-        return "__.s(" .. leaf.value .. ")"
-    elseif typ == "boolean" then
-        return "__.b(" .. leaf.value .. ")"
-    elseif typ == "boolean|any" then
-        if leaf.type == "boolean" then
-            return leaf.value
-        else
-            return "__.b2(" .. leaf.value .. ")"
-        end
-    else
-        return leaf.value
-    end
-end
 
 --- @param node aspect.ast.node
 --- @return aspect.ast.leaf
@@ -340,19 +319,19 @@ local function pack_node(node)
             if left.op then
                 left = pack_node(left)
             end
-            left = cast(left, node.op.l)
+            left = cast(left.value, left.type, node.op.l)
         end
         if right then
             if right.op then
                 right = pack_node(right)
             end
-            right = cast(right, node.op.r)
+            right = cast(right.value, right.type, node.op.r)
         end
         if cond then
             if cond.op then
                 cond = pack_node(cond)
             end
-            cond = cast(cond, node.op.c)
+            cond = cast(cond.value, cond.type, node.op.c)
         end
         --var_dump(node)
         local v = node.op.pack(left, right, cond)

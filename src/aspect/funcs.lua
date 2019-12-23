@@ -3,7 +3,8 @@ local concat = table.concat
 local err = require("aspect.err")
 local compiler_error = err.compiler_error
 local runtime_error = err.runtime_error
-local quote_string = require("pl.stringx").quote_string
+local stringx = require("pl.stringx")
+local quote_string = stringx.quote_string
 local config = require("aspect.config")
 local tags = require("aspect.tags")
 local tag_type = config.compiler.tag_type
@@ -11,6 +12,8 @@ local dump = require("aspect.utils").dump
 local date = require("date")
 local utils = require("aspect.utils")
 local range = require("aspect.utils.range")
+local pairs = pairs
+local ipairs = ipairs
 
 local func = {
     args = {},
@@ -18,46 +21,41 @@ local func = {
     parsers = {}
 }
 
+--- @class
+
 --- Add function
 --- @param name string
---- @param args table
+--- @param info table
 --- @param fn fun(...):any
---- @param parser fun(compiler:aspect.compiler, args:table):string
---- @param pre_parse boolean parse arguments before parser
-function func.add(name, args, fn, parser, pre_parse)
-    func.args[name] = args
+function func.add(name, info, fn)
+    func.args[name] = info.args
     func.fn[name] = fn
-    func.parsers[name] = {parser, pre_parse}
+    func.parsers[name] = info.parser
 end
 
---- Args of {% parent() %}
-func.args.parent = {}
-
---- {% parent() %}
---- @param compiler aspect.compiler
-function func.parsers.parent(compiler)
-    local tag = compiler:get_last_tag("block")
-    if not tag then
-        compiler_error(nil, "syntax", "{{ parent() }} should be called in the {% block %}")
-    else
-        tag.parent = true
-    end
-    if compiler.tag_type == tag_type.EXPRESSION then -- {{ parent(...) }}
-        local vars = utils.implode_hashes(compiler:get_local_vars())
-        if vars then
-            return '__.fn.parent(__, ' .. quote_string(tag.block_name) .. ', __.setmetatable({ ' .. vars .. '}, { __index = _context }))' ;
+--- Function {{ parent() }}
+func.add('parent', {
+    args = {},
+    --- @param compiler aspect.compiler
+    parser = function(compiler)
+        local tag = compiler:get_last_tag("block")
+        if not tag then
+            compiler_error(nil, "syntax", "{{ parent() }} should be called in the {% block %}")
         else
-            return '__.fn.parent(__, ' .. quote_string(tag.block_name) .. ', _context)' ;
+            tag.parent = true
         end
-    else -- {% if parent(...) %}
-        return '__.fn.parent(__, ' .. quote_string(tag.block_name) .. ', nil)' ;
+        if compiler.tag_type == tag_type.EXPRESSION then -- {{ parent(...) }}
+            local vars = utils.implode_hashes(compiler:get_local_vars())
+            if vars then
+                return '__.fn.parent(__, ' .. quote_string(tag.block_name) .. ', __.setmetatable({ ' .. vars .. '}, { __index = _context }))' ;
+            else
+                return '__.fn.parent(__, ' .. quote_string(tag.block_name) .. ', _context)' ;
+            end
+        else -- {% if parent(...) %}
+            return '__.fn.parent(__, ' .. quote_string(tag.block_name) .. ', nil)' ;
+        end
     end
-end
-
---- @param __ aspect.output
---- @param name string
---- @param context table|nil
-function func.fn.parent(__, name, context)
+}, function (__, name, context)
     local block
     if __.parents and __.parents[name] then
         local parents = __.parents[name]
@@ -76,34 +74,31 @@ function func.fn.parent(__, name, context)
     elseif block then
         return true
     end
-end
+end)
 
---- Args of {% block(name, template) %}
-func.args.block = {"name", "template"}
-
---- {% block(name[, template]) %}
---- @param compiler aspect.compiler
---- @param args table
-function func.parsers.block(compiler, args)
-    if not args.name then
-        compiler_error(nil, "syntax", "function block() requires argument 'name'")
-    end
-    if compiler.tag_type == tag_type.EXPRESSION then -- {{ block(...) }}
-        local vars, context = utils.implode_hashes(compiler:get_local_vars()), "_context"
-        if vars then
-            context =  '__.setmetatable({ ' .. vars .. ' }, { __index = _context })' ;
+--- Function {{ block(name, [template]) }}
+func.add('block', {
+    args = {
+        [1] = {name = "name", type = "string"},
+        [2] = {name = "template", type = "string"},
+    },
+    --- @param compiler aspect.compiler
+    --- @param args table
+    parser = function(compiler, args)
+        if not args.name then
+            compiler_error(nil, "syntax", "function block() requires argument 'name'")
         end
-        return '__.fn.block(__, ' .. context .. ', ' .. args.name .. ', ' .. (args.template or 'nil') .. ')', false
-    else -- {% if block(...) %}
-        return '__.fn.block(__, nil, ' .. args.name .. ', ' .. (args.template or 'nil') .. ')'
+        if compiler.tag_type == tag_type.EXPRESSION then -- {{ block(...) }}
+            local vars, context = utils.implode_hashes(compiler:get_local_vars()), "_context"
+            if vars then
+                context =  '__.setmetatable({ ' .. vars .. ' }, { __index = _context })' ;
+            end
+            return '__.fn.block(__, ' .. context .. ', ' .. args.name .. ', ' .. (args.template or 'nil') .. ')', false
+        else -- {% if block(...) %}
+            return '__.fn.block(__, nil, ' .. args.name .. ', ' .. (args.template or 'nil') .. ')'
+        end
     end
-end
-
---- @param __ aspect.output
---- @param context table|nil if nil - check condition: {% if block(...) %}
---- @param name string
---- @param template string|nil
-function func.fn.block(__, context, name, template)
+}, function (__, context, name, template)
     local block
     if template then
         local view = __:get_view(template)
@@ -122,29 +117,27 @@ function func.fn.block(__, context, name, template)
     else
         return block ~= nil
     end
-end
+end)
 
---- Args of {% include(name, vars, ignore_missing, with_context) %}
-func.args.include = {"name", "vars", "ignore_missing", "with_context"}
-
---- {% include(name, vars, ignore_missing, with_context) %}
---- @param compiler aspect.compiler
---- @param args table
-function func.parsers.include(compiler, args)
-    if compiler.tag_type == tag_type.EXPRESSION then
-        args.with_vars = true
-        return tags.include(compiler, args)
-    else
-        return '__.fn.include(__, ' .. args.name .. ', true, nil)'
+--- Function {{ include(name, [vars], [ignore_missing], [with_context]) }}
+func.add('include', {
+    args = {
+        [1] = {name = "name", type = "any"},
+        [2] = {name = "vars", type = "table"},
+        [3] = {name = "ignore_missing", type = "boolean"},
+        [4] = {name = "with_context", type = "boolean"},
+    },
+    --- @param compiler aspect.compiler
+    --- @param args table
+    parser = function (compiler, args)
+        if compiler.tag_type == tag_type.EXPRESSION then
+            args.with_vars = true
+            return tags.include(compiler, args)
+        else
+            return '__.fn.include(__, ' .. args.name .. ', true, nil)'
+        end
     end
-end
-
---- Include another template
---- @param __ aspect.output
---- @param names string|table
---- @param ignore boolean
---- @param context table|nil if nil it is just check
-function func.fn.include(__, names, ignore, context)
+}, function (__, names, ignore, context)
     local view, error = __.opts.get(names)
     if not context then
         return view ~= nil
@@ -159,23 +152,23 @@ function func.fn.include(__, names, ignore, context)
         end
     end
     view.body(__, context)
-end
+end)
 
---- {{ range() }}
-func.args.range = {"from", "to", "step"}
-
---- @param __ aspect.output
---- @param args table
-function func.fn.range(__, args)
+--- Function {{ range(from, to, step) }}
+func.add('range', {
+    args = {
+        [1] = {name = "from", type = "number"},
+        [2] = {name = "to", type = "number"},
+        [3] = {name = "step", type = "number"},
+    }
+}, function (__, args)
     if not args.from then
         __:notice("range(): requires 'from' argument")
         return {}
-        --runtime_error(__, "range(): requires 'from' argument")
     end
     if not args.to then
         __:notice("range(): requires 'to' argument")
         return {}
-        --runtime_error(__, "range(): requires 'to' argument")
     end
     if not args.step or args.step == 0 then
         args.step = 1
@@ -183,24 +176,16 @@ function func.fn.range(__, args)
     if args.step > 0 and args.to < args.from then
         __:notice("range(): 'to' less than 'from' with positive step")
         return {}
-        --runtime_error(__, "range(): 'to' less than 'from' with positive step")
     elseif args.step < 0 and args.to > args.from then
         __:notice("range(): 'to' great than 'from' with negative step")
         return {}
-        --runtime_error(__, "range(): 'to' great than 'from' with negative step")
     end
-    --local t = {}
-    --for i = args.from, args.to, args.step do
-    --    t[#t+1] = i
-    --end
-    --return t
     return range.new(args.from, args.to, args.step)
-end
+end)
 
---- @param __ aspect.output
---- @param from string
---- @param names table
-function func.fn.import(__, from, names)
+func.add("import", {
+    args = {}
+}, function (__, from, names)
     if not from then
         runtime_error(__, "import(): requires 'from' argument")
     end
@@ -221,29 +206,55 @@ function func.fn.import(__, from, names)
     else
         return view.macros or {}
     end
-end
+end)
 
 --- {{ date(date) }}
-func.args.date = {"date"}
-
-function func.fn.date(__, args)
+func.add("date", {
+    args = {
+        [1] = {name = "date", type = "any"}
+    }
+}, function (__, args)
     return date(args.date or false) or date(false)
-end
+end)
 
-func.args.dump = {"value"}
-
---- {% dump(...) %}
---- @param __ aspect.output
---- @param args table|nil
-function func.fn.dump(__, args)
-    local out = {__.view.name .. ":"..__.line .. ":"}
-    if args.value then
-        out[#out + 1] = dump(args.value)
+--- {{ dump(...) }}
+func.add("dump", {
+    args = nil,
+    --- @param compiler aspect.compiler
+    --- @param _ nil
+    --- @param tok aspect.tokenizer
+    parser = function (compiler, _, tok)
+        if tok:is(")") then
+            return "__.fn.dump(__, nil, _context)"
+        end
+        local vars = {}
+        while true do
+            local from = tok:get_pos()
+            local expr = compiler:parse_expression(tok)
+            local name = tok:get_path_as_string(from, tok.i - 1)
+            vars[#vars + 1] = "{name = " .. quote_string(stringx.strip(name)) .. ", value = " .. expr .. "}"
+            if tok:is(")") then
+                break
+            end
+            tok:require(","):next()
+        end
+        return "__.fn.dump(__, {" .. concat(vars, ",") .. "})"
+    end
+}, function (__, args, ctx)
+    local out = {}
+    if args then
+        out[1] = "Dump values:"
+        for _, v in ipairs(args) do
+            out[#out + 1] = v.name .. ": " .. dump(v.value) .. "\n"
+        end
     else
-        out[#out + 1] = dump(__.ctx)
+        out[1] = "Dump context:"
+        for name, value in pairs(ctx) do
+            out[#out + 1] = name .. ": " .. dump(value) .. "\n"
+        end
     end
     out[#out + 1] = "\nStack:\n" .. __:get_callstack()
     return concat(out, "\n")
-end
+end)
 
 return func

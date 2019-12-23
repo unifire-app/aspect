@@ -10,6 +10,7 @@ local yield = coroutine.yield
 local tonumber = tonumber
 local patterns = require("aspect.config").tokenizer.patterns
 local compiler = require("aspect.config").compiler
+local utils = require("aspect.utils")
 
 --- @class aspect.tokenizer
 --- @field tok function
@@ -150,10 +151,14 @@ function tokenizer:get_next_token_type()
 end
 
 --- Returns done tokens as string
+--- @param from number by default — 1
+--- @param to number by default — self.i
 --- @return string
-function tokenizer:get_path_as_string()
+function tokenizer:get_path_as_string(from, to)
     local path = {self.indent}
-    for i = 1, self.i do
+    from = from or 1
+    to = to or self.i
+    for i = from, to do
         if self.tokens[i] then
             path[#path + 1] = self.tokens[i][2] .. (self.tokens[i][3] or "")
         end
@@ -167,6 +172,7 @@ function tokenizer:next()
         return self
     end
     self.i = self.i + 1
+    --utils.var_dump("NEXT" .. tostring(self.tokens[self.i - 1][2]) .. " => " .. tostring((self.tokens[self.i] or {})[2]))
     if self.tokens[self.i] then
         self.token = self.tokens[self.i][2]
         self.typ = self.tokens[self.i][1]

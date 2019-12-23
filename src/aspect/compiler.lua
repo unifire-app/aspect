@@ -25,6 +25,7 @@ local loop_keys = config.loop.keys
 local tag_type = config.compiler.tag_type
 local strip_pattern = config.compiler.strip
 local func = require("aspect.funcs")
+local filters = require("aspect.filters")
 local ast = require("aspect.ast")
 local utils = require("aspect.utils")
 local rstrip = utils.rtrim
@@ -45,29 +46,40 @@ local special = config.compiler.special
 --- @field append_code fun(tpl:aspect.compiler, code:string)
 local _ = {}
 
+--- @class aspect.compiler.blocks
+--- @field code table<string> list of lua code of the block
+--- @field parent boolean has parent function inside
+--- @field vars table list of used variables
+--- @field desc string the description
+--- @field start_line number of line there block started
+--- @field end_line number of line there block ended
+local _ = {}
+
 --- @class aspect.compiler
 --- @field aspect aspect.template
 --- @field name string
+--- @field blocks table<aspect.compiler.blocks>
 --- @field macros table<table> table of macros with their code (witch array)
---- @field extends string|fun
---- @field extends_expr boolean
+--- @field extends string|boolean if true then we has dynamic extend
 --- @field import table
 --- @field uses table
 --- @field line number
+--- @field tag_name string the current tag
 --- @field ignore string|nil
 --- @field tok aspect.tokenizer
 --- @field tags table<aspect.tag>
 --- @field code table stack of code. Each level is isolated code (block or macro). 0 level is body
+--- @field stats boolean
 local compiler = {
     version = 1,
 }
 
-local mt = {__index = compiler}
+local mt = { __index = compiler }
 
 --- @param aspect aspect.template
 --- @param name string
 --- @return aspect.compiler
-function compiler.new(aspect, name)
+function compiler.new(aspect, name, stats)
     return setmetatable({
         aspect = aspect,
         name = name,
@@ -80,6 +92,7 @@ function compiler.new(aspect, name)
         blocks = {},
         uses = {},
         uses_tpl = {},
+        used_vars = {},
         vars = {},
         deps = {},
         tags = {},
@@ -88,6 +101,7 @@ function compiler.new(aspect, name)
         tag_type = nil,
         import = {},
         ignore = nil,
+        stats = stats or true,
     }, mt)
 end
 
@@ -112,8 +126,9 @@ function compiler:get_code()
         "\tname = " .. quote_string(self.name) .. ",",
         "\tblocks = {},",
         "\tmacros = {},",
-        "\tvars = {},",
+        --"\tvars = {},",
     }
+    --insert(code, "\tvars = " .. write(self.used_vars))
     if self.extends then
         if self.extends.static then
             insert(code,"\textends = " .. self.extends.value .. ",")
@@ -234,6 +249,7 @@ function compiler:parse(source)
         elseif t == "%" then -- '{%'
             self.tag_type = tag_type.CONTROL
             local tok = tokenizer.new(sub(source, tag_pos + 2))
+            self.tag_name = tok:get_token()
             local tag_name = 'tag_' .. tok:get_token()
             if tags[tag_name] then
                 self:append_code(tags[tag_name](self, tok:next())) -- call tags.tag_{{ name }}(compiler, tok)
@@ -248,6 +264,7 @@ function compiler:parse(source)
             self.line = self.line + strcount(path, "\n")
             strip = strip_pattern[sub(tok.finish_token, 1, 1)]
             tok = nil
+            self.tag_name = nil
         elseif t == "#" then -- '{#'
             tag_pos = find(source, "#}", p, true)
             l = tag_pos + 2
@@ -313,7 +330,7 @@ end
 --- @param tok aspect.tokenizer
 function compiler:parse_variable(tok)
     if tok:is_word() then
-        local var
+        local var, keys
         if tok:is('loop') then -- magick variable name {{ loop }}
             var = {"loop"}
             local tag, pos = self:get_last_tag('for')
@@ -348,6 +365,15 @@ function compiler:parse_variable(tok)
         if not var then
             var = {self:parse_var_name(tok)}
             if not self:has_local_var(var[1]) then
+                if self.stats then
+                    if self.used_vars[var[1]] then
+                        keys = self.used_vars[var[1]]
+                        keys.where[#keys.where + 1] = {line = self.line, tag = self.tag_name}
+                    else
+                        keys = {where = {{line = self.line, tag = self.tag_name}}, keys = {}}
+                        self.used_vars[var[1]] = keys
+                    end
+                end
                 var[1] = "_context." .. var[1]
             end
         end
@@ -355,9 +381,17 @@ function compiler:parse_variable(tok)
             local mode = tok:get_token()
             tok:next()
             if tok:is_word() then
+                if keys then
+                    keys.keys[tok:get_token()] = 1
+                    keys = nil
+                end
                 insert(var, '"' .. tok:get_token() .. '"')
                 tok:next()
             elseif tok:is_string() then
+                if keys then
+                    keys.keys[tok:get_token()] = true
+                    keys = nil
+                end
                 insert(var, tok:get_token())
                 tok:next()
                 if mode == "[" then
@@ -378,58 +412,80 @@ function compiler:parse_variable(tok)
 end
 
 --- @param tok aspect.tokenizer
+--- @param args_info table
+--- @param assoc boolean returns table or values or list
+function compiler:parse_args(tok, args_info, assoc, fname)
+    local args, i = {}, 1
+    if tok:is(")") then
+        return args
+    end
+    while tok:is_valid() do
+        local key, value, info, arg_info = nil, nil, {}, nil
+        if tok:is_word() and tok:is_next("=") then
+            key = tok:get_token()
+            tok:next():require("="):next()
+        end
+        value = self:parse_expression(tok, info)
+        if key then
+            for _, arg in ipairs(args_info) do
+                if arg.name == key then
+                    arg_info = arg
+                    break
+                end
+            end
+            if not arg_info then
+                compiler_error(tok, "compile", (fname or "callable") .. " has no '" .. key .. "' argument")
+            end
+        else
+            if args_info[i] then
+                arg_info = args_info[i]
+            else
+                compiler_error(tok, "compile", (fname or "callable") .. " has no argument #" .. i)
+            end
+        end
+        if assoc then
+            args[arg_info.name] = utils.cast_lua(value, info.type, args_info.type)
+        else
+            args[i] = utils.cast_lua(value, info.type, args_info.type)
+        end
+        i = i + 1
+        if tok:is(",") then
+            tok:next()
+        else
+            break
+        end
+    end
+    return args
+end
+
+--- parse coma separated arguments
+--- @param tok aspect.tokenizer
 function compiler:parse_function(tok)
-    local name, args = nil, {}
+    local name, args
     if tok:is_word() then
         name = tok:get_token()
     else
         compiler_error(tok, "syntax", "expecting function name")
     end
     if not func.fn[name] then
-        compiler_error(tok, "syntax", "function " .. name .. "() not found")
+        compiler_error(tok, "compile", "function " .. name .. "() not found")
     end
     tok:next():require("("):next()
-    if not tok:is(")") and func.args[name] then
-        local i, hint = 1, func.args[name]
-        while true do
-            local key, value = nil, nil
-            if tok:is_word() then
-                if tok:is_next("=") then
-                    key = tok:get_token()
-                    tok:next():require("="):next()
-                    value = self:parse_expression(tok)
-                else
-                    value = self:parse_expression(tok)
-                end
-            else
-                value = self:parse_expression(tok)
-            end
-            if key then
-                if tablex.find(hint, key) then
-                    args[key] = value
-                else
-                    compiler_error(tok, "syntax", name .. "(): unknown argument <" .. key .. ">")
-                end
-            else
-                if hint[i] then
-                    args[ hint[i] ] = value
-                else
-                    compiler_error(tok, "syntax", name .. "(): unknown argument #" .. i)
-                end
-            end
-            if tok:is(",") then
-                tok:next()
-            else
-                break
-            end
-            i = i + 1
+    if func.args[name] then
+        args = self:parse_args(tok, func.args[name], true, "function " .. name)
+        tok:require(")"):next()
+        if func.parsers[name] then
+            return func.parsers[name](self, args)
+        else
+            return "__.fn." .. name .. "(__, {" .. utils.implode_hashes(args) .. "})"
         end
-    end
-    tok:require(")"):next()
-    if func.parsers[name] then
-        return func.parsers[name](self, args)
+    elseif func.parsers[name] then
+        local code = func.parsers[name](self, nil, tok)
+        tok:require(")"):next()
+        return code
     else
-        return "__.fn." .. name .. "(__, {" .. utils.implode_hashes(args) .. "})"
+        tok:require(")"):next()
+        return "__.fn." .. name .. "(__, {})"
     end
 end
 
@@ -597,32 +653,27 @@ function compiler:parse_filters(tok, var, info)
     while tok:is("|") do -- parse pipeline filter
         if tok:next():is_word() then
             local filter = tok:get_token()
+            if not filters.fn[filter] then
+                compiler_error(tok, "compile", "unknown filter " .. filter)
+            end
             if filter == "raw" then
                 info.raw = true
             end
-            local args, no = nil, 1
-            tok:next()
-            if tok:is("(") then
-                args = {}
-                while not tok:is(")") and tok:is_valid() do -- parse arguments of the filter
-                    tok:next()
-                    local key
-                    if tok:is_word() and not special[tok:get_token()] and tok:is_next("=") then
-                        key = tok:get_token()
-                        tok:next():require("="):next()
-                        args[key] = self:parse_expression(tok)
-                    else
-                        args[no] = self:parse_expression(tok)
-                    end
-                    no = no + 1
-                end
-                tok:next()
+            local args
+
+            if tok:next():is("(") then
+                args = self:parse_args(tok:next(), filters.info[filter].args, false, "filter " .. filter)
+                tok:require(")"):next()
+            end
+            if info.type then
+                var = utils.cast_lua(var, info.type, filters.info[filter].input)
             end
             if args then
                 var = "__.f['" .. filter .. "'](" .. var .. ", " .. concat(args, ", ") .. ")"
             else
                 var = "__.f['" .. filter .. "'](" .. var .. ")"
             end
+            info.type = filters.info[filter].output
         else
             compiler_error(tok, "syntax", "expecting filter name")
         end
@@ -678,18 +729,18 @@ function compiler:parse_value(tok, info)
         var = self:parse_array(tok)
         info.type = "table"
     elseif tok:is("(") then -- is expression
-        var = self:parse_expression(tok:next())
+        local expr_info = {}
+        var = self:parse_expression(tok:next(), expr_info)
+        info.type = expr_info.type
         tok:require(")"):next()
-        if tok:is("|") then
-            var = self:parse_filters(tok, var, info)
-        end
-        info.type = "any"
+        --if tok:is("|") then
+        --    var = self:parse_filters(tok, var, info)
+        --end
     else
         compiler_error(tok, "syntax", "expecting any value")
     end
     if tok:is("|") then
         var = self:parse_filters(tok, var, info)
-        info.type = "any"
     end
     return var
 end
@@ -797,13 +848,6 @@ function compiler:get_checkpoint()
     end
 end
 
---- Variable with name used in the code
---- @param name string
---- @param context any for what use variable
-function compiler:use_var(name, context)
-
-end
-
 --- Add local variable name to scope (used for includes and blocks)
 --- @param name string
 function compiler:push_var(name)
@@ -873,6 +917,7 @@ function compiler:push_tag(name, code_space, code_space_name, var_space)
     if var_space then
         insert(self.vars, var_space)
         tag.var_space_no = #self.vars
+        tag.used_vars = {}
     end
     tag.var_space = self.vars[#self.vars]
 

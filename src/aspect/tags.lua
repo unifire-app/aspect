@@ -107,7 +107,8 @@ function tags.tag_block(compiler, tok)
         code = {},
         parent = false,
         vars = {},
-        desc = nil
+        desc = nil,
+        start_line = compiler.line
     }
     local tag_for, pos = compiler:get_last_tag("for") -- may be {{ loop }} used in the block (which may be replaced)
     while tag_for do
@@ -131,6 +132,7 @@ function tags.tag_endblock(compiler, tok)
         end
     end
     compiler.blocks[tag.block_name].parent = tag.parent
+    compiler.blocks[tag.block_name].end_line = compiler.line
     local vars = utils.implode_hashes(compiler:get_local_vars())
     if vars then
         return '__.blocks.' .. tag.block_name .. '.body(__, __.setmetatable({ ' .. vars .. '}, { __index = _context }))' ;
@@ -323,7 +325,7 @@ function tags.tag_from(compiler, tok)
     tok:require("import"):next()
     local names, aliases = {}, {}
     while tok:is_valid() do
-        local info = {}
+        info = {}
         local name = compiler:parse_var_name(tok, info)
         if info.var_system then
             compiler_error(tok, "syntax", "system variables can't be changed")
@@ -474,9 +476,9 @@ function tags.tag_endfor(compiler)
     end
 
     if tag.key then -- start of 'for'
-        before[#before + 1] = 'for ' .. tag.key .. ', ' .. tag.value .. ' in __.i(' .. tag.from .. ') do'
+        before[#before + 1] = 'for ' .. tag.key .. ', ' .. tag.value .. ' in __.iter(' .. tag.from .. ') do'
     else
-        before[#before + 1] = 'for _, ' .. tag.value .. ' in __.i(' .. tag.from .. ') do'
+        before[#before + 1] = 'for _, ' .. tag.value .. ' in __.iter(' .. tag.from .. ') do'
     end
     if tag.cond then -- start of 'if'
         before[#before + 1] = tag.cond

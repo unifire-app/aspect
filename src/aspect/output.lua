@@ -316,12 +316,17 @@ function output.t(v)
     end
 end
 
+--- Cast value to the iterator (if possible)
+function output.i(v)
+    return v
+end
+
 --- Get iterator of the v
 --- @param v any
 --- @return fun iterator
 --- @return any object
 --- @return any key
-function output.i(v)
+function output.iter(v)
     local typ, mt = type(v), getmetatable(v)
     if typ == "table" then
         if mt and mt.__pairs then

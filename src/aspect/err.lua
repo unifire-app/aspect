@@ -49,10 +49,14 @@ function err.compiler_error(tok, code, message)
         traceback = traceback(),
     }
     if tok then
-        if tok:is_valid() then
-            fields.message = "unexpected token '" .. tok:get_token() .. "', " .. message
+        if code == "syntax" then
+            if tok:is_valid() then
+                fields.message = "unexpected token '" .. tok:get_token() .. "', " .. message
+            else
+                fields.message = "unexpected end of tag, " .. message
+            end
         else
-            fields.message = "unexpected end of tag, " .. message
+            fields.message = message
         end
         fields.context = tok:get_path_as_string()
     else

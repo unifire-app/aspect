@@ -175,5 +175,42 @@ function utils.rtrim(s, chrs)
     return s
 end
 
+--- Generate lua code for casting value to another type. Supported types:
+---  number, string, table, iterator, boolean, boolean|any, any
+--- @param value string lua code of the value
+--- @param curr_type string current type of the value
+--- @param to_type string required type
+--- @return string lua code
+function utils.cast_lua(value, curr_type, to_type)
+    if curr_type == to_type or to_type == "any" then
+        return value
+    elseif to_type == "number" then
+        return "__.n(" .. value .. ")"
+    elseif to_type == "string" then
+        return "__.s(" .. value .. ")"
+    elseif to_type == "table" then
+        if curr_type == "iterator" then
+            return value
+        else
+            return "__.t(" .. value .. ")"
+        end
+    elseif to_type == "iterator" then
+        if curr_type == "table" then
+            return value
+        else
+            return "__.i(" .. value .. ")"
+        end
+    elseif to_type == "boolean" then
+        return "__.b(" .. value .. ")"
+    elseif to_type == "boolean|any" then
+        if curr_type == "boolean" then
+            return value
+        else
+            return "__.b2(" .. value .. ")"
+        end
+    else
+        return value
+    end
+end
 
 return utils

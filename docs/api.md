@@ -159,10 +159,30 @@ Loader should be callback or callable object.
 ### File system loader
 
 ```lua
-aspect.loader = require("aspect.loader.filesystem").new(project_root .. "/templates")
+aspect.loader = require("aspect.loader.filesystem").new("/var/project/templates")
 ```
 
+The code bellow
+
+```lua
+aspect:display("pages/about.html", vars)
+```
+
+loads `/var/project/templates/pages/about.html` template.
+
 ### Resty loader
+
+```lua
+aspect.loader = require("aspect.loader.resty").new("/.templates/")
+```
+
+The code bellow
+
+```lua
+aspect:display("pages/about.html", vars)
+```
+
+loads `/.templates/pages/about.html` template (via [ngx.location.capture](https://github.com/openresty/lua-nginx-module#ngxlocationcapture)).
 
 ### Array loader
 
@@ -224,7 +244,15 @@ Add filters
 ```lua
 local filters = require("aspect.filters")
 
-filters.add("foo", {"arg1", "arg2"}, function (v, arg1, arg2) 
+filters.add("foo", {
+    input = "any", -- input value type
+    output = "string", -- output value type
+    -- define foo's arguments
+    args = {
+        [1] = {name = "arg1", type = "string"}, 
+        [2] = {name = "arg2", type = "number"}
+    }
+}, function (v, arg1, arg2) 
 
 end)
 ```
@@ -239,24 +267,22 @@ Add function `{{ foo(arg1=x, arg2=y) }}`:
 ```lua
 local funcs = require("aspect.funcs")
 
---- Define foo's arguments
-funcs.args.foo = {"arg1", "arg2"}
-
---- Optional. The function will be called when the template is compiled.
---- @param compiler aspect.compiler
---- @param args table
---- @return string the lua code
-function funcs.parsers.foo(compiler, args)
+--- add {{ foo(arg1, arg2) }}
+funcs.add("foo", {
+    -- Define foo's arguments
+    args = {
+        [1] = {name = "arg1", type = "string"},
+        [2] = {name = "arg2", type = "number"},
+    },
+    --- Optional. The function will be called when the template is compiled.
+    --- @param compiler aspect.compiler
+    --- @param args table
+    parser = function (compiler, args)
+        -- ...
+    end
+}, function (__, args) 
     -- ...
-end
-
---- The function will be called when the template is executed.
---- @param __ aspect.output
---- @param args table arguments witch listed in the funcs.args.foo
---- @return string the output
-function funcs.fs.foo(__, args)
-    -- ...
- end 
+end)
 ```
 
 See [aspect.funcs](../src/aspect/funcs.lua) for more examples.

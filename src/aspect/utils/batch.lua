@@ -68,7 +68,7 @@ function batch.new(t, cnt)
     if cnt == 0 then
         return nil
     end
-    local iter, ctx, key = output.i(t)
+    local iter, ctx, key = output.iter(t)
     if not iter then
         return nil
     end

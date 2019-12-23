@@ -132,6 +132,15 @@ templates["basic_09"] = {
     [[{{ table_1.integer_value }} and1 { not a tag } and2 {{ table_1.string_value }}]],
     "7 and1 { not a tag } and2 is table value"
 }
+--
+--templates["basic_10"] = {
+--    [[
+--    {% if table_1.integer_value %}
+--        {{ table_1.integer_value }} and1 {{ wow.string_value }}
+--    {% endif %}
+--    ]],
+--    "7 and1 dd"
+--}
 
 templates["if_01"] = {
     [[
@@ -695,7 +704,7 @@ templates["filter:merge_00"] = {
 
 templates["function:dump_01"] = {
     "{{ dump(list_1) }}",
-    "function:dump_01:1: { (string) item1 (string) item2 (string) item3 } Stack: begin function:dump_01:1"
+    "Dump values: list_1: { (string) item1 (string) item2 (string) item3 } Stack: begin function:dump_01:1"
 }
 
 --templates["function:dump_02"] = {
@@ -829,7 +838,7 @@ templates["with_04"] = {
 
 local function factory(ops)
     local template = aspect.new(ops or {})
-    template.loader = function(tpl, name)
+    template.loader = function(name)
         if templates[name] then
             return templates[name][1]
         else
@@ -928,7 +937,7 @@ describe("Testing template syntax.", function ()
     for k, v in tablex.sort(templates) do
         local template = factory(v[4] or {})
         local compiled = {}
-        template.luacode_save = function (tpl, name, code)
+        template.luacode_save = function (name, code)
             compiled[#compiled + 1] = "\n==== Compiled template " .. name .. ":\n" .. code
         end
         it("Run template " .. k, function ()
@@ -979,7 +988,7 @@ end)
 describe("Testing cache.", function ()
     it("bytecode and luacode cache", function ()
         local template = aspect.new()
-        template.loader = function(tpl, name)
+        template.loader = function(name)
             if templates[name] then
                 return templates[name][1]
             else
@@ -987,20 +996,20 @@ describe("Testing cache.", function ()
             end
         end
 
-        template.bytecode_load = function (tpl, name)
+        template.bytecode_load = function (name)
             assert.is.equals("basic_00", name)
             return nil
         end
-        template.luacode_load = function (tpl, name)
+        template.luacode_load = function (name)
             assert.is.equals("basic_00", name)
             return nil
         end
-        template.bytecode_save = function (tpl, name, code)
+        template.bytecode_save = function (name, code)
             assert.is.equals("basic_00", name)
             assert.is_true(string.len(code) > 0)
             return nil
         end
-        template.luacode_save = function (tpl, name, code)
+        template.luacode_save = function (name, code)
             assert.is.equals("basic_00", name)
             assert.is_true(string.len(code) > 0)
             return nil

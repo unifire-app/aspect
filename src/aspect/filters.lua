@@ -256,7 +256,7 @@ filters.add('last', {
     local typ = type(v)
     if typ == "table" then
         local last
-        for _, e in output.i(v) do
+        for _, e in output.iter(v) do
             last = e
         end
         return last

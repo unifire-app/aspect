@@ -35,18 +35,19 @@ local jit = jit
 --- @field cached string (dynamic)
 --- @field has_blocks boolean (dynamic)
 --- @field has_macros boolean (dynamic)
-local _view = {}
+local _ = {}
 
 --- @class aspect.template.block
 --- @field desc string block description
 --- @field body fun(__: aspect.output, context: table) block's code
 --- @field vars table used context variables
 --- @field parent boolean use parent() function inside
-local _block = {}
+local _ = {}
 
 
 --- @class aspect.template
 --- @field compiler aspect.compiler
+--- @field stats boolean
 --- @field cache boolean|table enable or disable in-memory cache. by default: false. set table (as container) for enable cache.
 --- @field loader fun(name: string):string,string template source code loader with etag (optionally)
 --- @field luacode_load fun(tpl: aspect.template, name: string):string
@@ -128,6 +129,7 @@ function template.new(options)
         fn = funcs.fn,
         t = tests.fn
     }
+    tpl.stats = options.stats or true
     --- @param names table|string
     tpl.opts.get = function(names)
         local view, error
@@ -227,7 +229,7 @@ end
 function template:load(name)
     local bytecode, luacode, source, build, ok, error, f
     if self.bytecode_load then
-        bytecode, error = self:bytecode_load(name)
+        bytecode, error = self.bytecode_load(name, self)
         if bytecode then
             return loadcode(self, bytecode, name .. ".lua")
         elseif error then
@@ -235,28 +237,28 @@ function template:load(name)
         end
     end
     if self.luacode_load then
-        luacode, error = self:luacode_load(name)
+        luacode, error = self.luacode_load(name, self)
         if luacode then
             return loadcode(self, luacode, name .. ".lua")
         elseif error then
             return nil, err.new(error)
         end
     end
-    source, error = self:loader(name)
+    source, error = self.loader(name, self)
     if source then
         build = self.compiler.new(self, name)
         ok, error = build:run(source)
         if ok then
             luacode = build:get_code()
             if self.luacode_save then
-                self:luacode_save(name, luacode)
+                self.luacode_save(name, luacode, self)
             end
             if self.bytecode_save then
                 f, error = (loadstring or load)(luacode, name .. ".lua")
                 if not f then
                     return nil, err.new(error or "Failed to dump a view " .. name)
                 end
-                self:bytecode_save(name, function_dump(f))
+                self.bytecode_save(name, function_dump(f), self)
             end
             return loadcode(self, luacode, name .. ".lua")
         else

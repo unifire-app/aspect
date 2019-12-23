@@ -50,10 +50,10 @@ local _ = {}
 --- @field stats boolean
 --- @field cache boolean|table enable or disable in-memory cache. by default: false. set table (as container) for enable cache.
 --- @field loader fun(name: string):string,string template source code loader with etag (optionally)
---- @field luacode_load fun(tpl: aspect.template, name: string):string
---- @field luacode_save fun(tpl: aspect.template, name: string, luacode: string)
---- @field bytecode_load fun(tpl: aspect.template, name: string):string
---- @field bytecode_save fun(tpl: aspect.template, name: string, bytecode: string)
+--- @field luacode_load fun(name: string, tpl: aspect.template):string
+--- @field luacode_save fun(name: string, luacode: string, tpl: aspect.template)
+--- @field bytecode_load fun(name: string, tpl: aspect.template):string
+--- @field bytecode_save fun(name: string, bytecode: string, tpl: aspect.template)
 local template = {
     _VERSION = "1.7",
     _NAME = "aspect",

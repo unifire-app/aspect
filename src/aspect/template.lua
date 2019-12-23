@@ -55,7 +55,7 @@ local _ = {}
 --- @field bytecode_load fun(tpl: aspect.template, name: string):string
 --- @field bytecode_save fun(tpl: aspect.template, name: string, bytecode: string)
 local template = {
-    _VERSION = "1.3",
+    _VERSION = "1.7",
     _NAME = "aspect",
 }
 local mt = { __index = template }

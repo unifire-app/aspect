@@ -81,7 +81,7 @@ function err.new_runtime(__, e)
     if not err.is(e) then
         e = err.new(e, "runtime")
     end
-    e:set_name(__.name, __.line, __:get_callstack())
+    e:set_name(__.view.name, __.line, __:get_callstack())
     return e
 end
 

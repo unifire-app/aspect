@@ -120,7 +120,7 @@ templates["basic_06"] = {
 templates["basic_07"] = {
     [[{{ integer_3 * + }}]],
     nil,
-    "unexpected token '+', expecting any value"
+    "unexpected token '+', expecting any value [basic_07:1]"
 }
 
 templates["basic_08"] = {
@@ -293,7 +293,7 @@ templates["include_05"] = {
     {% include 'tpl_none' %}
     ]],
     nil,
-    "Template(s) not found. Trying tpl_none"
+    "Template(s) not found. Trying tpl_none [include_05:2]"
 }
 templates["include_06"] = {
     [[
@@ -308,7 +308,7 @@ templates["include_07"] = {
     {% include ['tpl_none', 'tpl_none2'] %}
     ]],
     nil,
-    "Template(s) not found. Trying tpl_none, tpl_none2"
+    "Template(s) not found. Trying tpl_none, tpl_none2 [include_07:2]"
 }
 templates["include_08"] = {
     [[
@@ -835,6 +835,20 @@ templates["with_04"] = {
     "one [and] [and]"
 }
 
+templates["error_01"] = {
+    [[
+        {% if false %}
+            nope
+        {% endif %}
+        {% if true and false %}
+            nope
+        {% endif %}
+        {{ unkown_function() }}
+    ]],
+    nil,
+    "function unknown_function() not found [error_01:7]"
+}
+
 
 local function factory(ops)
     local template = aspect.new(ops or {})
@@ -946,7 +960,7 @@ describe("Testing template syntax.", function ()
             if result and not err then
                 assert.is.equals(v[2], spaceless(result.result), "Test template ".. k ..":\n" .. v[1] .. "\nCompiled template:\n" .. table.concat(compiled))
             elseif not v[2] and v[3] then
-                assert.is.equals(err.message, v[3])
+                assert.is.equals(err.message .. " [" .. err.name .. ":" .. err.line .. "]", v[3])
             else
                 error(tostring(err) .. "\n\nTest template ".. k ..":\n" .. v[1] .. "\nCompiled template:\n" .. table.concat(compiled))
             end

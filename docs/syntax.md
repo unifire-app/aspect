@@ -272,7 +272,7 @@ Macros
 
 Macros are comparable with functions in regular programming languages. 
 They are useful to reuse HTML fragments to not repeat yourself. 
-They are described in the [macro](./tags/macros.md) tag documentation.
+They are described in the [macro](./tags/macro.md) tag documentation.
 
 Expressions
 -----------

@@ -259,7 +259,7 @@ function output.b(v)
     return true
 end
 
---- Returns value if cast value to boolean is true
+--- Returns value if cast of this value to boolean is true
 --- @param v any
 --- @return any|nil
 function output.b2(v)
@@ -269,7 +269,7 @@ function output.b2(v)
         local mt = getmetatable(v)
         if mt then
             if mt.__toboolean then
-                return mt.__toboolean(v)
+                return mt.__toboolean(v) and v
             elseif mt.__count  then
                 return mt.__count(v) ~= 0
             end

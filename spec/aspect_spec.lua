@@ -843,7 +843,7 @@ templates["error_01"] = {
         {% if true and false %}
             nope
         {% endif %}
-        {{ unkown_function() }}
+        {{ unknown_function() }}
     ]],
     nil,
     "function unknown_function() not found [error_01:7]"

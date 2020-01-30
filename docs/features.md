@@ -39,8 +39,7 @@ You may [configure empty-string behavior](./api.md#empty-string-behaviour).
 | userdata                 | `tonumber(tostring(...))` |
 | non numeric string       | 0                         |
 
-You may [configure number
- behavior](./api.md#number-behaviour).
+You may [configure number behavior](./api.md#number-behaviour).
 
 ## Working with booleans
 
@@ -89,7 +88,7 @@ and compatible with basic function `pairs()` (returns `iterator`, `key`, `value`
 
 | Value                    | Number evaluation    |
 |--------------------------|----------------------|
-| string                   | `strlen(...)`        |
+| string                   | `string.len(...)`    |
 | empty table              | 0                    |
 | number                   | 0                    |
 | nil                      | 0                    |
@@ -97,6 +96,6 @@ and compatible with basic function `pairs()` (returns `iterator`, `key`, `value`
 | userdata                 | 0                    |
 | table                    | count of keys        |
 | table with `__count`     | `__count(...)`       |
-| table with `__pairs`     | iterate with `__pairs()` and count elements |
+| table with `__pairs`     | invoke `__pairs()` and count elements |
 | userdata with `__count`  | `__count(...)`       |
-| userdata with `__pairs`  | iterate with `__pairs()` and count elements |
+| userdata with `__pairs`  | invoke `__pairs()` and count elements |

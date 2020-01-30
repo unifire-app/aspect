@@ -34,6 +34,27 @@ The first one is used to execute statements such as for-loops, the latter output
 Table Of Content
 ----------------
 
+- [Variables](#variables)
+  - [Global Variables](#global-variables)
+  - [Setting Variables](#setting-variables)
+- [Filters](#filters)
+- [Functions](#functions)
+- [Named Arguments](#named-arguments)
+- [Control Structure](#control-structure)
+- [Comments](#comments)
+- [Template Inheritance](#template-inheritance)
+- [Macros](#macros)
+- [Expressions](#expressions)
+  - [Literals](#literals)
+- [Operators](#operators)
+  - [Math Operators](#math-operators)
+  - [Logic Operators](#logic-operators)
+  - [Comparisons Operators](#comparisons-operators)
+  - [Containment Operators](#containment-operator)
+  - [Test Operators](#test-operator)
+  - [Other Operators](#other-operators)
+  - [Operator Precedence](#operator-precedence)
+- [Whitespace Control](#whitespace-control)
 
 Variables
 ---------
@@ -422,7 +443,8 @@ Operator precedence, from the higher to the lower priority:
 14. `or` (boolean)
 
 
-### Whitespace Control
+Whitespace Control
+------------------
 
 Whitespace is not further modified by the template engine, so each whitespace (spaces, tabs, newlines etc.) is returned unchanged.
 

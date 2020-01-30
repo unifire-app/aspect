@@ -5,6 +5,24 @@ This chapter describes the API to Aspect and not the template language.
 It will be most useful as reference to those implementing the template interface to the application 
 and not those who are creating Aspect templates.
 
+Table Of Content
+----------------
+
+- [Basic API Usage](#basic-api-usage)
+- [Rendering Templates](#rendering-templates)
+- [Options](#options)
+- [Cache](#cache)
+- [Loaders](#loaders)
+- [Add tags](#add-tags)
+- [Add filters](#add-filters)
+- [Add functions](#add-functions)
+- [Add operators](#add-operators)
+- [Behaviors](#behaviors)
+  - [Condition behaviour](#condition-behaviour)
+  - [Empty string behaviour](#empty-string-behaviour)
+  - [Number behaviour](#number-behaviour)
+- [Custom escaper](#custom-escaper)
+
 Basic API Usage
 --------------
 

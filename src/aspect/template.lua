@@ -166,12 +166,12 @@ end
 --- @return aspect.compiler
 --- @return aspect.error
 function template:compile_code(name, source)
-    local tpl = self.compiler.new(self, name)
-    local ok, error = tpl:run(source)
+    local cmp = self.compiler.new(self, name)
+    local ok, error = cmp:run(source)
     if not ok then
         return nil, error
     else
-        return tpl
+        return cmp
     end
 end
 

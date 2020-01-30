@@ -303,9 +303,12 @@ function output.n(v)
         return tonumber(v) or 0
     elseif is_n[getmetatable(v)] then
         return v
-    else
+    elseif typ == "boolean" then
+        return v and 1 or 0
+    elseif v then
         return tonumber(tostring(v)) or 0
     end
+    return 0
 end
 
 function output.t(v)

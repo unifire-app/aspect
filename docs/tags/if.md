@@ -60,7 +60,7 @@ The rules to determine if an expression is true or false are (edge cases):
 | whitespace-only string   | true               |
 | string "0" or '0'        | true               |
 | empty table              | false              |
-| nil/null                 | false              |
+| nil                      | false              |
 | non-empty table          | true               |
 | table with `__toboolean` | `__toboolean()`    |
 | cjson.null               | false              |

@@ -1,5 +1,5 @@
-Syntax
-======
+Template Syntax
+===============
 
 A template is a regular text file. 
 It can generate any text-based format (HTML, XML, CSV, LaTeX, etc.). It doesn't have a specific extension, 

@@ -18,11 +18,8 @@ The key-features are...
   This allows Aspect to be used as a template language for applications where users may modify the template design.
 * _Flexible_: Aspect is powered by a flexible lexer and parser. 
   This allows the developer to define their own custom tags, filters, functions and operators, and to create their own DSL.
-* _Comfortable_: Aspect allows you to process userdata data. 
-  More intuitive behavior with special values such as a empty string, number zero and so on.
-* _Memory-safe_: The template is built in such a way as to save maximum memory when it is executed, 
-  even if the iterator provides a lot of data.
 * _Supports_ lua 5.1/5.2/5.3 and luajit 2.0/2.1 (with OpenResty)
+* **[List of all features](./docs/features.md)**
 
 Synopsis
 --------

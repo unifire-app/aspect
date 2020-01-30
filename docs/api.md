@@ -13,7 +13,7 @@ Get Aspect from `aspect.template` package
 local aspect = require("aspect.template").new(options)
 ```
 
-`options` variable store Aspect configuration. 
+[`options`](#options) variable store Aspect configuration. 
 
 Aspect uses a loader `aspect.loader` to locate templates
 
@@ -84,15 +84,15 @@ The following options are available:
 * `cache` _table_ or `false` or `true`
   Enables or disables in-memory cache. If this parameter is a table, then it will be used to store the cache. 
   If `true` - own table will be used.
-* `loader` _function_ `fun(name: string):string,string`.
+* `loader` _function_ `fun(name: string, tpl: aspect.template):string,string`.
   Template source code loader with etag (optionally)
-* `luacode_load` _function_ `fun(tpl: aspect.template, name: string):string`
+* `luacode_load` _function_ `fun(name: string, tpl: aspect.template):string`
   Function used for loading compiled lua code of the template.
-* `luacode_save` _function_ `fun(tpl: aspect.template, name: string, luacode: string)`
+* `luacode_save` _function_ `fun(name: string, luacode: string, tpl: aspect.template)`
   Function used for saving compiled lua code of the template.
-* `bytecode_load` _function_ `fun(tpl: aspect.template, name: string):string`
+* `bytecode_load` _function_ `fun(name: string, tpl: aspect.template):string`
   Function used for loading byte-code of the template.
-* `bytecode_save` _function_ `fun(tpl: aspect.template, name: string, bytecode: string)`
+* `bytecode_save` _function_ `fun(name: string, bytecode: string, tpl: aspect.template)`
   Function used for saving byte-code of the template.
 * `autoescape` _boolean_
   Enables or disables auto-escaping with 'html' strategy. 
@@ -394,6 +394,25 @@ is_false['0'] = true
  
 Now example output `Unaceptable condition!` because `zero` will be casted to false.
 
+### Empty string behaviour
+
+Configure `aspect.config.is_empty_string` table. Indicate which values ​​are empty string or values ​​with specific metatable.
+
+```lua
+local is_empty_string = require("aspect.config").is_empty_string
+is_empty_string[ngx.null] = true
+is_empty_string[getmetatable(cbson.null())] = true
+```
+
+### Number behaviour
+
+Configure `aspect.config.is_n` table.  Indicate which objects can behave like numbers.
+
+```lua
+local is_n = require("aspect.config").is_n
+is_n[getmetatable(cbson.number(0))] = 0
+```
+
 Custom escaper
 --------------
 
@@ -401,7 +420,7 @@ Add custom escaper via config, using escaper name:
 
 ```lua
 require("aspect.config").escapers.csv = function(value) 
-    -- ... 
+    -- ... returns escaped value
 end
 ```
 

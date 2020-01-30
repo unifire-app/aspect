@@ -49,7 +49,7 @@ Synopsis
 </html>
 ```
 
-Aspect Documentation
+[API Documentation](./docs/api.md)
 --------------------
 
 * [Installation](./docs/installation.md)
@@ -57,7 +57,7 @@ Aspect Documentation
 * [Configuration](./docs/api.md#options)
 * [Cache](./docs/api.md#cache)
 
-Syntax
+[Syntax](./docs/syntax.md)
 ------
 
 * [Variables](./docs/syntax.md#variables)

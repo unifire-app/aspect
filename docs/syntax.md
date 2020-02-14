@@ -479,3 +479,6 @@ It is possible to use the modifiers on one side of a tag or on both sides:
     {{~ value }}    </li>
 {# outputs '<li>\nno spaces    </li>' #}
 ```
+
+Escape control
+--------------

@@ -1,15 +1,23 @@
 Features
 ========
 
+* Sandboxed execution mode. Every aspect of the template execution is monitored and explicitly whitelisted or blacklisted, 
+  whatever is preferred. This makes it possible to execute untrusted templates.
+* Powerful [automatic HTML escaping](./syntax.md#escape-control) system for cross site scripting prevention.
+* [Template inheritance](./syntax.md#template-inheritance) makes it possible to use the same or a similar layout for all templates.
+* High performance with just in time compilation to Lua bytecode. 
+  Aspect will translate your template sources on first load into Lua bytecode for best runtime performance.
+* Easy to debug with a debug system that integrates template compile and runtime errors into the standard Lua traceback system.
+* [Configurable syntax](./api.md#extending).
+* [Iterator supported](./api.md#iterator) and countable objects.
 * Supports lua 5.1/5.2/5.3 and luajit 2.0/2.1 (including OpenResty)
-* The template is built in such a way as to save maximum memory when it is executed, 
-  even if the iterator provides a lot of data.
 * Keys sequence `a.b.c.d` returns `nil` if variable `a` or any keys doesn't exits.
-* [Template extending](./syntax.md#template-inheritance).
 * [Two level cache](./api.md#cache) (lua level and bytecode level).
-* Custom iterator supported.
 * [Chain rendering](./api.md#rendering-templates) (renders data chunk by chunk).
 * Change some Lua behaviours (see below).
+
+Behaviours
+==========
 
 ## Working with strings
 
@@ -38,6 +46,7 @@ You may [configure empty-string behavior](./api.md#empty-string-behaviour).
 | nil                      | 0                         |
 | userdata                 | `tonumber(tostring(...))` |
 | non numeric string       | 0                         |
+| string                   | `tonumber(...)`           |
 
 You may [configure number behavior](./api.md#number-behaviour).
 
@@ -45,23 +54,26 @@ You may [configure number behavior](./api.md#number-behaviour).
 
 The rules to determine if an expression is `true` or `false` are (edge cases):
 
-| Value                    | Boolean evaluation |
-|--------------------------|--------------------|
-| empty string             | false              |
-| numeric zero             | false              |
-| whitespace-only string   | true               |
-| string "0" or '0'        | true               |
-| empty table              | false              |
-| nil                      | false              |
-| non-empty table          | true               |
-| table with `__toboolean` | `__toboolean()`    |
-| table with `__count`     | `__count() ~= 0`   |
-| cjson.null               | false              |
-| cbson.null()             | false              |
-| lyaml.null               | false              |
-| yaml.null                | false              |
-| ngx.null                 | false              |
-| msgpack.null             | false              |
+| Value                       | Boolean evaluation |
+|-----------------------------|--------------------|
+| empty string                | false              |
+| other string                | true               |
+| numeric zero                | false              |
+| whitespace-only string      | true               |
+| string "0" or '0'           | true               |
+| empty table                 | false              |
+| nil                         | false              |
+| non-empty table             | true               |
+| table with `__toboolean`    | `__toboolean()`    |
+| table with `__count`        | `__count() ~= 0`   |
+| cjson.null                  | false              |
+| cbson.null()                | false              |
+| lyaml.null                  | false              |
+| yaml.null                   | false              |
+| ngx.null                    | false              |
+| msgpack.null                | false              |
+| userdata with `__toboolean` | `__toboolean()`    |
+| userdata with `__count`     | `__count() ~= 0`   |
 
 Functions `__toboolean()` and `__count()` should be a part of the metatable. 
 
@@ -76,10 +88,10 @@ Aspect allows define own object-iterators via metatable.
 | number                   | not iterate          |
 | nil                      | not iterate          |
 | true/false               | not iterate          |
-| userdata                 | not iterate          |
 | userdata with `__pairs`  | iterate with `__pairs()` |
-| table                    | iterate with `pairs()` |
+| userdata                 | not iterate          |
 | table with `__pairs`     | iterate with `__pairs()` instead of `pairs()` |
+| table                    | iterate with `pairs()` |
 
 The function `__pairs()` should be a part of the metatable 
 and compatible with basic function `pairs()` (returns `iterator`, `key`, `value`) 

@@ -11,7 +11,7 @@ Aspect Lua Template
 
 The key-features are...
 * _Well known_: The most popular Django-like syntax is used - 
-  [Twig](https://twig.symfony.com/doc/2.x/templates.html) compatible and [Jinja](https://jinja.palletsprojects.com/en/2.10.x/templates/) like.
+  [Twig](https://twig.symfony.com/doc/2.x/templates.html) compatible, [Jinja](https://jinja.palletsprojects.com/en/2.10.x/templates/) like.
 * _Fast_: Aspect compiles templates down to plain optimized Lua code. 
   Moreover, Lua code compiles into bytecode - the fastest representation of a template.
 * _Secure_: Aspect has a sandbox mode to evaluate all template code. 

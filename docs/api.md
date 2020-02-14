@@ -13,15 +13,16 @@ Table Of Content
 - [Options](#options)
 - [Cache](#cache)
 - [Loaders](#loaders)
-- [Add tags](#add-tags)
-- [Add filters](#add-filters)
-- [Add functions](#add-functions)
-- [Add operators](#add-operators)
-- [Behaviors](#behaviors)
-  - [Condition behaviour](#condition-behaviour)
-  - [Empty string behaviour](#empty-string-behaviour)
-  - [Number behaviour](#number-behaviour)
-- [Custom escaper](#custom-escaper)
+- [Extending](#extending)
+  - [Add tags](#add-tags)
+  - [Add filters](#add-filters)
+  - [Add functions](#add-functions)
+  - [Add operators](#add-operators)
+  - [Behaviors](#behaviors)
+    - [Condition behaviour](#condition-behaviour)
+    - [Empty string behaviour](#empty-string-behaviour)
+    - [Number behaviour](#number-behaviour)
+  - [Custom escaper](#custom-escaper)
 
 Basic API Usage
 --------------
@@ -213,8 +214,10 @@ tpls["theme.tpl"] = [[<html> ... template ... </html>]]
 aspect.loader = tpls
 ```
 
-Add tags
---------
+Extending
+---------
+
+## Add tags
 
 Add inline tag `{% foo %}`:
 
@@ -256,8 +259,7 @@ end
 
 See [aspect.tags](../src/aspect/tags.lua) for more examples.
 
-Add filters
------------
+## Add filters
 
 ```lua
 local filters = require("aspect.filters")
@@ -277,8 +279,7 @@ end)
 
 See [aspect.filters](../src/aspect/filters.lua) for more examples.
 
-Add functions
--------------
+## Add functions
 
 Add function `{{ foo(arg1=x, arg2=y) }}`:
 
@@ -305,8 +306,7 @@ end)
 
 See [aspect.funcs](../src/aspect/funcs.lua) for more examples.
 
-Add tests
----------
+## Add tests
 
 Add tests `foo`, `bar` and `baz`
 
@@ -336,8 +336,7 @@ Result:
 
 See [aspect.tests](../src/aspect/tests.lua) for more examples.
 
-Add operators
--------------
+## Add operators
 
 For example add bitwise operator `&` (using [bitop](http://bitop.luajit.org/) package): 
 
@@ -363,8 +362,7 @@ table.insert(ops, {
 
 See [aspect.ast.ops](../src/aspect/ast/ops.lua) for more examples.
 
-Behaviors
----------
+## Behaviors
 
 ### Condition behaviour
 
@@ -431,8 +429,7 @@ local is_n = require("aspect.config").is_n
 is_n[getmetatable(cbson.number(0))] = 0
 ```
 
-Custom escaper
---------------
+## Custom escaper
 
 Add custom escaper via config, using escaper name: 
 

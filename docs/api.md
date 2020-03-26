@@ -143,19 +143,19 @@ local aspect = require("aspect.template")
 local template = aspect.new({
     cache = true -- enable internal lua in-memory cache 
 })
-template.bytecode_load = function (t, name)
+template.bytecode_load = function (name, aspect)
     -- load bytecode from nginx shared dictionary
     return ngx.shared["cache"]:get(name)
 end
-template.luacode_load = function (t, name)
+template.luacode_load = function (name, aspect)
     -- load lua code from redis
     return redis:get(name)
 end
-template.luacode_save = function (t, name, luacode)
+template.luacode_save = function (name, luacode, aspect)
     -- save lua code into redis
     redis:set(name, luacode)
 end
-template.bytecode_save = function (t, name, bytecode)
+template.bytecode_save = function (name, bytecode, aspect)
     -- save bytecode into nginx shared dictionary
     ngx.shared["cache"]:set(name, bytecode)
 end

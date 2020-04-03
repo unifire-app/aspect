@@ -380,23 +380,14 @@ function tags.tag_for(compiler, tok)
             compiler_error(tok, "syntax", "expecting variable name")
         end
     end
-    local tag = compiler:push_tag('for', {})
+    local tag = compiler:push_tag('for', {}, nil, nil, false)
     from = compiler:parse_expression(tok:require("in"):next())
     tag.has_loop = false
     tag.from = from
     tag.value = value
     tag.key = key
     while tok:is_valid() do
-        if tok:is('if') then
-            tok:next()
-            local info = {}
-            cond = compiler:parse_expression(tok, info)
-            if info.type == "boolean" then
-                tag.cond = "if " .. cond .. " then"
-            else
-                tag.cond = "if __.b(" .. cond .. ") then"
-            end
-        elseif tok:is("recursive") then
+        if tok:is("recursive") then
             if tag.nestedset then
                 compiler_error(tok, "syntax", "nestedset() already declared")
             end
@@ -420,13 +411,10 @@ function tags.tag_for(compiler, tok)
     end
 end
 
---- {% break  %}
+--- {% break %}
 function tags.tag_break(compiler, tok)
     local tag = compiler:get_last_tag()
-    if not tag then
-        compiler_error(tok, "syntax")
-    end
-    if tag.name ~= "for" then
+    if not tag or tag.name ~= "for" then
         compiler_error(tok, "syntax", "'break' allows only in 'for' tag")
     end
     return 'break'
@@ -438,6 +426,7 @@ function tags.tag_endfor(compiler)
     local tag = compiler:pop_tag('for')
     local lua = tag.code_space
     local before = {}
+    local use_while = false
     if tag.has_loop then
         if tag.has_loop == true then -- use all keys of {{ loop }}
             tag.has_loop = loop_keys
@@ -463,6 +452,7 @@ function tags.tag_endfor(compiler)
         if tag.has_loop.index0 then
             before[#before + 1] = "\tindex0 = 0,"
         end
+
         before[#before + 1] = "}"
         if tag.has_loop.revindex then
             before[#before + 1] = "loop.revindex = loop.length - 1"
@@ -473,53 +463,91 @@ function tags.tag_endfor(compiler)
         if tag.has_loop.last then
             before[#before + 1] = "loop.last = (length == 1)"
         end
+        if tag.has_loop.next_item or tag.has_loop.has_more then
+            use_while = true
+            before[#before + 1] = "loop._it, loop._ctx, loop._k = __.iter(" .. tag.from .. ")"
+        end
     end
 
-    if tag.key then -- start of 'for'
-        before[#before + 1] = 'for ' .. tag.key .. ', ' .. tag.value .. ' in __.iter(' .. tag.from .. ') do'
+    if use_while then
+        tag.key = tag.key or "loop._k"
+        before[#before + 1] = tag.key .. ', ' .. tag.value ..' = loop._it(loop._ctx, loop._k)'
+        before[#before + 1] = 'if ' .. tag.key .. ' then'
+        before[#before + 1] = '  loop._nk, loop.next_item = loop._it(loop._ctx, ' .. tag.key .. ')'
+        before[#before + 1] = 'end'
+        before[#before + 1] = 'loop.has_more = loop._nk and true or false'
+        before[#before + 1] = 'while ' .. tag.key .. ' do' -- start of 'while'
+        if tag.has_loop then
+            if tag.has_loop.iteration then
+                lua[#lua + 1] = "loop.iteration = loop.iteration + 1"
+            end
+            if tag.has_loop.prev_item then
+                lua[#lua + 1] = "loop.prev_item = " .. tag.value
+            end
+        end
+        lua[#lua + 1] = tag.key .. ', ' .. tag.value .. ' = loop._nk, loop.next_item'
+        lua[#lua + 1] = 'if loop._nk ~= nil then'
+        lua[#lua + 1] = '  loop._nk, loop.next_item = loop._it(loop._ctx, loop._nk)'
+        lua[#lua + 1] = 'end'
+        lua[#lua + 1] = 'loop.has_more = loop._nk and true or false'
+        if tag.has_loop then
+            if tag.has_loop.first then
+                lua[#lua + 1] = "if loop.first then loop.first = false end"
+            end
+            if tag.has_loop.index or tag.has_loop.last then
+                lua[#lua + 1] = "loop.index = loop.index + 1"
+            end
+            if tag.has_loop.index0 then
+                lua[#lua + 1] = "loop.index0 = loop.index0 + 1"
+            end
+            if tag.has_loop.revindex then
+                lua[#lua + 1] = "loop.revindex = loop.revindex - 1"
+            end
+            if tag.has_loop.revindex0 then
+                lua[#lua + 1] = "loop.revindex0 = loop.revindex0 - 1"
+            end
+            if tag.has_loop.last then
+                lua[#lua + 1] = "if not loop.has_more then loop.last = true end"
+            end
+        end
+        lua[#lua + 1] = 'end' -- end of 'while'
     else
-        before[#before + 1] = 'for _, ' .. tag.value .. ' in __.iter(' .. tag.from .. ') do'
+        if tag.key then -- start of 'for'
+            before[#before + 1] = 'for ' .. tag.key .. ', ' .. tag.value .. ' in __.iter(' .. tag.from .. ') do'
+        else
+            before[#before + 1] = 'for _, ' .. tag.value .. ' in __.iter(' .. tag.from .. ') do'
+        end
+        if tag.has_loop then
+            if tag.has_loop.iteration then
+                lua[#lua + 1] = "loop.iteration = loop.iteration + 1"
+            end
+            if tag.has_loop.prev_item then
+                lua[#lua + 1] = "loop.prev_item = " .. tag.value
+            end
+        end
+        if tag.has_loop then -- after for body
+            if tag.has_loop.first then
+                lua[#lua + 1] = "if loop.first then loop.first = false end"
+            end
+            if tag.has_loop.index or tag.has_loop.last then
+                lua[#lua + 1] = "loop.index = loop.index + 1"
+            end
+            if tag.has_loop.index0 then
+                lua[#lua + 1] = "loop.index0 = loop.index0 + 1"
+            end
+            if tag.has_loop.revindex then
+                lua[#lua + 1] = "loop.revindex = loop.revindex - 1"
+            end
+            if tag.has_loop.revindex0 then
+                lua[#lua + 1] = "loop.revindex0 = loop.revindex0 - 1"
+            end
+            if tag.has_loop.last then
+                lua[#lua + 1] = "if loop.length == loop.index then loop.last = true end"
+            end
+            lua[#lua + 1] = "end" -- end of 'for'
+        end
     end
-    if tag.cond then -- start of 'if'
-        before[#before + 1] = tag.cond
-    end
-
-    if tag.has_loop then
-        if tag.has_loop.iteration then
-            lua[#lua + 1] = "loop.iteration = loop.iteration + 1"
-        end
-        if tag.has_loop.prev_item then
-            lua[#lua + 1] = "loop.prev_item = " .. tag.value
-        end
-    end
-    if tag.cond then -- end of 'if'
-        lua[#lua + 1] = "end"
-    end
-    if tag.has_loop then -- after for body
-        if tag.has_loop.first then
-            lua[#lua + 1] = "if loop.first then loop.first = false end"
-        end
-        if tag.cond then -- end of 'if'
-            lua[#lua + 1] = "end"
-        end
-        if tag.has_loop.index or tag.has_loop.last then
-            lua[#lua + 1] = "loop.index = loop.index + 1"
-        end
-        if tag.has_loop.index0 then
-            lua[#lua + 1] = "loop.index0 = loop.index0 + 1"
-        end
-        if tag.has_loop.revindex then
-            lua[#lua + 1] = "loop.revindex = loop.revindex - 1"
-        end
-        if tag.has_loop.revindex0 then
-            lua[#lua + 1] = "loop.revindex0 = loop.revindex0 - 1"
-        end
-        if tag.has_loop.last then
-            lua[#lua + 1] = "if loop.length == loop.index then loop.last = true end"
-        end
-        lua[#lua + 1] = "end" -- end of 'do'
-    end
-    lua[#lua + 1] = "end" -- end if 'for'
+    lua[#lua + 1] = "end" -- end of 'do'
     utils.prepend_table(before, lua)
     return lua
 end

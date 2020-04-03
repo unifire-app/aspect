@@ -339,7 +339,7 @@ function compiler:parse_variable(tok)
                     tag.has_loop = tag.has_loop or {}
                     local loop_key = tok:next():require("."):next():get_token()
                     if not loop_keys[loop_key] then
-                        compiler_error(tok, "syntax", "expecting one of [" .. concat(tablex.keys(loop_keys), ", ") .. "]")
+                        compiler_error(tok, "syntax", "loop-variable expects one of [" .. concat(tablex.keys(loop_keys), ", ") .. "] keys")
                     end
                     var[#var + 1] = '"' .. loop_key .. '"'
                     if loop_key == "parent" then
@@ -815,6 +815,8 @@ function compiler:append_expr(lua, raw)
     end
 end
 
+--- Append any lua code
+--- @param lua string
 function compiler:append_code(lua)
     local tag = self:get_last_tag()
     local line= self:get_checkpoint()
@@ -893,13 +895,17 @@ end
 --- @param name string the tag name
 --- @param code_space table|nil for lua code
 --- @return aspect.tag
-function compiler:push_tag(name, code_space, code_space_name, var_space)
+function compiler:push_tag(name, code_space, code_space_name, var_space, push_state)
     self.idx = self.idx + 1
+    if push_state == nil then
+        push_state = true
+    end
     --- @type aspect.tag
     local tag = {
         id = self.idx,
         name = name,
-        line = self.line
+        line = self.line,
+        push_state = push_state
     }
     if code_space then
         insert(self.code, code_space)
@@ -908,7 +914,10 @@ function compiler:push_tag(name, code_space, code_space_name, var_space)
         else
             code_space_name = quote_string(code_space_name)
         end
-        code_space[#code_space + 1] = "__:push_state(_self, " .. self.line .. ", " .. code_space_name .. ")"
+        tag.code_space_name = code_space_name
+        if push_state then
+            code_space[#code_space + 1] = "__:push_state(_self, " .. self.line .. ", " .. code_space_name .. ")"
+        end
         self.prev_line = self.line
         tag.code_space_no = #self.code
     end
@@ -964,7 +973,9 @@ function compiler:pop_tag(name)
                     compiler_error(nil, "compiler", "invalid code space layer in the tag " .. name)
                 else
                     local prev = remove(self.code)
-                    prev[#prev + 1] = "__:pop_state()"
+                    if tag.push_state then
+                        prev[#prev + 1] = "__:pop_state()"
+                    end
                 end
             end
             if tag.var_space_no then

@@ -200,14 +200,6 @@ templates["for_00"] = {
     ]],
     "item1 item2 item3"
 }
-templates["for_01"] = {
-    [[
-        {% for k, v in list_1 if v != "item2" %}
-            {{ k }}: {{ v }}
-        {% endfor %}
-    ]],
-    "1: item1 3: item3"
-}
 
 templates["for_02"] = {
     [[
@@ -216,6 +208,15 @@ templates["for_02"] = {
         {% endfor %}
     ]],
     "1: item1 | 2: item2 | 3: item3"
+}
+
+templates["for_10"] = {
+    [[
+        {% for k, v in list_1 %}
+            {{ k }}: {{ v }} (prev: {{ loop.prev_item }}, next: {{ loop.next_item }}) {% if loop.has_more %}|{% endif %}
+        {% endfor %}
+    ]],
+    "1: item1 (prev: , next: item2) | 2: item2 (prev: item1, next: item3) | 3: item3 (prev: item2, next: )"
 }
 
 templates["set_00"] = {

@@ -201,6 +201,7 @@ config.loop = {
         length = true,
         prev_item = true,
         next_item = true,
+        has_more = true,
 
         --- trees
         depth = true,

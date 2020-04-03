@@ -79,7 +79,7 @@ Tags
 * [set](./docs/tags/set.md) — assign values to variables
 * [do](./docs/tags/do.md) 
 * [if, elseif, elif, else](./docs/tags/if.md) — conditional statement
-* [for, else](./docs/tags/for.md) — loop over each item in a sequence.
+* [for, else, break](./docs/tags/for.md) — loop over each item in a sequence.
 * [macro](./docs/tags/macro.md), [import](./docs/tags/macro.md#importing-macros), [from](./docs/tags/macro.md#importing-macros)
 * [include](./docs/tags/include.md) — includes a template and returns the rendered content
 * [extends](./docs/tags/extends.md), [block](./docs/tags/extends.md#block), [use](./docs/tags/extends.md#use) - 

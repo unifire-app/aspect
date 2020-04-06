@@ -56,6 +56,9 @@ Synopsis
 * [Basic Usage](./docs/api.md#basic-api-usage)
 * [Configuration](./docs/api.md#options)
 * [Cache](./docs/api.md#cache)
+* [Loaders](./docs/api.md#loaders)
+* [Extending](./docs/api.md#extending)
+* [Iterators](./docs/api.md#iterator)
 
 [Syntax](./docs/syntax.md)
 ------

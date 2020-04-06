@@ -895,28 +895,19 @@ end
 --- @param name string the tag name
 --- @param code_space table|nil for lua code
 --- @return aspect.tag
-function compiler:push_tag(name, code_space, code_space_name, var_space, push_state)
+function compiler:push_tag(name, code_space, code_space_name, var_space)
     self.idx = self.idx + 1
-    if push_state == nil then
-        push_state = true
-    end
     --- @type aspect.tag
     local tag = {
         id = self.idx,
         name = name,
-        line = self.line,
-        push_state = push_state
+        line = self.line
     }
     if code_space then
         insert(self.code, code_space)
-        if not code_space_name then
-            code_space_name = "nil"
-        else
-            code_space_name = quote_string(code_space_name)
-        end
-        tag.code_space_name = code_space_name
-        if push_state then
-            code_space[#code_space + 1] = "__:push_state(_self, " .. self.line .. ", " .. code_space_name .. ")"
+        if code_space_name then
+            tag.code_space_name = code_space_name
+            code_space[#code_space + 1] = "__:push_state(_self, " .. self.line .. ", " .. quote_string(code_space_name) .. ")"
         end
         self.prev_line = self.line
         tag.code_space_no = #self.code
@@ -973,7 +964,7 @@ function compiler:pop_tag(name)
                     compiler_error(nil, "compiler", "invalid code space layer in the tag " .. name)
                 else
                     local prev = remove(self.code)
-                    if tag.push_state then
+                    if tag.code_space_name then
                         prev[#prev + 1] = "__:pop_state()"
                     end
                 end

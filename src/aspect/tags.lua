@@ -380,7 +380,7 @@ function tags.tag_for(compiler, tok)
             compiler_error(tok, "syntax", "expecting variable name")
         end
     end
-    local tag = compiler:push_tag('for', {}, nil, nil, false)
+    local tag = compiler:push_tag('for', {})
     from = compiler:parse_expression(tok:require("in"):next())
     tag.has_loop = false
     tag.from = from

@@ -54,6 +54,22 @@ aspect:display("dashboard.tpl", {
 })
 ```
 
+## Render result
+
+```lua
+local output, err = aspect:display(template, vars)
+```
+
+- `output` is `aspect.output` object and contains rendering information, even if the rendering failed. 
+  If you use `aspect:render` method `output` contains rendered string:
+  ```lua
+  local output, err = aspect:render(template, vars)
+  if not err then
+      io.write(tostring(output))
+  end
+  ```
+- `err` is `aspect.error` object and contains error information. `nil` if no errors.
+
 Rendering Templates
 -------------------
 
@@ -442,3 +458,10 @@ end
 ```twig
 {{ data.raw|e("csv") }}
 ```
+
+## Iterator
+
+The `Aspect` implements custom iterators as in Lua 5.2 - through the metatable and `__pairs()` function. 
+Works for all lua/luajit versions.
+
+For example see [range iterator](../src/aspect/utils/range.lua).

@@ -160,6 +160,10 @@ function output:set_print(p, size)
     self.size = size
 end
 
+--- Push new state to call stack
+--- @param view aspect.view
+--- @param line number
+--- @param scope_name string
 function output:push_state(view, line, scope_name)
     if #self.stack > self.opts.stack_size then
         runtime_error(self, "Call stack overflow (maximum " .. self.opts.stack_size .. ")")

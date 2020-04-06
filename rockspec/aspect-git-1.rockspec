@@ -6,16 +6,16 @@ source = {
 description = {
     summary = "Aspect is a compiling templating engine for Lua and OpenResty with syntax Twig/Django/Jinja.",
     detailed = [[
-* Popular Django syntax compatible with Twig2 and Jinja2
-* Bytecode and lua code caching of compiled templates are available.
-* Safe launch of templates in the sandbox.
-* Automatic casting of data types when used.
-* Designed for highload and big input and output data.
-* Detailed error messages make it easy to debug templates.
-* Easily extensible: add your own tags, filters, functions, handlers, operators.
-* Intuitive behavior. For example, unlike lua, zero, an empty string, csjon.null, and so on, will be false in if-conditions. All of this is extensible.
-* Custom behavior with userdata.
-* Supports work with OpenResty.
+* Well known: The most popular Liquid-like syntax is used - Twig compatible and Jinja like.
+* Fast: Aspect compiles templates down to plain optimized Lua code.
+ Moreover, Lua code compiles into bytecode - the fastest representation of a template.
+* Secure: Aspect has a sandbox mode to evaluate all template code.
+ This allows Aspect to be used as a template language for applications where users may modify the template design.
+* Flexible: Aspect is powered by a flexible lexer and parser.
+ This allows the developer to define their own custom tags, filters, functions and operators, and to create their own DSL.
+* Comfortable: Aspect allows you to process userdata data.
+ More intuitive behavior with special values such as a empty string, number zero and so on.
+* Memory-safe: The template is built in such a way as to save maximum memory when it is executed, even if the iterator provides a lot of data.
     ]],
     license = "BSD-3-Clause",
 }
@@ -44,5 +44,7 @@ build = {
         ["aspect.utils.batch"] = "src/aspect/utils/batch.lua",
         ["aspect.utils.range"] = "src/aspect/utils/range.lua",
         ["aspect.loader.array"] = "src/aspect/loader/array.lua",
+        ["aspect.loader.array"] = "src/aspect/loader/filesystem.lua",
+        ["aspect.loader.array"] = "src/aspect/loader/resty.lua",
     }
 }

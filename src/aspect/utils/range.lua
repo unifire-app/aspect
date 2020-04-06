@@ -2,7 +2,26 @@ local setmetatable = setmetatable
 local floor = math.floor
 local abs = math.abs
 
-local function iterator(self, k)
+--- Range iterator
+--- @class aspect.utils.range
+--- @field from number
+--- @field to number
+--- @field step number
+--- @field incr boolean
+local range = {}
+
+--- Magic function for {{ for }} tag
+--- @return fun iterator (see range.__iterate)
+--- @return table context object
+--- @return number initial key value
+function range:__pairs()
+    return self.__iterate, self, 0
+end
+
+--- Iterator
+--- @return number the key
+--- @return number the value
+function range:__iterate(k)
     local i = self.from + k * self.step
     if self.incr then
         if i > self.to then
@@ -19,11 +38,9 @@ local function iterator(self, k)
     end
 end
 
-local function __pairs(self)
-    return iterator, self, 0
-end
-
-local function __count(self)
+--- Magic function for calculating the number of iterations (elements)
+--- @return number count of iterations/elements
+function range:__count()
     if self.incr then
         return floor(abs((self.to - self.from) / self.step)) + 1
     else
@@ -31,18 +48,16 @@ local function __count(self)
     end
 end
 
---- @class aspect.utils.range
---- @field from number
---- @field to number
---- @field step number
---- @field incr boolean
-local range = {}
 local mt = {
     __index = range,
-    __pairs = __pairs,
-    __count = __count
+    __pairs = range.__pairs,
+    __count = range.__count
 }
 
+--- Range constructor
+--- @param from number
+--- @param to number
+--- @param step number
 function range.new(from, to, step)
     return setmetatable({
         incr = from < to,
@@ -51,6 +66,5 @@ function range.new(from, to, step)
         step = step,
     }, mt)
 end
-
 
 return range

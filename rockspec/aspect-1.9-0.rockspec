@@ -1,13 +1,13 @@
 package = "aspect"
-version = "1.6-0"
+version = "1.9-0"
 source = {
-    url = "https://github.com/unifire-app/aspect/archive/1.6.zip",
-    dir = "aspect-1.6"
+    url = "https://github.com/unifire-app/aspect/archive/1.9.zip",
+    dir = "aspect-1.9"
 }
 description = {
-    summary = "Aspect is a compiling templating engine for Lua and OpenResty with syntax Twig/Django/Jinja.",
+    summary = "Aspect is a compiling templating engine for Lua and OpenResty with syntax Twig/Jinja/Liquid.",
     detailed = [[
-* Well known: The most popular Django-like syntax is used - Twig compatible and Jinja like.
+* Well known: The most popular Liquid-like syntax is used - Twig compatible and Jinja like.
 * Fast: Aspect compiles templates down to plain optimized Lua code.
   Moreover, Lua code compiles into bytecode - the fastest representation of a template.
 * Secure: Aspect has a sandbox mode to evaluate all template code.
@@ -45,5 +45,7 @@ build = {
         ["aspect.utils.batch"] = "src/aspect/utils/batch.lua",
         ["aspect.utils.range"] = "src/aspect/utils/range.lua",
         ["aspect.loader.array"] = "src/aspect/loader/array.lua",
+        ["aspect.loader.array"] = "src/aspect/loader/filesystem.lua",
+        ["aspect.loader.array"] = "src/aspect/loader/resty.lua",
     }
 }

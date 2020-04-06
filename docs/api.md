@@ -23,6 +23,7 @@ Table Of Content
     - [Empty string behaviour](#empty-string-behaviour)
     - [Number behaviour](#number-behaviour)
   - [Custom escaper](#custom-escaper)
+- [Iterators](#iterator)
 
 Basic API Usage
 --------------
@@ -459,7 +460,8 @@ end
 {{ data.raw|e("csv") }}
 ```
 
-## Iterator
+Iterator
+--------
 
 The `Aspect` implements custom iterators as in Lua 5.2 - through the metatable and `__pairs()` function. 
 Works for all lua/luajit versions.

@@ -1033,3 +1033,20 @@ describe("Testing cache.", function ()
         assert.is.equals("1 and 2 and string and 17", strip(template:render("basic_00", vars).result))
     end)
 end)
+
+describe("Testing CLI.", function ()
+    -- search lua bin path
+    local i, bin = 0
+    while arg[ i ] do i = i - 1 end
+    bin = arg[i + 1]
+
+    local cmd = 'LUA_PATH="' .. package.path .. '" LUA_CPATH="' .. package.cpath .. '" ' .. bin .. ' bin/aspect --include=spec/fixture spec/fixture/data.json spec/fixture/greeting.tpl'
+    local p = io.popen(cmd)
+    local result = p:read("*a")
+    p:close()
+    assert.is.equals([[
+Hello, nobody!
+We sent foo to email@dev.null.
+
+Footer say foo.]], result)
+end)

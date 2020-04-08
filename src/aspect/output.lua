@@ -34,7 +34,7 @@ local _parents = {}
 
 --- Output handler
 --- @class aspect.output
---- @field data table runtime output fragments
+--- @field fixture table runtime output fragments
 --- @field line number
 --- @field view aspect.view
 --- @field stack table<aspect.view,number,string>
@@ -52,7 +52,13 @@ local output = {
 }
 
 local function __tostring(self)
-    return concat(self.data)
+    if self.result then
+        return self.result
+    elseif self.data then
+        return concat(self.data)
+    else
+        return ""
+    end
 end
 
 --- collect output
@@ -252,8 +258,8 @@ function output.b(v)
         if mt then
             if mt.__toboolean then
                 return mt.__toboolean(v)
-            elseif mt.__count  then
-                return mt.__count(v) ~= 0
+            elseif mt.__len  then
+                return mt.__len(v) ~= 0
             end
         end
         if is_empty(v) then
@@ -274,8 +280,8 @@ function output.b2(v)
         if mt then
             if mt.__toboolean then
                 return mt.__toboolean(v) and v
-            elseif mt.__count  then
-                return mt.__count(v) ~= 0
+            elseif mt.__len  then
+                return mt.__len(v) ~= 0
             end
         end
         if is_empty(v) then

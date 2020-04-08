@@ -204,11 +204,11 @@ config.loop = {
         has_more = true,
 
         --- trees
-        depth = true,
-        depth0 = true,
-        first_child = true,
-        last_child = true,
-        trace = true
+        level = true,
+        level0 = true,
+        first_node = true,
+        last_node = true,
+        path = true
     }
 }
 

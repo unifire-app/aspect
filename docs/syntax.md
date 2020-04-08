@@ -55,6 +55,9 @@ Table Of Content
   - [Other Operators](#other-operators)
   - [Operator Precedence](#operator-precedence)
 - [Whitespace Control](#whitespace-control)
+- [HTML Escaping](#html-escaping)
+  - [Manual Escaping](#working-with-manual-escaping)
+  - [Automatic Escaping](#working-with-automatic-escaping)
 
 Variables
 ---------
@@ -480,5 +483,45 @@ It is possible to use the modifiers on one side of a tag or on both sides:
 {# outputs '<li>\nno spaces    </li>' #}
 ```
 
-Escape control
---------------
+HTML Escaping
+-------------
+
+When generating HTML from templates, there’s always a risk that a variable will include characters that affect the resulting HTML. 
+There are two approaches: manually escaping each variable or automatically escaping everything by default.
+
+Aspect supports both, automatic escaping is enabled by default.
+
+The automatic escaping strategy can be configured via the [autoescape](./api.md#options) option.
+
+## Working with Manual Escaping
+
+If manual escaping is enabled, it is **your** responsibility to escape variables if needed. 
+What to escape? Any variable that comes from an untrusted source.
+
+Escaping works by using the [escape](./filters/escape.md) or `e` filter:
+
+```twig
+{{ user.username|e }}
+```
+
+By default, the [escape](./filters/escape.md) filter uses the html strategy, 
+but depending on the escaping context, you might want to explicitly use an other strategy:
+
+```twig
+{{ user.username|e('html') }}
+{{ user.username|e('js') }}
+{{ user.username|e('url') }}
+```
+
+## Working with Automatic Escaping
+
+Whether automatic escaping is enabled or not, you can mark a section of a template to be escaped 
+or not by using the [autoescape](./tags/autoescape.md) tag:
+
+```twig
+{% autoescape %}
+    Everything will be automatically escaped in this block (using the HTML strategy)
+{% endautoescape %}
+```
+
+Currently auto-escaping uses only the html escaping strategy. 

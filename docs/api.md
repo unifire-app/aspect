@@ -23,6 +23,7 @@ Table Of Content
     - [Empty string behaviour](#empty-string-behaviour)
     - [Number behaviour](#number-behaviour)
   - [Custom escaper](#custom-escaper)
+- [Iterator and countable objects](#iterator-and-countable-objects)
 
 Basic API Usage
 --------------
@@ -459,9 +460,13 @@ end
 {{ data.raw|e("csv") }}
 ```
 
-## Iterator
+Iterator and countable objects
+-------------------------------
 
-The `Aspect` implements custom iterators as in Lua 5.2 - through the metatable and `__pairs()` function. 
+The `Aspect` implements custom iterators as in Lua 5.2+ - through the metatable and `__pairs()` function. 
 Works for all lua/luajit versions.
 
 For example see [range iterator](../src/aspect/utils/range.lua).
+
+As in Lua 5.2+, the Aspect allows to determine the length of objects through the `__len()` function. 
+Works for all lua/luajit versions.

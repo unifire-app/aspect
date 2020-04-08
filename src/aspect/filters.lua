@@ -340,8 +340,8 @@ filters.add('length', {
     local typ = type(v)
     if typ == "table" then
         local mt = getmetatable(v)
-        if mt and mt.__count then
-            return mt.__count(v)
+        if mt and mt.__len then
+            return mt.__len(v)
         elseif mt and mt.__pairs then -- has custom iterator. we don't know how much elements will be
             return 0 -- may be return -1 ?
         else

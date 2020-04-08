@@ -1,0 +1,3 @@
+#!/usr/bin/env lua
+-- Aspect command-line runner
+require('aspect.cli')()

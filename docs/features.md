@@ -65,7 +65,7 @@ The rules to determine if an expression is `true` or `false` are (edge cases):
 | nil                         | false              |
 | non-empty table             | true               |
 | table with `__toboolean`    | `__toboolean()`    |
-| table with `__count`        | `__count() ~= 0`   |
+| table with `__len`        | `__len() ~= 0`   |
 | cjson.null                  | false              |
 | cbson.null()                | false              |
 | lyaml.null                  | false              |
@@ -73,9 +73,9 @@ The rules to determine if an expression is `true` or `false` are (edge cases):
 | ngx.null                    | false              |
 | msgpack.null                | false              |
 | userdata with `__toboolean` | `__toboolean()`    |
-| userdata with `__count`     | `__count() ~= 0`   |
+| userdata with `__len`     | `__len() ~= 0`   |
 
-Functions `__toboolean()` and `__count()` should be a part of the metatable. 
+Functions `__toboolean()` and `__len()` should be a part of the metatable. 
 
 ## Working with cycles
 
@@ -107,7 +107,7 @@ and compatible with basic function `pairs()` (returns `iterator`, `key`, `value`
 | true/false               | 0                    |
 | userdata                 | 0                    |
 | table                    | count of keys        |
-| table with `__count`     | `__count(...)`       |
+| table with `__len`     | `__len(...)`       |
 | table with `__pairs`     | invoke `__pairs()` and count elements |
-| userdata with `__count`  | `__count(...)`       |
+| userdata with `__len`  | `__len(...)`       |
 | userdata with `__pairs`  | invoke `__pairs()` and count elements |

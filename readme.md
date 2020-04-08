@@ -19,6 +19,7 @@ The key-features are...
 * _Flexible_: Aspect is powered by a flexible lexer and parser. 
   This allows the developer to define their own custom tags, filters, functions and operators, and to create their own DSL.
 * _Supports_ lua 5.1/5.2/5.3 and luajit 2.0/2.1 (with OpenResty)
+* Has [console renderer](./docs/cli.md).
 * **[List of all features](./docs/features.md)**
 
 Synopsis
@@ -49,6 +50,12 @@ Synopsis
 </html>
 ```
 
+Aspect also has a [console tool](./docs/cli.md) for rendering data
+
+```bash
+$ aspect /path/to/data.json /path/to/template.tpl
+```
+
 [API Documentation](./docs/api.md)
 --------------------
 
@@ -56,6 +63,8 @@ Synopsis
 * [Basic Usage](./docs/api.md#basic-api-usage)
 * [Configuration](./docs/api.md#options)
 * [Cache](./docs/api.md#cache)
+* [Extending](./docs/api.md#extending)
+* [Iterator and countable objects](./docs/api.md#iterator-and-countable-objects)
 
 [Syntax](./docs/syntax.md)
 ------
@@ -72,6 +81,7 @@ Synopsis
 * [Expressions](./docs/syntax.md#expressions)
 * [Operators](./docs/syntax.md#operators)
 * [Whitespace control](./docs/syntax.md#whitespace-control)
+* [HTML Escaping](./docs/syntax.md#html-escaping)
 
 Tags
 ----

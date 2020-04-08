@@ -40,7 +40,7 @@ end
 
 --- Magic function for calculating the number of iterations (elements)
 --- @return number count of iterations/elements
-function range:__count()
+function range:__len()
     if self.incr then
         return floor(abs((self.to - self.from) / self.step)) + 1
     else
@@ -51,7 +51,7 @@ end
 local mt = {
     __index = range,
     __pairs = range.__pairs,
-    __count = range.__count
+    __len = range.__len
 }
 
 --- Range constructor

@@ -33,20 +33,20 @@ local function __pairs(self)
     end, self
 end
 
-local function __count(self)
+local function __len(self)
     local typ = type(self.t)
     local mt = getmetatable(self.t)
     if typ == "table" then
-        if mt and mt.__count then
-            return ceil(mt.__count(self.t) / self.count)
+        if mt and mt.__len then
+            return ceil(mt.__len(self.t) / self.count)
         elseif mt and mt.__pairs then -- has custom iterator. we don't know how much elements will be
             return 0
         else
             return ceil(nkeys(self.t) / self.count)
         end
     elseif typ == "userdata" then
-        if mt and mt.__count then
-            return ceil(mt.__count(self.t) / self.count)
+        if mt and mt.__len then
+            return ceil(mt.__len(self.t) / self.count)
         end
     else
         return 0
@@ -59,7 +59,7 @@ local batch = {}
 local mt = {
     __index = batch,
     __pairs = __pairs,
-    __count = __count
+    __len = __len
 }
 
 --- @param t table

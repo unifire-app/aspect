@@ -1,0 +1,4 @@
+Hello, {{ user.name }}!
+We sent {{ say }} to {{ user.email }}.
+
+{% include 'footer.tpl' %}

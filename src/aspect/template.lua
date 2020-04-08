@@ -179,11 +179,12 @@ end
 --- @param name string the view name
 --- @return aspect.view|nil
 --- @return aspect.error|nil
+--- @return aspect.compiler|nil
 function template:get_view(name)
     if self.cache and self.cache[name] then
         return self.cache[name]
     end
-    local view, error = self:load(name)
+    local view, error, build = self:load(name)
     if view then
         if view.uses then -- lazy load the {%use%} tag
             for _, use in ipairs(view.uses) do
@@ -206,7 +207,7 @@ function template:get_view(name)
                     end
                 else
                     return nil, err.new("Failed to load block from template " .. name .. ": " .. err.new(use_error):get_message())
-                        :set_name(self.name, use_view.line)
+                        :set_name(self.name, use_view.line), build
                 end
             end
         end
@@ -215,7 +216,7 @@ function template:get_view(name)
         end
         return view
     elseif error then
-        return nil, err.new(error)
+        return nil, err.new(error), build
     else
         return nil
     end
@@ -226,6 +227,7 @@ end
 --- @param name string the view name
 --- @return aspect.view|nil
 --- @return aspect.error|nil
+--- @return aspect.compiler|nil
 function template:load(name)
     local bytecode, luacode, source, build, ok, error, f
     if self.bytecode_load then
@@ -250,19 +252,20 @@ function template:load(name)
         ok, error = build:run(source)
         if ok then
             luacode = build:get_code()
+            local view = loadcode(self, luacode, name .. ".lua")
             if self.luacode_save then
                 self.luacode_save(name, luacode, self)
             end
             if self.bytecode_save then
                 f, error = (loadstring or load)(luacode, name .. ".lua")
                 if not f then
-                    return nil, err.new(error or "Failed to dump a view " .. name)
+                    return nil, err.new(error or "Failed to dump a view " .. name), build
                 end
                 self.bytecode_save(name, function_dump(f), self)
             end
-            return loadcode(self, luacode, name .. ".lua")
+            return view, nil, build
         else
-            return nil, error
+            return nil, error, build
         end
     elseif error then
         return nil, err.new(error)

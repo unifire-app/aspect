@@ -1,0 +1,7 @@
+{
+  "say": "foo",
+  "user": {
+    "name": "nobody",
+    "email": "email@dev.null"
+  }
+}

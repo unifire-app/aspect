@@ -11,10 +11,10 @@ local var_dump = require("aspect.utils").var_dump
 --- @field pack fun(l:string, r:string, c:string) how to pack lua code
 --- @field delimiter string|nil ternary delimiter
 --- @field brackets boolean operator in brackets
---- @field c string|nil data type of condition branch
---- @field l string|nil data type of left member (branch)
---- @field r string data type of right member (branch)
---- @field out string data type of operator's result
+--- @field c string|nil fixture type of condition branch
+--- @field l string|nil fixture type of left member (branch)
+--- @field r string fixture type of right member (branch)
+--- @field out string fixture type of operator's result
 local _op = {}
 
 local ops = {

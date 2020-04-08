@@ -52,10 +52,10 @@ build = {
         ["aspect.loader.resty"]      = "src/aspect/loader/resty.lua",
 
         ["aspect.cli"]          = "src/aspect/cli.lua",
-    }
-}
-install = {
-    bin = {
-        ['aspect'] = 'bin/aspect'
+    },
+    install = {
+        bin = {
+            ['aspect'] = 'bin/aspect'
+        }
     }
 }

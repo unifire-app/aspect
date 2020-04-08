@@ -1,7 +1,16 @@
 Filter `format`
 ==============
 
-The `format` filter formats a given string by replacing the placeholders (placeholders follows the printf c notation):
+The `format` filter formats a given string by replacing the placeholders.
+
+```twig
+{{ "I like %s and %s."|format(foo, "bar") }}
+
+{# outputs I like foo and bar
+   if the foo parameter equals to the foo string. #}
+```
+
+Placeholders follows the printf c notation:
 
 | specifier | Output | Example |
 |-----------|--------|---------|
@@ -20,6 +29,5 @@ The `format` filter formats a given string by replacing the placeholders (placeh
 | A | Hexadecimal floating point, uppercase | -0XC.90FEP-2 |
 | c | Character | a |
 | s | String of characters | sample |
-| p | Pointer address | b8000000 |
 | n | Nothing printed. The corresponding argument must be a pointer to a signed int. The number of characters written so far is stored in the pointed location. |	
 | % | A % followed by another % character will write a single % to the stream. | % |

@@ -63,6 +63,7 @@ $ aspect /path/to/data.json /path/to/template.tpl
 * [Basic Usage](./docs/api.md#basic-api-usage)
 * [Configuration](./docs/api.md#options)
 * [Cache](./docs/api.md#cache)
+* [Loaders](./docs/api.md#loaders)
 * [Extending](./docs/api.md#extending)
 * [Iterator and countable objects](./docs/api.md#iterator-and-countable-objects)
 

@@ -1,16 +1,13 @@
---local lexer = require("aspect.lexer")
 local compiler_error = require("aspect.err").compiler_error
-local strcount = require("pl.stringx").count
 local setmetatable = setmetatable
-local insert = table.insert
 local concat = table.concat
 local strlen = string.len
-local lexer = require("pl.lexer")
-local yield = coroutine.yield
 local tonumber = tonumber
 local patterns = require("aspect.config").tokenizer.patterns
 local compiler = require("aspect.config").compiler
 local utils = require("aspect.utils")
+local strfind = string.find
+local strsub = string.sub
 
 --- @class aspect.tokenizer
 --- @field tok function
@@ -19,36 +16,8 @@ local utils = require("aspect.utils")
 local tokenizer = {}
 local mt = {__index = tokenizer}
 
-local function tdump(tok)
-    return yield(tok,tok)
-end
-
-local function ndump(tok,options)
-    if options and options.number then
-        tok = tonumber(tok)
-    end
-    return yield("number",tok)
-end
-
--- regular strings, single or double quotes; usually we want them
--- without the quotes
-local function sdump(tok, options)
-    if options and options.string then
-        tok = tok:sub(2,-2)
-    end
-    return yield("string",tok)
-end
-
-local function wsdump (tok)
-    return yield("space", tok)
-end
-
-local function wdump(tok)
-    return yield("word",tok)
-end
-
-local function tstop(tok)
-    return yield("stop",tok)
+local function unquote(tok)
+    return tok:sub(2,-2)
 end
 
 local straight = {
@@ -58,61 +27,74 @@ local straight = {
 }
 
 local matches = {
-    {patterns.WSPACE,wsdump},
-    {patterns.NUMBER3,ndump},
-    {patterns.WORD, wdump},
-    {patterns.NUMBER4,ndump},
-    {patterns.NUMBER5,ndump},
-    {patterns.STRING1,sdump},
-    {patterns.STRING2,sdump},
-    {patterns.STRING3,sdump},
-    {'^}}',tstop},
-    {'^%%}',tstop},
-    {'^%-}}',tstop},
-    {'^%-%%}',tstop},
-    {'^==',tdump},
-    {'^!=',tdump},
-    {'^%?:',tdump},
-    {'^%?%?',tdump},
-    {'^<=',tdump},
-    {'^>=',tdump},
-    {'^%*%*',tdump},
-    {'^//',tdump},
-    {'^.',tdump}
+    {patterns.WSPACE,   "space"},
+    {patterns.NUMBER3,  "number",  tonumber},
+    {patterns.WORD,     "word"},
+    {patterns.NUMBER4,  "number",  tonumber},
+    {patterns.NUMBER5,  "number",  tonumber},
+    { patterns.STRING1, "string",  unquote },
+    { patterns.STRING2, "string",  unquote },
+    { patterns.STRING3, "string",  unquote },
+    {'^}}',             "stop"},
+    {'^%%}',            "stop"},
+    {'^%-}}',           "stop"},
+    {'^%-%%}',          "stop"},
+    {'^==',             nil},
+    {'^!=',             nil},
+    {'^%?:',            nil},
+    {'^%?%?',           nil},
+    {'^<=',             nil},
+    {'^>=',             nil},
+    {'^%*%*',           nil},
+    {'^//',             nil},
+    {'^.',              nil}
 }
 
-
 --- Start the tokenizer
+--- @param s string input string
 --- @return aspect.tokenizer
 function tokenizer.new(s)
     local tokens = {}
-    local indent
+    local indent, final_token
     local parsed_len = 0
-    local finished_token
-    local tok = lexer.scan(s, matches, {space=true}, {number=true,string=false})
-    for tok_type, token in tok do
-        if tok_type == "stop" then
-            parsed_len = parsed_len + strlen(token)
-            finished_token = token
-            break
-        end
-        if tok_type == "space" then
-            if tokens[#tokens] then
-                tokens[#tokens][3] = token
-            else
-                indent = token
+    local idx, resume = 1, true
+    while idx <= #s and resume do
+        for _,m in ipairs(matches) do
+            local pat = m[1]
+            local typ = m[2]
+            local i1, i2 = strfind(s,pat,idx)
+            if i1 then
+                local tok = strsub(s,i1,i2)
+                if not typ then
+                    typ = tok
+                end
+                idx = i2 + 1
+                if typ == "stop" then
+                    parsed_len = parsed_len + strlen(tok)
+                    final_token = tok
+                    resume = false
+                    break
+                elseif typ == "space" then
+                    if tokens[#tokens] then
+                        tokens[#tokens][3] = tok
+                    else
+                        indent = tok
+                    end
+                else
+                    parsed_len = parsed_len + strlen(tok)
+                    tokens[#tokens + 1] = {typ, tok}
+                end
+                break
             end
-        else
-            parsed_len = parsed_len + strlen(token)
-            tokens[#tokens + 1] = {tok_type, token}
         end
     end
+    --utils.var_dump("tokens", tokens)
     return setmetatable({
         tokens = tokens,
         i = 1,
         token = tokens[1][2],
         typ = tokens[1][1],
-        finish_token = finished_token,
+        finish_token = final_token,
         parsed_len = parsed_len,
         indent = indent
     }, mt)
@@ -172,7 +154,6 @@ function tokenizer:next()
         return self
     end
     self.i = self.i + 1
-    --utils.var_dump("NEXT" .. tostring(self.tokens[self.i - 1][2]) .. " => " .. tostring((self.tokens[self.i] or {})[2]))
     if self.tokens[self.i] then
         self.token = self.tokens[self.i][2]
         self.typ = self.tokens[self.i][1]

@@ -14,8 +14,8 @@ to respect the GitHub issue template, and include:
 
 1. A summary of the issue
 2. A list of steps to reproduce the issue
-3. The version of Kong you encountered the issue with
-4. Your Kong configuration, or the parts that are relevant to your issue
+3. The version of Aspect you encountered the issue with
+4. If posible get template info with `aspect --debug --lint path/to/template.tmpl`
 
 ## Where to submit feature requests?
 

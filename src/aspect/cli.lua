@@ -2,7 +2,7 @@ local var_dump   = require("aspect.utils").var_dump
 local dump       = require("aspect.utils").dump
 local aspect     = require("aspect.template")
 local fs_loader  = require("aspect.loader.filesystem")
-local has_json, cjson = pcall(require, "cjson.safe")
+local json       = require("aspect.config").json
 
 local cli = {
     aliases = {
@@ -218,10 +218,10 @@ Examples:
     if options.debug then
         verbose("data (" .. string.len(data) .. " bytes): ", data)
     end
-    if not has_json then
-        return 1, "[ERROR] required lua-cjson module"
+    if not json.decode then
+        return 1, "[ERROR] " .. json.error
     end
-    data, err = cjson.decode(data)
+    data, err = json.decode(data)
     if not data then
         return 1, "[ERROR] Failed to decode data: " .. tostring(err)
     end

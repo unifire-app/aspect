@@ -7,16 +7,22 @@ local getmetatable = getmetatable
 --- @class aspect.config
 local config = {}
 
---- escape filter settings
+--- JSON configuration
+config.json = {
+    encode = nil,
+    decode = nil,
+    error = "JSON encode/decode no available. Please install `cjson` or `json` or configure `require('aspect.config').json` before Aspect usage"
+}
+
+--- escape filter settings (HTML strategy)
 config.escape = {
-    pattern = "[}{\">/<'&]",
+    pattern = "[}{\"><'&]",
     replaces = {
         ["&"] = "&amp;",
         ["<"] = "&lt;",
         [">"] = "&gt;",
         ['"'] = "&quot;",
-        ["'"] = "&#39;",
-        ["/"] = "&#47;"
+        ["'"] = "&#39;"
     }
 }
 
@@ -48,6 +54,18 @@ do
     if has_cjson then
         config.is_false[cjson.null] = true
         config.is_empty_string[cjson.null] = true
+        config.json.encode = cjson.encode
+        config.json.decode = cjson.decode
+    else
+        local has_json, json = pcall(require, "json")
+        if has_json then
+            config.json.encode = json.encode
+            config.json.decode = json.decode
+            if json.null then
+                config.is_false[json.null] = true
+                config.is_empty_string[json.null] = true
+            end
+        end
     end
 
     --- https://github.com/isage/lua-cbson

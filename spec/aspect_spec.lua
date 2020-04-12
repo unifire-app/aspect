@@ -601,28 +601,28 @@ templates["date_02"] = {
 
 templates["autoescape_00"] = {
     "<pre>{{ string_html }}</pre>",
-    "<pre>&lt;b&gt;Hello&lt;&#47;b&gt;</pre>",
+    "<pre>&lt;b&gt;Hello&lt;/b&gt;</pre>",
     nil,
     { autoescape = true }
 }
 
 templates["autoescape_01"] = {
     "<pre>{{ string_html|raw }} [and] {{ string_html }}</pre>",
-    "<pre><b>Hello</b> [and] &lt;b&gt;Hello&lt;&#47;b&gt;</pre>",
+    "<pre><b>Hello</b> [and] &lt;b&gt;Hello&lt;/b&gt;</pre>",
     nil,
     { autoescape = true }
 }
 
 templates["autoescape_02"] = {
     "<pre>{{ 'yeah, ' ~ string_html|raw }}</pre>",
-    "<pre>yeah, &lt;b&gt;Hello&lt;&#47;b&gt;</pre>",
+    "<pre>yeah, &lt;b&gt;Hello&lt;/b&gt;</pre>",
     nil,
     { autoescape = true }
 }
 
 templates["autoescape_03"] = {
     "{% autoescape %}<pre>{{ string_html }}</pre>{% endautoescape %}",
-    "<pre>&lt;b&gt;Hello&lt;&#47;b&gt;</pre>",
+    "<pre>&lt;b&gt;Hello&lt;/b&gt;</pre>",
 }
 
 templates["autoescape_04"] = {
@@ -665,7 +665,7 @@ templates["filter:length_01"] = {
 
 templates["filter:escape_01"] = {
     "{{ string_html|e }}",
-    "&lt;b&gt;Hello&lt;&#47;b&gt;"
+    "&lt;b&gt;Hello&lt;/b&gt;"
 }
 
 templates["filter:escape_02"] = {
@@ -680,7 +680,7 @@ templates["filter:escape_03"] = {
 
 templates["filter:escape_04"] = {
     "{{ string_html|escape }}",
-    "&lt;b&gt;Hello&lt;&#47;b&gt;"
+    "&lt;b&gt;Hello&lt;/b&gt;"
 }
 
 templates["filter:default_01"] = {

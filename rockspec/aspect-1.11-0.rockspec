@@ -21,8 +21,7 @@ description = {
     license = "BSD-3-Clause",
 }
 dependencies = {
-    "date",
-    "lua-cjson"
+    "date"
 }
 build = {
     type = "builtin",

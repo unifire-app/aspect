@@ -20,7 +20,7 @@ local nkeys = utils.nkeys
 local escape = utils.escape
 local trim = utils.trim
 local output = require("aspect.output")
-local cjson = require("cjson.safe")
+local json = require("aspect.config").json
 local date = require("date")
 local upper = string.upper
 local lower = string.lower
@@ -189,7 +189,10 @@ filters.add('e', {
     if not typ or typ == "html" then
         return gsub(v, e_pattern, e_replaces)
     elseif typ == "js" then
-        return cjson.encode(v)
+        if not json.encode then
+            error(json.error)
+        end
+        return json.encode(v)
     elseif typ == "url" then
         v = v:gsub("\n", "\r\n")
         v = v:gsub("([^%w ])", char_to_hex)
@@ -301,9 +304,12 @@ end)
 filters.add('json_encode', {
     input = 'any',
     output = 'string',
-    args = {}
+    args = {},
 }, function (v)
-    return cjson.encode(v)
+    if not json.encode then
+        error(json.error)
+    end
+    return json.encode(v)
 end)
 
 filters.add('keys', {

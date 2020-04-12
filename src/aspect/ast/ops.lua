@@ -1,6 +1,4 @@
 local require = require
-local quote_string = require("pl.stringx").quote_string
-local var_dump = require("aspect.utils").var_dump
 
 --- The operator settings
 --- @class aspect.ast.op

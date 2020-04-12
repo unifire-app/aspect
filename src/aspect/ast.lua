@@ -349,7 +349,7 @@ local function pack_node(node)
 end
 
 --- @param node aspect.ast.node
---- @param callback fun
+--- @param callback function
 local function visit(node, callback)
     if node.op then -- if aspect.ast.node
         local left, right, cond = node.l, node.r, node.c

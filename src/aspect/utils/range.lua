@@ -11,7 +11,7 @@ local abs = math.abs
 local range = {}
 
 --- Magic function for {{ for }} tag
---- @return fun iterator (see range.__iterate)
+--- @return function iterator (see range.__iterate)
 --- @return table context object
 --- @return number initial key value
 function range:__pairs()

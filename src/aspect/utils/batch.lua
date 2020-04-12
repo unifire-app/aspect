@@ -3,7 +3,6 @@ local type = type
 local ceil = math.ceil
 local getmetatable = getmetatable
 local setmetatable = setmetatable
-local tablex = require("pl.tablex")
 local nkeys = require("aspect.utils")
 --local count = table.nkeys or tablex.size
 --if table.nkeys then -- new luajit function

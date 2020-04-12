@@ -7,12 +7,155 @@ local insert = table.insert
 local str_rep  = string.rep
 local sub = string.sub
 local find = string.find
+local reverse = string.reverse
 local getmetatable = getmetatable
-local tablex = require("pl.tablex")
+local nkeys = table.nkeys
 
-local utils = {
-    nkeys = table.nkeys or tablex.size
-}
+local utils = {}
+
+--- Total number of elements in this table.
+--- Supported __len metamethod and table.nkeys (if possible)
+--- Note: iterators (tables with __paris metamethod) returns 0
+--- @param t table
+--- @return number
+function utils.nkeys(t)
+    local mt = getmetatable(t)
+    if mt then
+        if mt.__len then
+            return t:__len()
+        elseif mt.__pairs then -- skip iterators
+            return 0
+        end
+    elseif nkeys then
+        return nkeys(t)
+    else
+        local i = 0
+        for _ in pairs(t) do i = i + 1 end
+        return i
+    end
+end
+
+--- Escape any Lua 'magic' characters in a string
+--- @param s string the input string
+--- @return string
+function utils.escape(s)
+    return (s:gsub('[%-%.%+%[%]%(%)%$%^%%%?%*]','%%%1'))
+end
+
+--- Trim any whitespace or present chars
+--- @param s string
+--- @param left boolean
+--- @param right boolean
+--- @param chrs string|nil
+--- @return string
+function utils.trim(s, left, right, chrs)
+    if not chrs then
+        chrs = '%s'
+    else
+        chrs = '[' .. utils.escape(chrs) .. ']'
+    end
+    local f = 1
+    local t
+    if left then
+        local i1, i2 = find(s,'^'..chrs..'*')
+        if i2 >= i1 then
+            f = i2+1
+        end
+    end
+    if right then
+        if #s < 200 then
+            local i1,i2 = find(s,chrs..'*$',f)
+            if i2 >= i1 then
+                t = i1-1
+            end
+        else
+            local rs = reverse(s)
+            local i1,i2 = find(rs, '^'..chrs..'*')
+            if i2 >= i1 then
+                t = -i2
+            end
+        end
+    end
+    return sub(s,f,t)
+end
+
+--- @param s string
+--- @return string
+function utils.strip(s)
+    return utils.trim(s, true, true)
+end
+
+--- Count all instances of substring in string.
+--- @param s string
+--- @param subs string
+---
+function utils.strcount(s, subs)
+    local i1,i2 = find(s, subs, nil, true)
+    local k = 0
+    while i1 do
+        if i2 > #s then break end
+        k = k + 1
+        i1,i2 = find(s, subs, i2+1, true)
+    end
+    return k
+end
+
+--- Utility function that finds any patterns that match a long string's an open or close.
+-- Note that having this function use the least number of equal signs that is possible is a harder algorithm to come up with.
+-- Right now, it simply returns the greatest number of them found.
+-- @param s The string
+-- @return 'nil' if not found. If found, the maximum number of equal signs found within all matches.
+local function has_lquote(s)
+    local lstring_pat = '([%[%]])(=*)%1'
+    local equals, new_equals, _
+    local finish = 1
+    repeat
+        _, finish, _, new_equals = s:find(lstring_pat, finish)
+        if new_equals then
+            equals = max(equals or 0, #new_equals)
+        end
+    until not new_equals
+
+    return equals
+end
+
+--- Quote the given string and preserve any control or escape characters, such that reloading the string in Lua returns the same result.
+--- @param s string the string to be quoted.
+--- @return string the quoted string.
+function utils.quote_string(s)
+    -- Find out if there are any embedded long-quote sequences that may cause issues.
+    -- This is important when strings are embedded within strings, like when serializing.
+    -- Append a closing bracket to catch unfinished long-quote sequences at the end of the string.
+    local equal_signs = has_lquote(s .. "]")
+
+    -- Note that strings containing "\r" can't be quoted using long brackets
+    -- as Lua lexer converts all newlines to "\n" within long strings.
+    if (s:find("\n") or equal_signs) and not s:find("\r") then
+        -- If there is an embedded sequence that matches a long quote, then
+        -- find the one with the maximum number of = signs and add one to that number.
+        equal_signs = ("="):rep((equal_signs or -1) + 1)
+        -- Long strings strip out leading newline. We want to retain that, when quoting.
+        if s:find("^\n") then s = "\n" .. s end
+        local lbracket, rbracket =
+        "[" .. equal_signs .. "[",
+        "]" .. equal_signs .. "]"
+        s = lbracket .. s .. rbracket
+    else
+        -- Escape funny stuff. Lua 5.1 does not handle "\r" correctly.
+        s = ("%q"):format(s):gsub("\r", "\\r")
+    end
+    return s
+end
+
+--- @param t table
+--- @return table
+function utils.keys(t)
+    local keys = {}
+    for k, _ in pairs(t) do
+        insert(keys, k)
+    end
+    return keys
+end
 
 --- Merge two tables and returns lua representation. Value of table are expressions.
 --- @param t1 table|nil
@@ -84,7 +227,7 @@ function utils.join(t, delim)
     end
 end
 
---- Outputs values to the stderr
+--- Outputs values to the stderr. For debug only.
 function utils.var_dump(...)
     io.stderr:write(utils.dump(...) .. "\n" .. debug.traceback() .. "\n")
 end
@@ -95,7 +238,7 @@ function utils.dump(...)
     local output = {};
     for _, v in pairs({ ... }) do
         if type(v) == 'table' then
-            insert(output, utils.table_export(v, 0, {[tostring(v)] = true}))
+            insert(output, utils.dump_table(v, 0, { [tostring(v)] = true}))
         else
             insert(output, tostring(v))
         end
@@ -107,7 +250,7 @@ end
 --- @param tbl table
 --- @param indent number отступ в количествах пробелов
 --- @return string
-function utils.table_export(tbl, indent, tables)
+function utils.dump_table(tbl, indent, tables)
     if not indent then
         indent = 0
     elseif indent > 16 then
@@ -137,7 +280,7 @@ function utils.table_export(tbl, indent, tables)
                 output = output .. formatting .. "*** private table ***\n"
             else
                 tables[table_id] = true
-                output = output .. formatting .. utils.table_export(v, indent + 1, tables) .. "\n"
+                output = output .. formatting .. utils.dump_table(v, indent + 1, tables) .. "\n"
             end
         else
             output = output .. formatting .. "("..type(v)..") " .. tostring(v) .. "\n"
@@ -149,6 +292,24 @@ function utils.table_export(tbl, indent, tables)
     else
         return "{}"
     end
+end
+
+function utils.table_export(t)
+    local output = {}
+    for k, v in pairs(t) do
+        local key
+        if type(k) == 'string' then
+            key =  "[" .. utils.quote_string(k) .. "] = "
+        end
+        if type(v) == "table" then
+            insert(output, k .. utils.table_export_lua(v))
+        elseif type(v) == "number" then
+            insert(output, k .. v)
+        else
+            insert(output, k .. utils.quote_string(tostring(v)))
+        end
+    end
+    return "{" .. concat(output, ", ") .. "}"
 end
 
 ---

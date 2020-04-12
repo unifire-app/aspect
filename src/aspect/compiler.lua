@@ -11,10 +11,10 @@ local tokenizer = require("aspect.tokenizer")
 local tags = require("aspect.tags")
 local tests = require("aspect.tests")
 local err = require("aspect.err")
-local write = require("pl.pretty").write
-local quote_string = require("pl.stringx").quote_string
-local strcount = require("pl.stringx").count
-local tablex = require("pl.tablex")
+local quote_string = require("aspect.utils").quote_string
+local get_keys = require("aspect.utils").keys
+local strcount = require("aspect.utils").strcount
+local table_export = require("aspect.utils").table_export
 local compiler_error = err.compiler_error
 local sub = string.sub
 local strlen = string.len
@@ -170,7 +170,7 @@ function compiler:get_code()
             insert(code, "_self.blocks." .. n .. " = {")
             insert(code, "\tparent = " .. tostring(b.parent) .. ",")
             insert(code, "\tdesc = " .. quote_string(b.desc or "") .. ",")
-            insert(code, "\tvars = " .. write(b.vars or {}, "\t") .. ",")
+            --insert(code, "\tvars = " .. table_export(b.vars or {}, "\t") .. ",")
             insert(code, "}")
             insert(code, "function _self.blocks." .. n .. ".body(__, _context)")
             --insert(code, "\t_context = ...")
@@ -339,7 +339,7 @@ function compiler:parse_variable(tok)
                     tag.has_loop = tag.has_loop or {}
                     local loop_key = tok:next():require("."):next():get_token()
                     if not loop_keys[loop_key] then
-                        compiler_error(tok, "syntax", "loop-variable expects one of [" .. concat(tablex.keys(loop_keys), ", ") .. "] keys")
+                        compiler_error(tok, "syntax", "loop-variable expects one of [" .. concat(get_keys(loop_keys), ", ") .. "] keys")
                     end
                     var[#var + 1] = '"' .. loop_key .. '"'
                     if loop_key == "parent" then
@@ -668,7 +668,7 @@ function compiler:parse_filters(tok, var, info)
             if info.type then
                 var = utils.cast_lua(var, info.type, filters.info[filter].input)
             end
-            if args then
+            if args and #args > 0 then
                 var = "__.f['" .. filter .. "'](" .. var .. ", " .. concat(args, ", ") .. ")"
             else
                 var = "__.f['" .. filter .. "'](" .. var .. ")"

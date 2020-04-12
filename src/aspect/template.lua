@@ -26,15 +26,15 @@ local jit = jit
 --- View
 --- @class aspect.view
 --- @field name string
---- @field body fun
---- @field macros table<fun(__: aspect.output, context: table)>
+--- @field body function
+--- @field macros table<fun(__:aspect.output, context:table)>
 --- @field blocks table<aspect.template.block>
 --- @field vars table<string>
 --- @field uses table<string>
 --- @field extends string|boolean
---- @field cached string (dynamic)
---- @field has_blocks boolean (dynamic)
---- @field has_macros boolean (dynamic)
+--- @field cached string
+--- @field has_blocks boolean
+--- @field has_macros boolean
 local _ = {}
 
 --- @class aspect.template.block
@@ -55,7 +55,7 @@ local _ = {}
 --- @field bytecode_load fun(name: string, tpl: aspect.template):string
 --- @field bytecode_save fun(name: string, bytecode: string, tpl: aspect.template)
 local template = {
-    _VERSION = "1.9",
+    _VERSION = "1.11",
     _NAME = "aspect",
 }
 local mt = { __index = template }
@@ -81,14 +81,14 @@ do
         end
     end
     --- @param tpl aspect.template
-    --- @param code fun
-    --- @param name string
+    --- @param code string
+    --- @param name string the template name
     loadcode = function (tpl, code, name)
         local error
         if type(code) == 'string' then
-            code, error = loadchunk(tpl, code, name)
+            code, error = loadchunk(tpl, code, name .. ".lua")
             if error then
-                return nil, err.new("Failed to load '" .. name .. "' chunk: " .. tostring(error))
+                return nil, err.new("Error loading '" .. name .. "' code: " .. tostring(error))
             end
         end
         if type(code) ~= 'function' then
@@ -186,7 +186,7 @@ function template:get_view(name)
     end
     local view, error, build = self:load(name)
     if view then
-        if view.uses then -- lazy load the {%use%} tag
+        if view.uses then -- lazy load {%use%} tags
             for _, use in ipairs(view.uses) do
                 local use_view, use_error = self:get_view(use.name)
                 if use_view then -- use template loaded
@@ -233,7 +233,7 @@ function template:load(name)
     if self.bytecode_load then
         bytecode, error = self.bytecode_load(name, self)
         if bytecode then
-            return loadcode(self, bytecode, name .. ".lua")
+            return loadcode(self, bytecode, name)
         elseif error then
             return nil, err.new(error)
         end
@@ -241,18 +241,23 @@ function template:load(name)
     if self.luacode_load then
         luacode, error = self.luacode_load(name, self)
         if luacode then
-            return loadcode(self, luacode, name .. ".lua")
+            return loadcode(self, luacode, name)
         elseif error then
             return nil, err.new(error)
         end
     end
     source, error = self.loader(name, self)
+
+
     if source then
         build = self.compiler.new(self, name)
         ok, error = build:run(source)
         if ok then
             luacode = build:get_code()
-            local view = loadcode(self, luacode, name .. ".lua")
+            local view, load_error = loadcode(self, luacode, name)
+            if not view then
+                return nil, load_error
+            end
             if self.luacode_save then
                 self.luacode_save(name, luacode, self)
             end
@@ -394,7 +399,7 @@ end
 --- Generate template result send into callback chunk by chunk
 --- @param name string|table
 --- @param vars table
---- @param callback fun<out:aspect.output, chunk:string>
+--- @param callback fun(out:aspect.output, chunk:string)
 --- @param chunk_size number
 --- @return aspect.output
 function template:generate(name, vars, callback, chunk_size)

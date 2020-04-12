@@ -3,12 +3,12 @@ local concat = table.concat
 local err = require("aspect.err")
 local compiler_error = err.compiler_error
 local runtime_error = err.runtime_error
-local stringx = require("pl.stringx")
-local quote_string = stringx.quote_string
 local config = require("aspect.config")
 local tags = require("aspect.tags")
 local tag_type = config.compiler.tag_type
 local dump = require("aspect.utils").dump
+local quote_string = require("aspect.utils").quote_string
+local strip = require("aspect.utils").strip
 local date = require("date")
 local utils = require("aspect.utils")
 local range = require("aspect.utils.range")
@@ -20,8 +20,6 @@ local func = {
     fn = {},
     parsers = {}
 }
-
---- @class
 
 --- Add function
 --- @param name string
@@ -232,7 +230,7 @@ func.add("dump", {
             local from = tok:get_pos()
             local expr = compiler:parse_expression(tok)
             local name = tok:get_path_as_string(from, tok.i - 1)
-            vars[#vars + 1] = "{name = " .. quote_string(stringx.strip(name)) .. ", value = " .. expr .. "}"
+            vars[#vars + 1] = "{name = " .. quote_string(strip(name)) .. ", value = " .. expr .. "}"
             if tok:is(")") then
                 break
             end

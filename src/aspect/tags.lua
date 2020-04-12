@@ -1,6 +1,6 @@
 local err = require("aspect.err")
 local compiler_error = err.compiler_error
-local quote_string = require("pl.stringx").quote_string
+local quote_string = require("aspect.utils").quote_string
 local config = require("aspect.config")
 local utils = require("aspect.utils")
 local reserved_words = config.compiler.reserved_words

@@ -2,7 +2,6 @@ local concat = table.concat
 local remove = table.remove
 local setmetatable = setmetatable
 local getmetatable = getmetatable
---local print = print
 local type = type
 local pairs = pairs
 local ipairs = ipairs
@@ -336,7 +335,7 @@ end
 
 --- Get iterator of the v
 --- @param v any
---- @return fun iterator
+--- @return function iterator
 --- @return any object
 --- @return any key
 function output.iter(v)

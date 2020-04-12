@@ -7,18 +7,19 @@ local math = math
 local strlen = string.len
 local format = string.format
 local byte = string.byte
+local find = string.find
 local insert = table.insert
 local isarray = table.isarray -- new luajit feature (https://github.com/openresty/luajit2#tableisarray)
 local concat = table.concat
+local clone = table.clone -- luajit 2.1+
 local tostring = tostring
 local getmetatable = getmetatable
+local utils = require("aspect.utils")
 local batch = require("aspect.utils.batch")
-local nkeys = require("aspect.utils").nkeys
-local var_dump = require("aspect.utils").var_dump
+local nkeys = utils.nkeys
+local escape = utils.escape
+local trim = utils.trim
 local output = require("aspect.output")
-local tablex = require("pl.tablex")
-local stringx = require("pl.stringx")
-local array2d = require("pl.array2d")
 local cjson = require("cjson.safe")
 local date = require("date")
 local upper = string.upper
@@ -46,7 +47,7 @@ local filters = {
 --- Add filter
 --- @param name string the filter name
 --- @param args table the filter argument list
---- @param func fun the filter function
+--- @param func function the filter function
 function filters.add(name, info, func)
     filters.info[name] = {
         input = info.input or 'any',
@@ -94,12 +95,13 @@ filters.add('column', {
         [1] = {name = 'column', type = 'any'}
     }
 }, function (v, column)
-    local ok, res = pcall(array2d.column, v, column)
-    if ok then
-        return res
-    else
-        return nil
+    local res = {}
+    for k, x in output.iter(v) do
+        if type(x) == "table" then
+            res[k] = x[column]
+        end
     end
+    return res
 end)
 
 filters.add('date', {
@@ -339,14 +341,7 @@ filters.add('length', {
 }, function (v)
     local typ = type(v)
     if typ == "table" then
-        local mt = getmetatable(v)
-        if mt and mt.__len then
-            return mt.__len(v)
-        elseif mt and mt.__pairs then -- has custom iterator. we don't know how much elements will be
-            return 0 -- may be return -1 ?
-        else
-            return nkeys(v)
-        end
+        return nkeys(v)
     elseif typ == "string" or typ == "userdata" then
         return strlen(v)
     else
@@ -378,7 +373,25 @@ filters.add('merge', {
     }
 }, function (v, items)
     if type(v) == "table" and type(items) == "table" then
-        return tablex.merge(v, items)
+        local t, mt1, mt2 = nil, getmetatable(v), getmetatable(items)
+        if mt1 and mt1.__pairs then
+            v = {}
+        end
+        if mt2 and mt2.__pairs then
+            items = {}
+        end
+        if clone then
+            t = clone(v)
+        else
+            t = {}
+            for k,x in pairs(v) do
+                t[k] = x
+            end
+        end
+        for k,x in pairs(items) do
+            t[k] = x
+        end
+        return t
     else
         return v or items or {}
     end
@@ -389,7 +402,7 @@ filters.add('nl2br', {
     output = 'string',
     args = {}
 }, function (v)
-    return gsub(output.s(v), "\n", "<br/>\n")
+    return (gsub(output.s(v), "\n", "<br/>\n"))
 end)
 
 filters.add('raw', {
@@ -409,7 +422,7 @@ filters.add('replace', {
 }, function (v, from)
     if type(from) == "table" then
         for k, e in pairs(from) do
-            v = stringx.replace(v, tostring(k), output.s(e))
+            v = (gsub(v, escape(tostring(k)), (output.s(e):gsub('%%','%%%%'))))
         end
     end
     return v
@@ -422,8 +435,33 @@ filters.add('split', {
         [1] = {name = 'delim', type = 'string'},
         [2] = {name = 'count', type = 'number'}
     }
-}, function (v, delim, c)
-    return stringx.split(tostring(v), delim, c)
+}, function (v, delim, n)
+    local i1,ls, plain = 1,{}, true
+    if not delim then
+        delim = '%s+'
+        plain = false
+    end
+    if delim == '' then
+        return {v}
+    end
+    while true do
+        local i2,i3 = find(v, delim, i1, plain)
+        if not i2 then
+            local last = sub(v, i1)
+            if last ~= '' then insert(ls, last) end
+            if #ls == 1 and ls[1] == '' then
+                return {}
+            else
+                return ls
+            end
+        end
+        insert(ls,sub(v,i1,i2-1))
+        if n and #ls == n then
+            ls[#ls] = sub(v, i1)
+            return ls
+        end
+        i1 = i3 + 1
+    end
 end)
 
 filters.add('striptags', {
@@ -443,13 +481,13 @@ filters.add('trim', {
     }
 }, function (v, what, side)
     if not side then
-        return stringx.strip(v, what)
+        return trim(v, true, true, what)
     elseif side == "right" then
-        return stringx.rstrip(v, what)
+        return trim(v, false, true, what)
     elseif side == "left" then
-        return stringx.lstrip(v, what)
+        return trim(v, true, false, what)
     else
-        return stringx.strip(v, what)
+        return trim(v, true, true, what)
     end
 end)
 
@@ -461,9 +499,14 @@ filters.add('inthe', {
     }
 }, function (v, vals)
     if type(vals) == "table" then
-        return tablex.find(vals, v) ~= nil
+        for _, x in pairs(vals) do
+            if v == x then
+                return true
+            end
+        end
+        return false
     else
-        return stringx.lfind(vals, output.s(v)) ~= nil
+        return (find(tostring(v), output.s(vals), nil,true)) ~= nil
     end
 end)
 

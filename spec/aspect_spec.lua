@@ -8,18 +8,41 @@ local funcs = require("aspect.funcs")
 local var_dump = require("aspect.utils").var_dump
 local batch = require("aspect.utils.batch")
 local err = require("aspect.err")
-local dump = require("pl.pretty").dump
-local tablex = require("pl.tablex")
-local strip = require("pl.stringx").strip
+local strip = require("aspect.utils").strip
 local json_encode = require("cjson.safe").encode
 local assert = require("luassert")
 local cjson = require("cjson.safe")
+local tsort,append,remove = table.sort,table.insert,table.remove
+
 
 require('busted.runner')()
 
 local function spaceless(v)
     v = string.gsub(v, "%s+", " ")
     return strip(v)
+end
+
+--- return an iterator to a table sorted by its keys
+-- @within Iterating
+-- @tab t the table
+-- @func f an optional comparison function (f(x,y) is true if x < y)
+-- @usage for k,v in tablex.sort(t) do print(k,v) end
+-- @return an iterator to traverse elements sorted by the keys
+local function sort(t,f)
+    local keys = {}
+    for k in pairs(t) do keys[#keys + 1] = k end
+    tsort(keys,f)
+    local i = 0
+    return function()
+        i = i + 1
+        return keys[i], t[keys[i]]
+    end
+end
+
+
+local large = {}
+for i=1, 1000 do
+    large[i] = 10 + i
 end
 
 local vars = {
@@ -42,6 +65,8 @@ local vars = {
     string_1 = [[string value]],
     string_2 = [[Hello, World]],
     string_html = [[<b>Hello</b>]],
+    string_list1 = [[a,b,c]],
+    string_list2 = "a \tb\n\t c",
 
     date_1 = "2019-11-11 09:55:30",
     date_2 = "2019-11-11 09:56:30",
@@ -49,6 +74,7 @@ local vars = {
     list_empty = {},
     list_1 = {"item1", "item2", "item3"},
     list_2 = { {name = "item2.1"}, {name = "item2.2"}, {name = "item2.3"} },
+    list_large = large,
 
     table_1 = {
         float_value = 2.1,
@@ -208,6 +234,14 @@ templates["for_02"] = {
         {% endfor %}
     ]],
     "1: item1 | 2: item2 | 3: item3"
+}
+templates["for_03"] = {
+    [[
+        {% for k, v in list_large %}
+            {{v}}
+        {% endfor %}
+    ]],
+    table.concat(vars.list_large, " ") .. " "
 }
 
 templates["for_10"] = {
@@ -698,15 +732,50 @@ templates["filter:striptags_00"] = {
 templates["filter:merge_00"] = {
     [[
     {% for k, v in table_1|merge(list_1) %}
+    x,
     {% endfor %}
     ]],
-    "" -- keys in tables are sorted randomly.
+    "x, x, x, x, x, x," -- keys in tables are sorted randomly.
 }
 
 templates["function:dump_01"] = {
     "{{ dump(list_1) }}",
     "Dump values: list_1: { (string) item1 (string) item2 (string) item3 } Stack: begin function:dump_01:1"
 }
+
+templates["filter:split_00"] = {
+    [[
+    {% for v in string_list1|split(",") %}
+        {{v}}:
+    {% endfor %}
+    ]],
+    "a: b: c:"
+}
+templates["filter:split_01"] = {
+    [[
+    {% for v in string_list1|split("") %}
+        {{v}}:
+    {% endfor %}
+    ]],
+    "a,b,c:"
+}
+templates["filter:split_02"] = {
+    [[
+    {% for k,v in string_list2|split()%}
+        {{v}}:
+    {% endfor %}
+    ]],
+    "a: b: c:"
+}
+templates["filter:split_03"] = {
+    [[
+    {% for v in string_list1|split(",", 2) %}
+        {{v}}:
+    {% endfor %}
+    ]],
+    "a: b,c:"
+}
+
 
 --templates["function:dump_02"] = {
 --    "{{ dump(table_1) }}",
@@ -949,7 +1018,7 @@ describe("Testing compiler.", function()
 end)
 
 describe("Testing template syntax.", function ()
-    for k, v in tablex.sort(templates) do
+    for k, v in sort(templates) do
         local template = factory(v[4] or {})
         local compiled = {}
         template.luacode_save = function (name, code)
@@ -973,7 +1042,7 @@ describe("Testing template syntax.", function ()
         local iter = batch.new({"a", "b", "c", "d", "e"}, 2)
         for _, list in getmetatable(iter).__pairs(iter) do
             local n = {}
-            for i,j in tablex.sortv(list) do
+            for i,j in sort(list) do
                 table.insert(n, i .. ":" .. j)
             end
             table.insert(m, table.concat(n, ","))
@@ -1035,18 +1104,19 @@ describe("Testing cache.", function ()
 end)
 
 describe("Testing CLI.", function ()
-    -- search lua bin path
-    local i, bin = 0
-    while arg[ i ] do i = i - 1 end
-    bin = arg[i + 1]
+    it("Basic usage command", function ()
+        local cli = require("aspect.cli")
 
-    local cmd = 'LUA_PATH="' .. package.path .. '" LUA_CPATH="' .. package.cpath .. '" ' .. bin .. ' bin/aspect --include=spec/fixture spec/fixture/data.json spec/fixture/greeting.tpl'
-    local p = io.popen(cmd)
-    local result = p:read("*a")
-    p:close()
-    assert.is.equals([[
+        local code, message = cli.run({
+            "--include=spec/fixture",
+            "spec/fixture/data.json",
+            "spec/fixture/greeting.twig"
+        })
+        assert.is.equals(0, code)
+        assert.is.equals(message, [[
 Hello, nobody!
 We sent foo to email@dev.null.
 
-Footer say foo.]], result)
+Footer say foo.]])
+    end)
 end)

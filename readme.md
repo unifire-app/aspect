@@ -8,6 +8,7 @@ Aspect Lua Template
 
 **Aspect** is a compiling templating engine for Lua and OpenResty.
 
+<img align="right" src="./docs/aspect.png">
 
 The key-features are...
 * _Well known_: The most popular syntax is used - 

@@ -20,7 +20,8 @@ description = {
     license = "BSD-3-Clause",
 }
 dependencies = {
-    "date"
+    "date",
+    "lua >= 5.1"
 }
 build = {
     type = "builtin",
@@ -44,6 +45,7 @@ build = {
         ["aspect.utils"]       = "src/aspect/utils.lua",
         ["aspect.utils.batch"] = "src/aspect/utils/batch.lua",
         ["aspect.utils.range"] = "src/aspect/utils/range.lua",
+        ["aspect.utils.date"]  = "src/aspect/utils/date.lua",
 
         ["aspect.loader.array"]      = "src/aspect/loader/array.lua",
         ["aspect.loader.filesystem"] = "src/aspect/loader/filesystem.lua",

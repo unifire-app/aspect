@@ -221,7 +221,7 @@ end
 
 --- @return boolean
 function tokenizer:is_boolean()
-    if self.token and compiler.boolean[self.token:lower()] then
+    if self.token and compiler.is_boolean[self.token:lower()] then
         return true
     end
     return false

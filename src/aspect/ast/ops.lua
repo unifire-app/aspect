@@ -13,7 +13,7 @@ local require = require
 --- @field l string|nil fixture type of left member (branch)
 --- @field r string fixture type of right member (branch)
 --- @field out string fixture type of operator's result
-local _op = {}
+local _ = {}
 
 local ops = {
     -- **

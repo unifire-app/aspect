@@ -12,6 +12,7 @@ local insert = table.insert
 local isarray = table.isarray -- new luajit feature (https://github.com/openresty/luajit2#tableisarray)
 local concat = table.concat
 local clone = table.clone -- luajit 2.1+
+              or table.deepcopy -- tarantool
 local tostring = tostring
 local getmetatable = getmetatable
 local utils = require("aspect.utils")

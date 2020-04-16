@@ -7,6 +7,7 @@ local filters = require("aspect.filters").fn
 local funcs = require("aspect.funcs")
 local var_dump = require("aspect.utils").var_dump
 local batch = require("aspect.utils.batch")
+local date = require("aspect.utils.date")
 local err = require("aspect.err")
 local strip = require("aspect.utils").strip
 local json_encode = require("cjson.safe").encode
@@ -218,6 +219,22 @@ templates["if_05"] = {
     ]],
     "failed"
 }
+templates["comments_00"] = {
+    [[
+        {# comment #}
+    ]],
+    ""
+}
+templates["comments_01"] = {
+    [[
+        {# comment %}
+
+         #}
+    ]],
+    ""
+}
+
+
 templates["for_00"] = {
     [[
         {% for v in list_1 %}
@@ -1015,6 +1032,81 @@ describe("Testing compiler.", function()
 
         end)
     end
+end)
+
+describe("Testing date.", function ()
+    local local_offset = date.local_offset
+    local custom_offset = 16 * 60 * 60 -- use not existing timezone: +16 UTC
+    local dates = {
+        -- zero zone
+        {"2009-02-13 23:31:30 UTC+00",       1234567890, 0},
+        {"2009-02-13T23:31:30+00:00",        1234567890, 0},
+        {"Fri, 13 Feb 2009 23:31:30 +0000",  1234567890, 0},
+        {"Friday, 13-February-2009 23:31:30 UTC", 1234567890, 0},
+        {"2009-02-13T23:31:30+00:00",        1234567890, 0},
+        {"Fri, 13 Feb 2009 23:31:30 GMT",    1234567890, 0},
+        -- local zone
+        {"2009-02-13 23:31:30",          1234567890 - local_offset, local_offset},
+        {"2009-02-13T23:31:30",          1234567890 - local_offset, local_offset},
+        {"Fri, 13 Feb 2009 23:31:30",    1234567890 - local_offset, local_offset},
+        {"Friday, 13-February-2009 23:31:30", 1234567890 - local_offset, local_offset},
+        {"2009-02-13T23:31:30",          1234567890 - local_offset, local_offset},
+        {"Fri, 13 Feb 2009 23:31:30",    1234567890 - local_offset, local_offset},
+        -- custom zone
+        {"2009-02-13 23:31:30 UTC+16",          1234567890 - custom_offset, custom_offset},
+        {"2009-02-13T23:31:30+16:00",          1234567890 - custom_offset, custom_offset},
+        {"Fri, 13 Feb 2009 23:31:30 +1600",    1234567890 - custom_offset, custom_offset},
+        {"Friday, 13-February-2009 23:31:30 UTC +16:00", 1234567890 - custom_offset, custom_offset},
+        {"2009-02-13T23:31:30+16:00",          1234567890 - custom_offset, custom_offset},
+        {"Fri, 13 Feb 2009 23:31:30 GMT+1600",    1234567890 - custom_offset, custom_offset},
+        -- edge cases
+        {"00:00:01 UTC", 1, 0},
+        {1, 1, 0},
+        {"00:00:01", 1-local_offset, local_offset}
+    }
+    for _, d in ipairs(dates) do
+        it("Parse dates " .. d[1], function ()
+            local dt = date.new(d[1])
+            assert.is.equals(d[2], dt.time, "Time diff: " .. (d[2] - dt.time))
+            assert.is.equals(d[3], dt.offset)
+        end)
+    end
+    local date1 = "2009-02-13 23:31:30 UTC+00"
+    local date2 = "2009-02-13T23:31:35+00:00"
+
+    it("Compare dates", function ()
+
+        assert.is.True(date.new(date1) < date.new(date2), date1 .. " < " .. date2)
+        assert.is.True(date.new(date1) <= date.new(date2), date1 .. " <= " .. date2)
+        assert.is.False(date.new(date1) > date.new(date2), date1 .. " > " .. date2)
+        assert.is.False(date.new(date1) >= date.new(date2), date1 .. " >= " .. date2)
+
+        assert.is.False(date.new(date1) == date.new(date2), date1 .. " == " .. date2)
+        assert.is.True(date.new(date1) ~= date.new(date2), date1 .. " ~= " .. date2)
+
+        assert.is.True(date.new(date1) == date.new(date1), date1 .. " == " .. date1)
+        assert.is.False(date.new(date1) ~= date.new(date1), date1 .. " ~= " .. date1)
+    end)
+
+    it("Modify dates", function ()
+        assert.is.True(date.new(date1) < date.new(date1) + date.new(1), date1 .. " < " .. date1 .. " + date(1)")
+        assert.is.True(date.new(date1) > date.new(date1) - date.new(1), date1 .. " > " .. date1 .. " - date(1)")
+
+        assert.is.True(date.new(date1) < date.new(date1) + date.new("00:00:01 UTC"), date1 .. " < " .. date1 .. " + date(00:00:01 UTC)")
+        assert.is.True(date.new(date1) > date.new(date1) - date.new("00:00:01 UTC"), date1 .. " > " .. date1 .. " - date(00:00:01 UTC)")
+
+        assert.is.True(date.new(date1) < date.new(date1) + 1, date1 .. " < " .. date1 .. " + 1")
+        assert.is.True(date.new(date1) > date.new(date1) - 1, date1 .. " > " .. date1 .. " - 1")
+
+        assert.is.True(date.new(date1) < date.new(date1) + {sec = 1},  date1 .. " < " .. date1 .. " + {sec = 1}")
+        assert.is.True(date.new(date1) < date.new(date1) + {sec = -1}, date1 .. " > " .. date1 .. " + {sec = -1}")
+        assert.is.True(date.new(date1) > date.new(date1) - {sec = 1},  date1 .. " > " .. date1 .. " - {sec = 1}")
+        assert.is.True(date.new(date1) > date.new(date1) - {sec = -1}, date1 .. " < " .. date1 .. " - {sec = -1}")
+    end)
+
+    it("Formatting dates", function ()
+        local date = date.new(date1)
+    end)
 end)
 
 describe("Testing template syntax.", function ()

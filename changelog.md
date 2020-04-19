@@ -4,6 +4,11 @@ ChangeLog
 Master
 ------
 
+*no changes*
+
+1.12
+----
+
 - Add date utils `aspect.utils.date`.
 - Remove `date` dependency.
 - More tests and docs.

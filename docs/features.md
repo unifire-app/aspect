@@ -13,6 +13,7 @@ Features
 * Supports lua 5.1/5.2/5.3 and luajit 2.0/2.1 (including OpenResty)
 * Keys sequence `a.b.c.d` returns `nil` if variable `a` or any keys doesn't exits.
 * [Two level cache](./api.md#cache) (lua level and bytecode level).
+* Date support.
 * [Chain rendering](./api.md#rendering-templates) (renders data chunk by chunk).
 * Change some Lua behaviours (see below).
 

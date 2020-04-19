@@ -51,14 +51,9 @@ before_install:
     - source lua_install/bin/activate
     - luarocks install busted
     - luarocks install cluacov
-#    - luarocks install luacheck
     - luarocks install lua-cjson $LUA_CJSON
 
-#install:
-#    - luarocks make rockspec/aspect-git-1.rockspec
-
 script:
-#    - luacheck src spec
     - busted -c
 
 after_script:

@@ -4,7 +4,6 @@ local setmetatable = setmetatable
 local ipairs = ipairs
 local require = require
 local type = type
-local json_encode = require("cjson.safe").encode
 local utils = require("aspect.utils")
 local cast = utils.cast_lua
 local var_dump = utils.var_dump
@@ -296,7 +295,7 @@ local function dump_visit(node, indent)
             insert(out, indent .. "r: " .. dump_visit(node.r, indent .. "    "))
         end
     elseif type(node.value) == "table" then
-        insert(out, node.type .. "(" .. json_encode(node.value) .. ")")
+        insert(out, node.type .. "(" .. utils.dump(node.value) .. ")")
     else
         insert(out, node.type .. "(" .. node.value .. ")")
     end

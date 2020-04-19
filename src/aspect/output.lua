@@ -310,8 +310,8 @@ function output.n(v)
         return v
     elseif typ == "string" then
         return tonumber(v) or 0
-    elseif is_n[getmetatable(v)] then
-        return v
+    elseif typ == "table" and v._NAME == "aspect.date" then
+        return v.time
     elseif typ == "boolean" then
         return v and 1 or 0
     elseif v then

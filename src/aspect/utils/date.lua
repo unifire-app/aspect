@@ -176,7 +176,7 @@ local function strtotime(t)
             end
         end
     end
-    local ts = os.time(time)
+    local ts = os.time(time) -- ts
     if not time.offset then -- no offset parsed - use local offset
         time.offset = current_offset
     else
@@ -197,17 +197,30 @@ local date = {
 }
 
 function date:format(format)
-
+    local utc = false
+    local time = self.time
+    local offset = self.offset
+    if format:sub(1, 1) == "!" then
+        utc = true
+    end
+    if utc and string.find(format, "%%z") then
+        format = string.gsub(format, "%%z", self:getTimezone(""))
+    end
+    return os.date(format, time)
 end
 
 --- Returns offset as time zone
 --- @return string like +03:00
-function date:getTimezone()
+function date:getTimezone(delim)
+    delim = delim or ":"
+    local sign = (self.offset < 0) and '-' or '+'
+    if self.offset == 0 then
+        return sign .. "00"
+    end
     local m = math.abs((self.offset / 60) % 60)
     local h = m / 60
-    local sign = (self.offset < 0) and '-' or '+'
 
-    return string.format(sign .. "%02d:%02d", h, m)
+    return string.format(sign .. "%02d" .. delim .. "%02d", h, m)
 end
 
 --- @return string
@@ -269,8 +282,36 @@ function date:__le(b)
     return self.time <= date.new(b).time
 end
 
-function date:modify(t)
+local date_mods = {
+    seconds = "sec",
+    second  = "sec",
+    secs    = "sec",
+    sec     = "sec",
+    minutes = "min",
+    minute  = "min",
+    mins    = "min",
+    min     = "min",
+    hours   = "hour",
+    hour    = "hour",
+    days    = "day",
+    day     = "day",
+    months  = "month",
+    month   = "month",
+    years   = "year",
+    year    = "year",
+}
 
+function date:modify(t)
+    local d = os.date("*t", self.time)
+    for k, v in pairs(t) do
+        if date_mods[k] then
+            local name = date_mods[k]
+            d[name] = d[name] + v
+        end
+        --var_dump("date:modify", self.info, self.time, d)
+    end
+    self.time = os.time(d)
+    return self
 end
 
 
@@ -288,7 +329,7 @@ local mt = {
 
 
 function date.new(t, offset)
-    local typ, time = type(t), 0
+    local typ, time, info = type(t), 0, {}
     offset = offset or 0
     if typ == "number" then
         time = t
@@ -300,15 +341,17 @@ function date.new(t, offset)
             union(_t, t)
             time = os.time(_t)
         end
-    elseif typ == "string" then
-        local ts, info = strtotime(t)
+    elseif typ == "string" or typ == "userdata" then
+        time, info = strtotime(tostring(t))
         offset = info.offset
-        time = ts
+    else
+        time = os.time()
     end
 
     return setmetatable({
         time = time,
-        offset = offset
+        offset = offset,
+        info = info
     }, mt)
 end
 

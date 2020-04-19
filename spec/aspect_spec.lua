@@ -6,6 +6,7 @@ local compiler = require("aspect.compiler")
 local filters = require("aspect.filters").fn
 local funcs = require("aspect.funcs")
 local var_dump = require("aspect.utils").var_dump
+local dump_table = require("aspect.utils").dump_table
 local batch = require("aspect.utils.batch")
 local date = require("aspect.utils.date")
 local err = require("aspect.err")
@@ -1046,19 +1047,19 @@ describe("Testing date.", function ()
         {"2009-02-13T23:31:30+00:00",        1234567890, 0},
         {"Fri, 13 Feb 2009 23:31:30 GMT",    1234567890, 0},
         -- local zone
-        {"2009-02-13 23:31:30",          1234567890 - local_offset, local_offset},
-        {"2009-02-13T23:31:30",          1234567890 - local_offset, local_offset},
-        {"Fri, 13 Feb 2009 23:31:30",    1234567890 - local_offset, local_offset},
+        {"2009-02-13 23:31:30",               1234567890 - local_offset, local_offset},
+        {"2009-02-13T23:31:30",               1234567890 - local_offset, local_offset},
+        {"Fri, 13 Feb 2009 23:31:30",         1234567890 - local_offset, local_offset},
         {"Friday, 13-February-2009 23:31:30", 1234567890 - local_offset, local_offset},
-        {"2009-02-13T23:31:30",          1234567890 - local_offset, local_offset},
-        {"Fri, 13 Feb 2009 23:31:30",    1234567890 - local_offset, local_offset},
+        {"2009-02-13T23:31:30",               1234567890 - local_offset, local_offset},
+        {"Fri, 13 Feb 2009 23:31:30",         1234567890 - local_offset, local_offset},
         -- custom zone
-        {"2009-02-13 23:31:30 UTC+16",          1234567890 - custom_offset, custom_offset},
-        {"2009-02-13T23:31:30+16:00",          1234567890 - custom_offset, custom_offset},
-        {"Fri, 13 Feb 2009 23:31:30 +1600",    1234567890 - custom_offset, custom_offset},
+        {"2009-02-13 23:31:30 UTC+16",                   1234567890 - custom_offset, custom_offset},
+        {"2009-02-13T23:31:30+16:00",                    1234567890 - custom_offset, custom_offset},
+        {"Fri, 13 Feb 2009 23:31:30 +1600",              1234567890 - custom_offset, custom_offset},
         {"Friday, 13-February-2009 23:31:30 UTC +16:00", 1234567890 - custom_offset, custom_offset},
-        {"2009-02-13T23:31:30+16:00",          1234567890 - custom_offset, custom_offset},
-        {"Fri, 13 Feb 2009 23:31:30 GMT+1600",    1234567890 - custom_offset, custom_offset},
+        {"2009-02-13T23:31:30+16:00",                    1234567890 - custom_offset, custom_offset},
+        {"Fri, 13 Feb 2009 23:31:30 GMT+1600",           1234567890 - custom_offset, custom_offset},
         -- edge cases
         {"00:00:01 UTC", 1, 0},
         {1, 1, 0},
@@ -1067,7 +1068,8 @@ describe("Testing date.", function ()
     for _, d in ipairs(dates) do
         it("Parse dates " .. d[1], function ()
             local dt = date.new(d[1])
-            assert.is.equals(d[2], dt.time, "Time diff: " .. (d[2] - dt.time))
+            assert.is.equals(d[2], dt.time, "Time diff: " .. (d[2] - dt.time) .. ". Current: "
+                    .. dt.time .. " offset " .. dt.offset .. "; info: " .. dump_table(dt.info))
             assert.is.equals(d[3], dt.offset)
         end)
     end
@@ -1089,6 +1091,7 @@ describe("Testing date.", function ()
     end)
 
     it("Modify dates", function ()
+        assert.is.True(date.new("2019-11-11 09:56:30") > date.new("2019-11-11 09:55:30"), "date('2019-11-11 09:56:30') > date('2019-11-11 09:55:30')")
         assert.is.True(date.new(date1) < date.new(date1) + date.new(1), date1 .. " < " .. date1 .. " + date(1)")
         assert.is.True(date.new(date1) > date.new(date1) - date.new(1), date1 .. " > " .. date1 .. " - date(1)")
 
@@ -1104,9 +1107,37 @@ describe("Testing date.", function ()
         assert.is.True(date.new(date1) > date.new(date1) - {sec = -1}, date1 .. " < " .. date1 .. " - {sec = -1}")
     end)
 
-    it("Formatting dates", function ()
-        local date = date.new(date1)
-    end)
+    local formated = {
+        -- zero zone
+        {
+            date = "2009-02-13 23:31:30 UTC+00",
+            format = {
+                {"%F %T", os.date("%F %T", 1234567890)},
+                {"!%F %T", "2009-02-13 23:31:30"},
+                {"%F %T UTC%z", os.date("%F %T UTC%z", 1234567890)},
+                {"!%F %T UTC%z", "2009-02-13 23:31:30 UTC+00"},
+            }
+        },
+        -- custom zone
+        {
+            date = "2009-02-13 23:31:30 UTC+16",
+            format = {
+                {"%F %T", os.date("%F %T", 1234567890 - custom_offset + local_offset)},
+                {"!%F %T", "2009-02-13 23:31:30"},
+                {"%F %T UTC%z", os.date("%F %T UTC%z", 1234567890)},
+                {"!%F %T UTC%z", "2009-02-13 23:31:30 UTC+00"},
+            }
+        }
+    }
+    for _, v1 in ipairs(formated) do
+        for _, v2 in ipairs(v1.format) do
+            --it("Formatting date '" .. v1.date .. "' as '" .. v2[1] .. "'", function ()
+            --    local d = date.new(v1.date)
+            --    print("d.time: " .. d.time)
+            --    assert.is.equals(v2[2], d:format(v2[1]))
+            --end)
+        end
+    end
 end)
 
 describe("Testing template syntax.", function ()

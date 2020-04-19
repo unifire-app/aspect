@@ -23,6 +23,7 @@ Table Of Content
     - [Empty string behaviour](#empty-string-behaviour)
     - [Number behaviour](#number-behaviour)
   - [Custom escaper](#custom-escaper)
+  - [Date processing](#date-processing)
 - [Iterator and countable objects](#iterator-and-countable-objects)
 
 Basic API Usage
@@ -459,6 +460,75 @@ end
 ```twig
 {{ data.raw|e("csv") }}
 ```
+
+## Date processing
+
+### strtotime
+
+Parse about any textual datetime description into a Unix timestamp:
+
+```lua
+local strtotime = require("aspect.utils.date").strtotime
+local ts, info = strtotime("2009-02-13 23:31:30")
+```
+
+### Date localization
+
+Add or change month localizations. For example add localized months for russian and spain languages. 
+
+```lua
+local months = require("aspect.config").date.months
+months["дек"] = 12          -- add short name of december on russian
+months["декабрь"] = 12      -- add long name of december on russian
+months["dic"] = 12          -- add short name of december on spain
+months["diciembre"] = 12    -- add long name of december on spain
+-- ...
+```
+There 1 - january, 12 - december.
+
+### Date parser
+
+Add or change date parsers. For example add parser for date like `2009Y02M13D23h31m30s+0230z` (it is `2009-02-13 23:31:30 UTC+02:30`)
+
+```lua
+local date = require("aspect.utils.date")
+table.insert(date.parsers.date, { -- parse date segment
+    pattern = "(%d%d%d%d)Y(%d%d)M(%d%d)D",
+    match = function(y, m, d)
+        return {year = tonumber(y), month = tonumber(m), day = tonumber(d)}
+    end 
+})
+table.insert(date.parsers.time, { -- parse time segment
+    pattern = "(%d%d)h(%d%d)m(%d%d)s",
+    match = function(h, m, s)
+        return {hour = tonumber(h), min = tonumber(m), sec = tonumber(s)}
+    end 
+})
+table.insert(date.parsers.zone, { -- parse offset/timezone offset
+    pattern = "([+-]%d%d)(%d?%d?)z",
+    match = function(h, m)
+        return {offset = tonumber(h) * 60 * 60 + (tonumber(m) or 0) * 60} -- seconds 
+    end 
+})
+```  
+
+How parsers work:
+
+- 1. take `date` parser.
+- 1.1 Iterate by patterns.
+- 1.2 When the pattern matches, the `match` function will be called.
+- 1.3 `Match` function returns table like `os.date("*t")` if success, nil if failed (if nil resume 1.1)
+- 2. take `time` parser. search continues with the next character after matched `date`
+- 2.1 Iterate by patterns.
+- 2.2 When the pattern matches, the `match` function will be called.
+- 2.3 `Match` function returns table like `os.date("*t")` if success, nil if failed (if nil resume 2.1)
+- 3. take `zone` parser. search continues with the next character after matched `time`
+- 2.1 Iterate by patterns.
+- 2.2 When the pattern matches, the `match` function will be called.
+- 2.3 `Match` function returns table with key `offset` if success, nil if failed (if nil resume 3.1)
+- 4. calculate timestamp
+
+See `date.parsers` for more information.
 
 Iterator and countable objects
 -------------------------------

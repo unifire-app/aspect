@@ -9,7 +9,7 @@ local tag_type = config.compiler.tag_type
 local dump = require("aspect.utils").dump
 local quote_string = require("aspect.utils").quote_string
 local strip = require("aspect.utils").strip
-local date = require("date")
+local date = require("aspect.utils.date")
 local utils = require("aspect.utils")
 local range = require("aspect.utils.range")
 local pairs = pairs
@@ -212,7 +212,7 @@ func.add("date", {
         [1] = {name = "date", type = "any"}
     }
 }, function (__, args)
-    return date(args.date or false) or date(false)
+    return date.new(args.date)
 end)
 
 --- {{ dump(...) }}

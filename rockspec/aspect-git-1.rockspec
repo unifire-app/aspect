@@ -4,7 +4,7 @@ source = {
     url = "https://github.com/unifire-app/aspect/-/archive/master/aspect-master.zip"
 }
 description = {
-    summary = "Aspect is a compiling templating engine for Lua and OpenResty with syntax Twig/Django/Jinja.",
+    summary = "Aspect is a powerful templating engine for Lua and OpenResty with syntax Twig/Django/Jinja/Liquid.",
     detailed = [[
 * Well known: The most popular Liquid-like syntax is used - Twig compatible and Jinja like.
 * Fast: Aspect compiles templates down to plain optimized Lua code.
@@ -17,10 +17,10 @@ description = {
  More intuitive behavior with special values such as a empty string, number zero and so on.
 * Memory-safe: The template is built in such a way as to save maximum memory when it is executed, even if the iterator provides a lot of fixture.
     ]],
+    homepage = "https://github.com/unifire-app/aspect",
     license = "BSD-3-Clause",
 }
 dependencies = {
-    "date",
     "lua >= 5.1"
 }
 build = {

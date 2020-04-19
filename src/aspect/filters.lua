@@ -22,7 +22,7 @@ local escape = utils.escape
 local trim = utils.trim
 local output = require("aspect.output")
 local json = require("aspect.config").json
-local date = require("date")
+local date = require("aspect.utils.date")
 local upper = string.upper
 local lower = string.lower
 local gsub = string.gsub
@@ -111,33 +111,14 @@ filters.add('date', {
     args = {
         [1] = {name = 'format', type = 'string'}
     }
-}, function (v, column)
-    local dt = date(tostring(v))
+}, function (v, fmt)
+    local dt = date.new(v)
     if dt then
-        return dt:fmt(fmt)
+        return dt:format(fmt)
     else
         return ""
     end
 end)
-
-local date_mods = {
-    seconds = "addseconds",
-    second  = "addseconds",
-    secs    = "addseconds",
-    sec     = "addseconds",
-    minutes = "addminutes",
-    minute  = "addminutes",
-    mins    = "addmins",
-    min     = "addmins",
-    hours   = "addhours",
-    hour    = "addhours",
-    days    = "adddays",
-    day     = "adddays",
-    months  = "addmonths",
-    month   = "addmonths",
-    years   = "addyears",
-    year    = "addyears",
-}
 
 filters.add('date_modify', {
     input = 'any',
@@ -146,20 +127,15 @@ filters.add('date_modify', {
         [1] = {name = 'offset', type = 'any'}
     }
 }, function (v, offset)
-    local dt = date(tostring(v))
+    local dt = date.new(v)
 
     if dt then
         local typ = type(offset)
         if typ == "table" then
-            for k, d in pairs(offset) do
-                if date_mods[k] then
-                    dt[ date_mods[k] ](dt, tonumber(d))
-                end
-            end
+            return dt:modify(offset)
         elseif typ == "number" then
-            dt:addseconds(offset)
+            return dt + offset
         end
-        return dt
     else
         return v
     end

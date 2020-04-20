@@ -1,4 +1,3 @@
-# see https://github.com/alex-page/blazing-fast-gh-pages-deploy
 name: Blazing fast GitHub Pages deploy
 
 on:
@@ -22,7 +21,7 @@ jobs:
           # Allow an empty commit to be created
           allow_empty_commit: true # optional, default is true
           # Build directory to deploy
-          build_dir: _site
+          build_dir: .
           # Commit author's name
           # committer_name: # optional
           # Commit author's email

@@ -1,3 +1,4 @@
 modules = {
-   ["aspect.*"] = "src"
+   ["aspect.*"] = "src",
+   ["aspect.utils.*"] = "src/aspect"
 }

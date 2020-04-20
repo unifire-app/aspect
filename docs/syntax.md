@@ -1,6 +1,8 @@
 Template Syntax
 ===============
 
+<!-- {% raw %} -->
+
 A template is a regular text file. 
 It can generate any text-based format (HTML, XML, CSV, LaTeX, etc.). It doesn't have a specific extension, 
 .html or .xml are just fine.
@@ -525,3 +527,5 @@ or not by using the [autoescape](./tags/autoescape.md) tag:
 ```
 
 Currently auto-escaping uses only the html escaping strategy. 
+
+<!-- {% endraw %} -->

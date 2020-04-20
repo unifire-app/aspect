@@ -1,6 +1,8 @@
 Tag `set`
 =========
 
+<!-- {% raw %} -->
+
 Inside code blocks you can also assign values to variables.
 Assignments use the `set` tag and can have multiple targets.
 
@@ -52,3 +54,5 @@ If you want to access the variable, just declare it before the loop:
 
 {# foo is available #}
 ```
+
+<!-- {% endraw %} -->

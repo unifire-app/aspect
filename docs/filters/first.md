@@ -1,6 +1,8 @@
 Filter `first`
 ==============
 
+<!-- {% raw %} -->
+
 The `first` filter returns the first "element" of a sequence, a mapping, or a string:
 
 ```twig
@@ -13,3 +15,5 @@ The `first` filter returns the first "element" of a sequence, a mapping, or a st
 {{ '1234'|first }}
 {# outputs 1 #}
 ```
+
+<!-- {% endraw %} -->

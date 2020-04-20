@@ -1,6 +1,8 @@
 Macro
 =====
 
+<!-- {% raw %} -->
+
 Macros are comparable with functions in regular programming languages. 
 They are useful to reuse template fragments to not repeat yourself.
 
@@ -69,3 +71,5 @@ you don't need to import the macros as they are automatically available under th
     <input type="{{ type }}" name="{{ name }}" value="{{ value|e }}" size="{{ size }}" />
 {% endmacro %}
 ```
+
+<!-- {% endraw %} -->

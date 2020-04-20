@@ -1,6 +1,8 @@
 Tag `include`
 =============
 
+<!-- {% raw %} -->
+
 The `include` statement includes a template and returns the rendered content of that file:
 
 ```twig
@@ -57,3 +59,5 @@ The first template that exists will be included:
 ```
 
 If `ignore missing` is given, it will fall back to rendering nothing if none of the templates exist, otherwise it will throw an exception.
+
+<!-- {% endraw %} -->

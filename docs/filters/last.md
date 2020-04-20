@@ -1,6 +1,8 @@
 Function `last`
 ===============
 
+<!-- {% raw %} -->
+
 The last filter returns the last "element" of a sequence, a mapping, or a string:
 
 ```twig
@@ -15,3 +17,5 @@ The last filter returns the last "element" of a sequence, a mapping, or a string
 ```
 
 **Note.** If the object has the `__pairs` function, then it will be used to search for the last element.
+
+<!-- {% endraw %} -->

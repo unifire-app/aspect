@@ -1,6 +1,8 @@
 Features
 ========
 
+<!-- {% raw %} -->
+
 * Sandboxed execution mode. Every aspect of the template execution is monitored and explicitly whitelisted or blacklisted, 
   whatever is preferred. This makes it possible to execute untrusted templates.
 * Powerful [automatic HTML escaping](./syntax.md#escape-control) system for cross site scripting prevention.
@@ -112,3 +114,5 @@ and compatible with basic function `pairs()` (returns `iterator`, `key`, `value`
 | table with `__pairs`     | invoke `__pairs()` and count elements |
 | userdata with `__len`  | `__len(...)`       |
 | userdata with `__pairs`  | invoke `__pairs()` and count elements |
+
+<!-- {% endraw %} -->

@@ -1,6 +1,8 @@
 Filter `join`
 =============
 
+<!-- {% raw %} -->
+
 Filter `join(glue, and)`:
 * `glue`: The separator
 * `and`: The separator for the last pair of input items
@@ -25,3 +27,5 @@ A second parameter can also be provided that will be the separator used between 
 {{ [1, 2, 3]|join(', ', ' and ') }}
 {# outputs 1, 2 and 3 #}
 ```
+
+<!-- {% endraw %} -->

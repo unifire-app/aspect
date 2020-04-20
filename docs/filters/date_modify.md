@@ -1,6 +1,8 @@
 Filter date_modify
 ==================
 
+<!-- {% raw %} -->
+
 The `date_modify` filter modifies a date with a given modifier values:
 
 ```twig
@@ -19,3 +21,5 @@ Possible modifiers:
 | seconds, second, secs, sec | incr or decr seconds |
 | months, month  | incr or decr months  |
 | years, year  | incr or decr years  |
+
+<!-- {% endraw %} -->

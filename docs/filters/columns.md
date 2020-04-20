@@ -1,6 +1,8 @@
 Filter `columns`
 ================
 
+<!-- {% raw %} -->
+
 Filter `column(name)`:
 * `name`: The column name to extract
 
@@ -13,3 +15,5 @@ The `column` filter returns the values from a single column in the input array.
 
 {# fruits now contains ['apple', 'orange'] #}
 ```
+
+<!-- {% endraw %} -->

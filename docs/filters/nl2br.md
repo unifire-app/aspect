@@ -1,6 +1,8 @@
 Filter `nl2br`
 ==============
 
+<!-- {% raw %} -->
+
 The `nl2br` filter inserts HTML line breaks before all newlines in a string:
 
 ```twig
@@ -12,3 +14,5 @@ The `nl2br` filter inserts HTML line breaks before all newlines in a string:
 
 #}
 ```
+
+<!-- {% endraw %} -->

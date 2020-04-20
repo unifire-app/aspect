@@ -1,6 +1,8 @@
 `extends`
 =========
 
+<!-- {% raw %} -->
+
 The `extends` tag can be used to extend a template from another one.
 
 `block`
@@ -252,3 +254,5 @@ The code is mostly equivalent to the following one (the imported blocks are not 
 {% block title %}{% endblock %}
 {% block content %}{% endblock %}
 ```
+
+<!-- {% endraw %} -->

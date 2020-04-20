@@ -1,6 +1,8 @@
 Tag `with`
 ==========
 
+<!-- {% raw %} -->
+
 Use the `with` tag to create a new inner scope. Variables set within this scope are not visible outside of the scope:
 
 ```twig
@@ -38,3 +40,5 @@ you can disable this behavior by appending the `only` keyword:
     {# bar is not defined #}
 {% endwith %}
 ```
+
+<!-- {% endraw %} -->

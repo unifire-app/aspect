@@ -1,6 +1,8 @@
 Filter `merge`
 ==============
 
+<!-- {% raw %} -->
+
 The `merge` filter merges an array or hash with another array or hash:
 
 ```twig
@@ -34,3 +36,5 @@ If you want to ensure that some values are defined in an array (by given default
 
 {# items now contains { 'apple': 'fruit', 'orange': 'fruit' } #}
 ```
+
+<!-- {% endraw %} -->

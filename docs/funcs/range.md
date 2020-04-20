@@ -1,6 +1,8 @@
 Function `range`
 ================
 
+<!-- {% raw %} -->
+
 Returns a list containing an arithmetic progression of integers:
 
 ```twig
@@ -31,3 +33,5 @@ When step is given (as the third parameter), it specifies the increment (or decr
 ```
 
 The `range` function returns the table with iterator (`__pairs`).
+
+<!-- {% endraw %} -->

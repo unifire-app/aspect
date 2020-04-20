@@ -1,6 +1,8 @@
 Filter `date`
 =============
 
+<!-- {% raw %} -->
+
 Filter `date(format)`:
 * `format`: The date format
 
@@ -106,3 +108,5 @@ The `format` string follows the same rules as the `strftime` standard C function
 | '${rfc850}'  | RFC850 format, same as "%A, %d-%b-%y %T GMT" |
 | '${rfc1123}' | RFC1123 format, same as "%a, %d %b %Y %T GMT" |
 | '${asctime}' | asctime format, same as "%a %b %d %T %Y" |
+
+<!-- {% endraw %} -->

@@ -1,6 +1,8 @@
 Filter `default`
 ================
 
+<!-- {% raw %} -->
+
 Filter `default(default)`:
 * `default`: The default value
 * `boolean`: Cast the value to boolean (default: `false`) 
@@ -20,3 +22,5 @@ If you want to use default with variables that evaluate to false you have to set
 ```twig
 {{ ''|default('passed var is empty')  }}
 ```
+
+<!-- {% endraw %} -->

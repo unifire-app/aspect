@@ -1,6 +1,8 @@
 Function `date`
 ===============
 
+<!-- {% raw %} -->
+
 Converts an argument to a date to allow date comparison:
 
 ```twig
@@ -19,3 +21,5 @@ If no argument is passed, the function returns the current date:
     {# always! #}
 {% endif %}
 ```
+
+<!-- {% endraw %} -->

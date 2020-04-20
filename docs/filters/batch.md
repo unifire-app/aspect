@@ -1,6 +1,8 @@
 Filter `batch`
 ==============
 
+<!-- {% raw %} -->
+
 Filter `batch(size)`:
 * `size`: The size of the batch; fractional numbers will be rounded up
 
@@ -38,3 +40,5 @@ The above example will be rendered as:
     </tr>
 </table>
 ```
+
+<!-- {% endraw %} -->

@@ -1,6 +1,8 @@
 Tag `autoescape`
 ================
 
+<!-- {% raw %} -->
+
 Whether automatic escaping is enabled or not, you can mark a section of a template 
 to be escaped or not by using the `autoescape` tag:
 
@@ -23,3 +25,5 @@ Those can be marked in the template by using the [raw](../filters/raw.md) filter
     {{ safe_value|raw }}
 {% endautoescape %}
 ```
+
+<!-- {% endraw %} -->

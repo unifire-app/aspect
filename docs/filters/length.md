@@ -1,6 +1,8 @@
 Filter `length`
 ================
 
+<!-- {% raw %} -->
+
 The `length` filter returns the number of items of a sequence or mapping, or the length of a string.
 
 ```twig
@@ -17,3 +19,5 @@ The `length` filter returns the number of items of a sequence or mapping, or the
 * table with `__pairs` meta function: count of elements `table:__pairs()`
 * table: count of elements 
 * other: always `0`
+
+<!-- {% endraw %} -->

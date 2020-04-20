@@ -1,6 +1,8 @@
 Tag `if`
 =======
 
+<!-- {% raw %} -->
+
 In the simplest form you can use it to test if an expression evaluates to `true`:
 
 ```twig
@@ -73,3 +75,5 @@ The rules to determine if an expression is true or false are (edge cases):
 Function `__toboolean()` should be in the metatable. 
 
 You can add your own [false-behaviour](./../api.md#condition-behaviour)
+
+<!-- {% endraw %} -->

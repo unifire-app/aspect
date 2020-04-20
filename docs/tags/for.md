@@ -1,6 +1,8 @@
 Tag `for`
 =========
 
+<!-- {% raw %} -->
+
 Loop over each item in a sequence (also see [iterator](../api.md#iterator-and-countable-objects)). 
 For example, to display a list of users provided in a variable called `users`:
 
@@ -91,3 +93,6 @@ Behavior
 | userdata with `__pairs()` | iterate with `value:__pairs()` |
 | table                     | iterate with `pairs()` |
 | table with `__pairs()`    | iterate with `value:__pairs()` instead of `pairs()` |
+
+
+<!-- {% endraw %} -->

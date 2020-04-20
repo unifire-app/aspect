@@ -1,6 +1,8 @@
 Filter abs
 ==========
 
+<!-- {% raw %} -->
+
 Filter `column(abs)`.
 
 The `abs` filter returns the absolute value.
@@ -12,3 +14,5 @@ The `abs` filter returns the absolute value.
 
 {# outputs 5 #}
 ```
+
+<!-- {% endraw %} -->

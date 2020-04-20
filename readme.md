@@ -5,6 +5,7 @@ Aspect Lua Template
 [![codecov](https://codecov.io/gh/unifire-app/aspect/branch/master/graph/badge.svg)](https://codecov.io/gh/unifire-app/aspect)
 [![Luarocks](https://img.shields.io/badge/LuaRocks-Aspect-blue)](https://luarocks.org/modules/unifire/aspect)
 
+<!-- {% raw %} -->
 
 **Aspect** is a compiling templating engine for Lua and OpenResty.
 
@@ -162,3 +163,5 @@ Extending
 * [Add tests](./docs/api.md#add-tests)
 * [Add operators](./docs/api.md#add-operators)
 * [Configure behaviors](./docs/api.md#behaviors)
+
+<!-- {% endraw %} -->

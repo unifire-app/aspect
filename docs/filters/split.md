@@ -1,6 +1,8 @@
 Filter `split`
 ==============
 
+<!-- {% raw %} -->
+
 Filter `split(delimiter, limit)`:
 * `delimiter`: The delimiter
 * `limit`: The limit argument
@@ -20,3 +22,5 @@ If `limit` is set, the returned array will contain a maximum of limit elements w
 {% set foo = "one,two,three,four,five"|split(',', 3) %}
 {# foo contains ['one', 'two', 'three,four,five'] #}
 ```
+
+<!-- {% endraw %} -->

@@ -1,6 +1,8 @@
 Function `include`
 ==================
 
+<!-- {% raw %} -->
+
 The `include` function returns the rendered content of a template:
 
 ```twig
@@ -45,3 +47,5 @@ The first template that exists will be rendered:
 ```
 
 If `ignore_missing` is set, it will fall back to rendering nothing if none of the templates exist, otherwise it will throw an exception.
+
+<!-- {% endraw %} -->

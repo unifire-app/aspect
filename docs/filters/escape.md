@@ -1,6 +1,8 @@
 Filter `escape`
 ===============
 
+<!-- {% raw %} -->
+
 Filter `escape(strategy)`:
 * `strategy`: The escaping strategy. By default is `html`.
 
@@ -49,3 +51,5 @@ Also you cat [add your custom escaper](./api.md#custom-escaper).
    
 Built-in escapers cannot be overridden mainly because they should be considered 
 as the final implementation and also for better performance.
+
+<!-- {% endraw %} -->

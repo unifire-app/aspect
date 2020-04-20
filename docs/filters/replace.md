@@ -1,6 +1,8 @@
 Filter `replace`
 ================
 
+<!-- {% raw %} -->
+
 The replace filter formats a given string by replacing the placeholders (placeholders are free-form):
 
 ```twig
@@ -15,3 +17,5 @@ The replace filter formats a given string by replacing the placeholders (placeho
 
 {# outputs I like foo and bar #}
 ```
+
+<!-- {% endraw %} -->

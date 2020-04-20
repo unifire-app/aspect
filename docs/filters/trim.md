@@ -1,6 +1,8 @@
 Filter `trim`
 =============
 
+<!-- {% raw %} -->
+
 The `trim` filter strips whitespace (or other characters) from the beginning and end of a string:
 
 ```twig
@@ -20,3 +22,5 @@ The `trim` filter strips whitespace (or other characters) from the beginning and
 
 {# outputs '  I like Aspect.' #}
 ```
+
+<!-- {% endraw %} -->

@@ -10,13 +10,24 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@master
-      - name: npm install, test and build
-        run: |
-          npm install
-          npm run test
-          npm run build
-      - name: Deploy site to gh-pages branch
-        uses: alex-page/blazing-fast-gh-pages-deploy@v1.1.0
+      - name: GitHub Pages
+        uses: crazy-max/ghaction-github-pages@v1.4.0
         with:
-          repo-token: ${{ secrets.GH_PAT }}
+          # GitHub repository where assets will be deployed (default current)
+          #repo: # optional
+          # Git branch where assets will be deployed
+          target_branch: gh-pages # optional, default is gh-pages
+          # Create incremental commit instead of doing push force
+          keep_history: false # optional, default is false
+          # Allow an empty commit to be created
+          allow_empty_commit: true # optional, default is true
+          # Build directory to deploy
+          # build_dir: _site
+          # Commit author's name
+          # committer_name: # optional
+          # Commit author's email
+          # committer_email: # optional
+          # Commit message
+          # commit_message: # optional
+          # Write the given domain name to the CNAME file
+          #fqdn: # optional

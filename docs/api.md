@@ -514,19 +514,19 @@ table.insert(date.parsers.zone, { -- parse offset/timezone offset
 
 How parsers work:
 
-- 1. take `date` parser.
-- 1.1 Iterate by patterns.
-- 1.2 When the pattern matches, the `match` function will be called.
-- 1.3 `Match` function returns table like `os.date("*t")` if success, nil if failed (if nil resume 1.1)
-- 2. take `time` parser. search continues with the next character after matched `date`
-- 2.1 Iterate by patterns.
-- 2.2 When the pattern matches, the `match` function will be called.
-- 2.3 `Match` function returns table like `os.date("*t")` if success, nil if failed (if nil resume 2.1)
-- 3. take `zone` parser. search continues with the next character after matched `time`
-- 2.1 Iterate by patterns.
-- 2.2 When the pattern matches, the `match` function will be called.
-- 2.3 `Match` function returns table with key `offset` if success, nil if failed (if nil resume 3.1)
-- 4. calculate timestamp
+- take `date` parser.
+  - Iterate by patterns.
+  - When the pattern matches, the `match` function will be called.
+  - `Match` function returns table like `os.date("*t")` if success, nil if failed (if nil resume 1.1)
+- take `time` parser. search continues with the next character after matched `date`
+  - Iterate by patterns.
+  - When the pattern matches, the `match` function will be called.
+  - `Match` function returns table like `os.date("*t")` if success, nil if failed (if nil resume 2.1)
+- take `zone` parser. search continues with the next character after matched `time`
+  - Iterate by patterns.
+  - When the pattern matches, the `match` function will be called.
+  - `Match` function returns table with key `offset` if success, nil if failed (if nil resume 3.1)
+- calculate timestamp
 
 See `date.parsers` for more information.
 

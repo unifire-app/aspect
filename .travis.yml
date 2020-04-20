@@ -1,27 +1,32 @@
 language: python
 
+branches:
+  only:
+    - master
+    - develop
+
 matrix:
-    include:
-        - os: linux
-          env:
-              - LUA="lua=5.1"
-              - LUA_CJSON=""
-        - os: linux
-          env:
-              - LUA="lua=5.2"
-              - LUA_CJSON="2.1.0"
-        - os: linux
-          env:
-              - LUA="lua=5.3"
-              - LUA_CJSON="2.1.0"
-        - os: linux
-          env:
-              - LUA="luajit=2.0"
-              - LUA_CJSON="2.1.0"
-        - os: linux
-          env:
-              - LUA="luajit=2.1"
-              - LUA_CJSON=""
+  include:
+    - os: linux
+      env:
+        - LUA="lua=5.1"
+        - LUA_CJSON=""
+    - os: linux
+      env:
+        - LUA="lua=5.2"
+        - LUA_CJSON="2.1.0"
+    - os: linux
+      env:
+        - LUA="lua=5.3"
+        - LUA_CJSON="2.1.0"
+    - os: linux
+      env:
+        - LUA="luajit=2.0"
+        - LUA_CJSON="2.1.0"
+    - os: linux
+      env:
+        - LUA="luajit=2.1"
+        - LUA_CJSON=""
 # testing osx too long
 #        - os: osx
 #          language: generic
@@ -45,17 +50,17 @@ matrix:
 #              - LUA="luajit=2.1"
 
 before_install:
-    - pip install codecov
-    - pip install hererocks
-    - hererocks lua_install --$LUA -r latest
-    - source lua_install/bin/activate
-    - luarocks install busted
-    - luarocks install cluacov
-    - luarocks install lua-cjson $LUA_CJSON
+  - pip install codecov
+  - pip install hererocks
+  - hererocks lua_install --$LUA -r latest
+  - source lua_install/bin/activate
+  - luarocks install busted
+  - luarocks install cluacov
+  - luarocks install lua-cjson $LUA_CJSON
 
 script:
-    - busted -c
+  - busted -c
 
 after_script:
-    - luacov
-    - codecov -X gcov
+  - luacov
+  - codecov -X gcov

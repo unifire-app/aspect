@@ -11,6 +11,8 @@ jobs:
     steps:
       - name: GitHub Pages
         uses: crazy-max/ghaction-github-pages@v1.4.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           # GitHub repository where assets will be deployed (default current)
           #repo: # optional

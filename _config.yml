@@ -4,3 +4,4 @@ destination: ./build
 encoding: UTF-8
 markdown: kramdown
 url: "https://unifire-app.github.io/"
+theme: jekyll-theme-cayman

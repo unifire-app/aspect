@@ -1,6 +1,8 @@
 Test `iterable`
 ===============
 
+<!-- {% raw %} -->
+
 `iterable` checks if a variable is an array or a traversable object:
 
 ```twig
@@ -14,3 +16,5 @@ Test `iterable`
     Hello {{ users }}!
 {% endif %}
 ```
+
+<!-- {% endraw %} -->

@@ -3,13 +3,13 @@ Aspect Lua Template
 
 [![Build Status](https://travis-ci.org/unifire-app/aspect.svg?branch=master)](https://travis-ci.org/unifire-app/aspect)
 [![codecov](https://codecov.io/gh/unifire-app/aspect/branch/master/graph/badge.svg)](https://codecov.io/gh/unifire-app/aspect)
-[![Luarocks](https://img.shields.io/badge/LuaRocks-Aspect-blue)](https://luarocks.org/modules/unifire/aspect)
+[![Luarocks](./docs/assets/luarocks.svg)](https://luarocks.org/modules/unifire/aspect)
 
 <!-- {% raw %} -->
 
-**Aspect** is a compiling templating engine for Lua and OpenResty.
+**Aspect** is a compiling (to Lua code and/or bytecode) templating engine for Lua and OpenResty. No dependencies. Pure Lua. 
 
-<img align="right" src="./docs/aspect.png">
+<img align="right" src="docs/assets/aspect.png" width="200">
 
 The key-features are...
 * _Well known_: The most popular syntax is used - 

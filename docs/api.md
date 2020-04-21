@@ -2,6 +2,7 @@ Aspect for Developers
 =====================
 
 <!-- {% raw %} -->
+
 This chapter describes the API to Aspect and not the template language. 
 It will be most useful as reference to those implementing the template interface to the application 
 and not those who are creating Aspect templates.

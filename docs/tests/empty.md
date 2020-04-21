@@ -1,6 +1,8 @@
 Test `empty`
 ============
 
+<!-- {% raw %} -->
+
 `empty` checks if a variable is an empty string, an empty array, an empty hash, 
 exactly false, exactly null or numeric zero.
 
@@ -13,3 +15,5 @@ For objects that has the __toboolean meta method (and not __len), empty will che
     ...
 {% endif %}
 ```
+
+<!-- {% endraw %} -->

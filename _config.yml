@@ -1,5 +1,5 @@
 name: "Aspect Lua Template"
-description: "Aspect is a compiling template engine for Lua and LuaJIT (OpenResty, Tarantool) with syntax Twig/Jinja/Django/Liquid."
+description: "Aspect is a compiling template engine for Lua and LuaJIT."
 encoding: UTF-8
 markdown: kramdown
 url: "https://unifire-app.github.io"

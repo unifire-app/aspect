@@ -22,7 +22,6 @@ The key-features are...
   This allows the developer to define their own custom tags, filters, functions and operators, and to create their own DSL.
 * _Supports_ lua 5.1/5.2/5.3 and luajit 2.0/2.1 (with OpenResty)
 * Has [console renderer](./docs/cli.md).
-* No dependencies. Pure Lua. 
 * **[List of all features](./docs/features.md)**
 
 Synopsis

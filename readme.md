@@ -9,6 +9,15 @@ Aspect Lua Template
 
 **Aspect** is a compiling (to Lua code and/or bytecode) templating engine for Lua and OpenResty. No dependencies. Pure Lua.
 
+* [Install](./docs/installation.md)
+* [Syntax](./docs/syntax.md)
+  * [Tags](./docs/tags.md)
+  * [Filters](./docs/filters.md)
+  * [Functions](./docs/funcs.md)
+  * [Tests](./docs/tests.md)
+* [API](./docs/api.md)
+* [Command Line](./docs/cli.md)
+
 <img align="right" src="./assets/aspect.png" width="128">
 
 The key-features are...
@@ -58,13 +67,5 @@ Aspect also has a [console tool](./docs/cli.md) for rendering data
 $ aspect /path/to/data.json /path/to/template.tpl
 ```
 
-* [Install](./docs/installation.md)
-* [Syntax](./docs/syntax.md)
-  * [Tags](./docs/tags.md)
-  * [Filters](./docs/filters.md)
-  * [Functions](./docs/funcs.md)
-  * [Tests](./docs/tests.md)
-* [API](./docs/api.md)
-* [Command Line](./docs/cli.md)
 
 <!-- {% endraw %} -->

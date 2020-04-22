@@ -1,4 +1,4 @@
-Aspect](./../readme.md) › Template Syntax
+[Aspect](./../readme.md) › Template Syntax
 ===============
 
 <!-- {% raw %} -->

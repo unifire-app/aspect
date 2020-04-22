@@ -1,5 +1,10 @@
-Filter `lower`
+[Aspect](./../../readme.md) › [Filters](./../filters.md) › `lower`
 ==============
+
+Filter `lower`:
+* no args
+
+---
 
 <!-- {% raw %} -->
 

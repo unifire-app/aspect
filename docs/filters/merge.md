@@ -1,7 +1,12 @@
-Filter `merge`
+[Aspect](./../../readme.md) › [Filters](./../filters.md) › `merge`
 ==============
 
 <!-- {% raw %} -->
+
+Filter `merge(array)`:
+* `array` — table or iterator to merge. 
+
+---
 
 The `merge` filter merges an array or hash with another array or hash:
 

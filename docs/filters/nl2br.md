@@ -1,7 +1,12 @@
-Filter `nl2br`
+[Aspect](./../../readme.md) › [Filters](./../filters.md) › `nl2br`
 ==============
 
 <!-- {% raw %} -->
+
+Filter `nl2br`:
+* no args
+
+---
 
 The `nl2br` filter inserts HTML line breaks before all newlines in a string:
 

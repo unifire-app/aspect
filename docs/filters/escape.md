@@ -1,10 +1,12 @@
-Filter `escape`
+[Aspect](./../../readme.md) › [Filters](./../filters.md) › `escape`
 ===============
 
 <!-- {% raw %} -->
 
 Filter `escape(strategy)`:
 * `strategy`: The escaping strategy. By default is `html`.
+
+---
 
 The `escape` filter escapes a string using strategies that depend on the context.
 

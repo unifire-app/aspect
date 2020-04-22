@@ -1,7 +1,12 @@
-Filter `first`
+[Aspect](./../../readme.md) › [Filters](./../filters.md) › `first`
 ==============
 
 <!-- {% raw %} -->
+
+Filter `first`:
+* no args
+
+---
 
 The `first` filter returns the first "element" of a sequence, a mapping, or a string:
 

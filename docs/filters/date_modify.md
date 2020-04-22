@@ -1,7 +1,12 @@
-Filter date_modify
+[Aspect](./../../readme.md) › [Filters](./../filters.md) › `date_modify`
 ==================
 
 <!-- {% raw %} -->
+
+Filter `date_modify`:
+* no args
+
+---
 
 The `date_modify` filter modifies a date with a given modifier values:
 

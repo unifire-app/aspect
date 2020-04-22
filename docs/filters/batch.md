@@ -1,10 +1,12 @@
-Filter `batch`
+[Aspect](./../../readme.md) › [Filters](./../filters.md) › `batch`
 ==============
 
 <!-- {% raw %} -->
 
 Filter `batch(size)`:
 * `size`: The size of the batch; fractional numbers will be rounded up
+
+---
 
 The `batch` filter "batches" items by returning a list of lists with the given number of items:
 

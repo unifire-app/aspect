@@ -1,7 +1,12 @@
-Filter `upper`
+[Aspect](./../../readme.md) › [Filters](./../filters.md) › `upper`
 ==============
 
 <!-- {% raw %} -->
+
+Filter `upper`
+* no args
+
+---
 
 The `upper` filter converts a value to uppercase:
 

@@ -1,7 +1,12 @@
-Function `last`
+[Aspect](./../../readme.md) › [Filters](./../filters.md) › `last`
 ===============
 
 <!-- {% raw %} -->
+
+Filter: `last`:
+* no args
+
+---
 
 The last filter returns the last "element" of a sequence, a mapping, or a string:
 

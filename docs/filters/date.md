@@ -1,4 +1,4 @@
-Filter `date`
+[Aspect](./../../readme.md) › [Filters](./../filters.md) › `date`
 =============
 
 <!-- {% raw %} -->
@@ -6,7 +6,7 @@ Filter `date`
 Filter `date(format)`:
 * `format`: The date format
 
-Date filter and function use [date](https://github.com/Tieske/date) package.
+---
 
 Parsing
 -------

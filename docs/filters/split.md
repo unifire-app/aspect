@@ -1,4 +1,4 @@
-Filter `split`
+[Aspect](./../../readme.md) › [Filters](./../filters.md) › `split`
 ==============
 
 <!-- {% raw %} -->

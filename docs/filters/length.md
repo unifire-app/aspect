@@ -1,7 +1,12 @@
-Filter `length`
+[Aspect](./../../readme.md) › [Filters](./../filters.md) › `length`
 ================
 
 <!-- {% raw %} -->
+
+Filter: `length`:
+* no args
+
+---
 
 The `length` filter returns the number of items of a sequence or mapping, or the length of a string.
 

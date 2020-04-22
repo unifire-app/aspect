@@ -1,11 +1,13 @@
-Filter `default`
+[Aspect](./../../readme.md) › [Filters](./../filters.md) › `default`
 ================
 
 <!-- {% raw %} -->
 
-Filter `default(default)`:
+Filter `default(default, boolean)`:
 * `default`: The default value
 * `boolean`: Cast the value to boolean (default: `false`) 
+
+---
 
 The `default` filter returns the passed default value if the value is undefined or empty, otherwise the value of the variable:
 
@@ -20,7 +22,7 @@ The `default` filter returns the passed default value if the value is undefined 
 If you want to use default with variables that evaluate to false you have to set the second parameter to `true`:
 
 ```twig
-{{ ''|default('passed var is empty')  }}
+{{ ''|default('passed var is empty', true)  }}
 ```
 
 <!-- {% endraw %} -->

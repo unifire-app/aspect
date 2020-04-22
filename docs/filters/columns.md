@@ -1,4 +1,4 @@
-Filter `columns`
+[Aspect](./../../readme.md) › [Filters](./../filters.md) › `columns`
 ================
 
 <!-- {% raw %} -->
@@ -6,7 +6,9 @@ Filter `columns`
 Filter `column(name)`:
 * `name`: The column name to extract
 
-The `column` filter returns the values from a single column in the input array.
+---
+
+The `column` filter returns the values from a single column in the input sequence.
 
 ```twig
 {% set items = [{ 'fruit' : 'apple'}, {'fruit' : 'orange' }] %}

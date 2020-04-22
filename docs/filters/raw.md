@@ -1,7 +1,12 @@
-Filter `raw`
+[Aspect](./../../readme.md) › [Filters](./../filters.md) › `raw`
 ============
 
 <!-- {% raw %} -->
+
+Filter `raw`:
+* no args
+
+---
 
 The `raw` filter marks the value as being "safe", which means that in an environment with automatic escaping enabled 
 this variable will not be escaped if raw is the last filter applied to it:

@@ -1,11 +1,13 @@
-Filter `join`
+[Aspect](./../../readme.md) › [Filters](./../filters.md) › `join`
 =============
 
 <!-- {% raw %} -->
 
-Filter `join(glue, and)`:
+Filter `join(glue, last)`:
 * `glue`: The separator
-* `and`: The separator for the last pair of input items
+* `last`: The separator for the last pair of input items
+
+---
 
 The `join` filter returns a string which is the concatenation of the items of a sequence:
 

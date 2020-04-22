@@ -1,4 +1,4 @@
-Function `date`
+[Aspect](./../../readme.md) › [Functions](./../funcs.md) › `date`
 ===============
 
 <!-- {% raw %} -->

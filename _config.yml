@@ -1,4 +1,4 @@
-name: "Aspect Lua Template"
+title: "Aspect Lua Template"
 description: "Aspect is a compiling template engine for Lua and LuaJIT."
 encoding: UTF-8
 markdown: kramdown
@@ -7,3 +7,5 @@ exclude:
   - src
   - bin
 theme: jekyll-theme-slate
+show_downloads: true
+google_analytics: UA-164241665-1

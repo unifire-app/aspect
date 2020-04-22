@@ -9,14 +9,8 @@ Aspect Lua Template
 
 **Aspect** is a compiling (to Lua code and/or bytecode) templating engine for Lua and OpenResty. No dependencies. Pure Lua.
 
-* [Install](./docs/installation.md)
-* [Syntax](./docs/syntax.md)
-  * [Tags](./docs/tags.md)
-  * [Filters](./docs/filters.md)
-  * [Functions](./docs/funcs.md)
-  * [Tests](./docs/tests.md)
-* [API](./docs/api.md)
-* [Command Line](./docs/cli.md)
+#### [Syntax](./docs/syntax.md) | [Tags](./docs/tags.md) | [Filters](./docs/filters.md) | [Functions](./docs/funcs.md) | [Tests](./docs/tests.md)
+
 
 <img align="right" src="./assets/aspect.png" width="128">
 
@@ -67,5 +61,37 @@ Aspect also has a [console tool](./docs/cli.md) for rendering data
 $ aspect /path/to/data.json /path/to/template.tpl
 ```
 
+[API Documentation](./docs/api.md)
+--------------------
+
+* [Installation](./docs/installation.md)
+* [Basic Usage](./docs/api.md#basic-api-usage)
+* [Configuration](./docs/api.md#options)
+* [Cache](./docs/api.md#cache)
+* [Loaders](./docs/api.md#loaders)
+* [Extending](./docs/api.md#extending)
+* [Iterator and countable objects](./docs/api.md#iterator-and-countable-objects)
+* [Command Line](./docs/cli.md)
+
+[Syntax](./docs/syntax.md)
+------
+
+* [Variables](./docs/syntax.md#variables)
+* [Expression](./docs/syntax.md#expressions)
+* [Filters](./docs/syntax.md#filters)
+* [Functions](./docs/syntax.md#functions)
+* [Named Arguments](./docs/syntax.md#named-arguments)
+* [Control Structure](./docs/syntax.md#control-structure)
+* [Comments](./docs/syntax.md#comments)
+* [Template Inheritance](./docs/syntax.md#template-inheritance)
+* [Macros](./docs/syntax.md#macros)
+* [Expressions](./docs/syntax.md#expressions)
+* [Operators](./docs/syntax.md#operators)
+* [Whitespace control](./docs/syntax.md#whitespace-control)
+* [HTML Escaping](./docs/syntax.md#html-escaping)
+* [Tags](./docs/tags.md)
+* [Filters](./docs/filters.md)
+* [Functions](./docs/funcs.md)
+* [Tests](./docs/tests.md)
 
 <!-- {% endraw %} -->

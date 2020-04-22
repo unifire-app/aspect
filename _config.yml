@@ -9,3 +9,8 @@ exclude:
 theme: jekyll-theme-slate
 show_downloads: true
 google_analytics: UA-164241665-1
+logo: /assets/aspect.png
+image:
+  path: /assets/aspect.png
+  height: 100
+  width: 100

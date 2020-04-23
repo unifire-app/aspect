@@ -7,7 +7,7 @@
 
 ```twig
 {% if foo.attribute is same as(false) %}
-    the foo attribute really is the 'false' PHP value
+    the foo attribute really is the 'false' value
 {% endif %}
 ```
 

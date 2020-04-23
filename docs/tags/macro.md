@@ -22,7 +22,7 @@ Imagine having a generic helper template that define how to render HTML forms vi
 
 Each macro argument can have a default value (here text is the default value for type if not provided in the call).
 
-Macros differ from native PHP functions in a few ways:
+Macros differ from native Lua functions in a few ways:
 
 * Arguments of a macro are always optional.
 * If extra positional arguments are passed to a macro, they end up in the special `_context` variable as a list of values.

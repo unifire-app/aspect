@@ -6,7 +6,7 @@ url: "https://aspect.unifire.app"
 exclude:
   - src
   - bin
-theme: jekyll-theme-slate
+theme: jekyll-theme-dinky
 google_analytics: UA-164241665-1
 logo: /assets/aspect.png
 #canonical_url: "https://github.com/unifire-app/aspect"

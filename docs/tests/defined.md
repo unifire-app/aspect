@@ -1,8 +1,23 @@
-[Aspect](./../../readme.md) › [Tests](./../tests.md) › `defined`
+[Aspect](./../../readme.md) › [Tests](./../tests.md) › defined
 =======
 
 <!-- {% raw %} -->
 
-`defined` checks if a variable is defined in the current context. This is very useful if you use the strict_variables option:
+`defined` checks if a variable is defined in the current context. 
 
+```twig
+{# defined works with variable names #}
+{% if foo is defined %}
+    ...
+{% endif %}
+
+{# and attributes on variables names #}
+{% if foo.bar is defined %}
+    ...
+{% endif %}
+
+{% if foo['bar'] is defined %}
+    ...
+{% endif %}
+```
 <!-- {% endraw %} -->

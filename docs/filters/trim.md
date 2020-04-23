@@ -1,4 +1,4 @@
-[Aspect](./../../readme.md) › [Filters](./../filters.md) › `trim`
+[Aspect](./../../readme.md) › [Filters](./../filters.md) › trim
 =============
 
 <!-- {% raw %} -->

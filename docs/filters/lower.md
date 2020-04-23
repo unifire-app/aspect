@@ -1,4 +1,4 @@
-[Aspect](./../../readme.md) › [Filters](./../filters.md) › `lower`
+[Aspect](./../../readme.md) › [Filters](./../filters.md) › lower
 ==============
 
 Filter `lower`:

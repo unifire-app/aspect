@@ -1,4 +1,4 @@
-[Aspect](./../../readme.md) › [Tags](./../tags.md) › `extends`
+[Aspect](./../../readme.md) › [Tags](./../tags.md) › extends
 =========
 
 <!-- {% raw %} -->

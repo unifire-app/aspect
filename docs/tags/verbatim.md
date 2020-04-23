@@ -1,4 +1,4 @@
-[Aspect](./../../readme.md) › [Tags](./../tags.md) › `verbatim`
+[Aspect](./../../readme.md) › [Tags](./../tags.md) › verbatim
 ==============
 
 <!-- {% raw %} -->

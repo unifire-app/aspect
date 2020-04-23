@@ -1,4 +1,4 @@
-[Aspect](./../../readme.md) › [Filters](./../filters.md) › `json_encode`
+[Aspect](./../../readme.md) › [Filters](./../filters.md) › json_encode
 ====================
 
 <!-- {% raw %} -->

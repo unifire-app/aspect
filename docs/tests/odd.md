@@ -1,4 +1,4 @@
-[Aspect](./../../readme.md) › [Tests](./../tests.md) › `odd`
+[Aspect](./../../readme.md) › [Tests](./../tests.md) › odd
 =========
 
 <!-- {% raw %} -->

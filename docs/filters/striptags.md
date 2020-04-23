@@ -1,4 +1,4 @@
-[Aspect](./../../readme.md) › [Filters](./../filters.md) › `striptags`
+[Aspect](./../../readme.md) › [Filters](./../filters.md) › striptags
 ==================
 
 <!-- {% raw %} -->

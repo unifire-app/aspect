@@ -1,4 +1,4 @@
-[Aspect](./../../readme.md) › [Functions](./../funcs.md) › `dump`
+[Aspect](./../../readme.md) › [Functions](./../funcs.md) › dump
 ==============
 
 <!-- {% raw %} -->

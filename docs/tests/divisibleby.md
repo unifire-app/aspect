@@ -1,4 +1,4 @@
-[Aspect](./../../readme.md) › [Tests](./../tests.md) › `divisible by`
+[Aspect](./../../readme.md) › [Tests](./../tests.md) › divisible by
 ===================
 
 <!-- {% raw %} -->

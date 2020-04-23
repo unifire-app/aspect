@@ -1,4 +1,4 @@
-[Aspect](./../../readme.md) › [Filters](./../filters.md) › `date`
+[Aspect](./../../readme.md) › [Filters](./../filters.md) › date
 =============
 
 <!-- {% raw %} -->

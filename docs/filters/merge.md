@@ -1,4 +1,4 @@
-[Aspect](./../../readme.md) › [Filters](./../filters.md) › `merge`
+[Aspect](./../../readme.md) › [Filters](./../filters.md) › merge
 ==============
 
 <!-- {% raw %} -->

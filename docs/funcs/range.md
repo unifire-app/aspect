@@ -1,4 +1,4 @@
-[Aspect](./../../readme.md) › [Functions](./../funcs.md) › `range`
+[Aspect](./../../readme.md) › [Functions](./../funcs.md) › range
 ================
 
 <!-- {% raw %} -->

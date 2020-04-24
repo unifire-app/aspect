@@ -1,4 +1,4 @@
-title: "Aspect Lua Template"
+name: "Aspect"
 description: "Aspect is a compiling template engine for Lua and LuaJIT."
 encoding: UTF-8
 markdown: kramdown
@@ -49,15 +49,15 @@ links:
     - title: GitHub
       icon: github
       brand: true
-      url: https://github.com/unifire-app/pages
+      url: https://github.com/unifire-app/aspect
     - title: Issues
       icon: bug
-      url: https://github.com/unifire-app/pages/issues?state=open
+      url: https://github.com/unifire-app/aspect/issues?state=open
   homepage:
     - title: View on GitHub
       icon: github
       brand: true
-      url: https://github.com/unifire-app/pages
+      url: https://github.com/unifire-app/aspect
 
 icons:
-  favicon: aspect.png
+  favicon: assets/aspect.png

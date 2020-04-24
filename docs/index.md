@@ -7,7 +7,10 @@ description: Aspect is a compiling template engine for Lua and LuaJIT.
 
 <!-- {% raw %} -->
 
-**Aspect** is a compiling templating engine for Lua and OpenResty.
+**Aspect** a compiling (to Lua code and bytecode) a template engine for Lua and LuaJIT. Adapted to work with OpenResty and Tarantool. 
+Lua itself is a simple language, but with many limitations and conventions. 
+Aspect makes it easy to work with Lua, letting you focus on the design of templates. 
+Template syntax is very popular. This syntax is used in Twig, Jinja, Django, Liquid.
 
 <!-- <img align="right" src="./aspect.png" width="200"> -->
 
@@ -43,6 +46,12 @@ description: Aspect is a compiling template engine for Lua and LuaJIT.
 </html>
 ```
 
+Aspect also has a [console tool](./cli.md) for rendering data
+
+```bash
+$ aspect /path/to/data.json /path/to/template.tpl
+```
+
 </div>
 <div class="col-lg-6" markdown="1">
 
@@ -70,12 +79,6 @@ package.path = '/path/to/aspect/src/?.lua;' .. package.path
 - [All Functions](funcs.md)
 - [All Tests](tests.md)
 
-
-Aspect also has a [console tool](./cli.md) for rendering data
-
-```bash
-$ aspect /path/to/data.json /path/to/template.tpl
-```
 
 </div>
 </div>

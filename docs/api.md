@@ -258,7 +258,7 @@ function tags.endbar(compiler, tok)
 end
 ```
 
-See [aspect.tags](../src/aspect/tags.lua) for more examples.
+See [aspect.tags](https://github.com/unifire-app/aspect/tree/master/src/aspect/src/aspect/tags.lua) for more examples.
 
 ## Add filters
 
@@ -278,7 +278,7 @@ filters.add("foo", {
 end)
 ```
 
-See [aspect.filters](../src/aspect/filters.lua) for more examples.
+See [aspect.filters](https://github.com/unifire-app/aspect/tree/master/src/aspect/src/aspect/filters.lua) for more examples.
 
 ## Add functions
 
@@ -305,7 +305,7 @@ funcs.add("foo", {
 end)
 ```
 
-See [aspect.funcs](../src/aspect/funcs.lua) for more examples.
+See [aspect.funcs](https://github.com/unifire-app/aspect/tree/master/src/aspect/src/aspect/funcs.lua) for more examples.
 
 ## Add tests
 
@@ -335,7 +335,7 @@ Result:
 {{ a is baz quux(c) }}
 ```
 
-See [aspect.tests](../src/aspect/tests.lua) for more examples.
+See [aspect.tests](https://github.com/unifire-app/aspect/tree/master/src/aspect/src/aspect/tests.lua) for more examples.
 
 ## Add operators
 
@@ -519,7 +519,7 @@ Iterator and countable objects
 The `Aspect` implements custom iterators as in Lua 5.2+ - through the metatable and `__pairs()` function. 
 Works for all lua/luajit versions.
 
-For example see [range iterator](../src/aspect/utils/range.lua).
+For example see [range iterator](https://github.com/unifire-app/aspect/tree/master/src/aspect/src/aspect/utils/range.lua).
 
 As in Lua 5.2+, the Aspect allows to determine the length of objects through the `__len()` function. 
 Works for all lua/luajit versions.

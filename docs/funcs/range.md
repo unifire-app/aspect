@@ -1,5 +1,9 @@
-[Aspect](./../../readme.md) › [Functions](./../funcs.md) › range
-================
+---
+layout: page
+title: Functions › range
+---
+
+[← functions](./../funcs.md)
 
 <!-- {% raw %} -->
 

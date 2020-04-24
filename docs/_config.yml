@@ -1,0 +1,63 @@
+title: "Aspect Lua Template"
+description: "Aspect is a compiling template engine for Lua and LuaJIT."
+encoding: UTF-8
+markdown: kramdown
+url: "https://aspect.unifire.app"
+exclude:
+  - src
+  - bin
+remote_theme: bzick/jekyll-docs-theme
+google_analytics: UA-164241665-1
+
+# theme configuration
+
+project:
+  download_url: https://github.com/unifire-app/aspect/releases
+  download_text: Download
+
+license:
+  software: BSD 3 Clause
+  software_url: https://opensource.org/licenses/BSD-3-Clause
+
+  docs: CC BY 3.0
+  docs_url: https://creativecommons.org/licenses/by/3.0/
+
+links:
+  pages:
+    - title: Syntax
+      url: /syntax
+    - title: Tags
+      url: /tags
+    - title: Filters
+      url: /filters
+    - title: Funcs
+      url: /funcs
+    - title: Tests
+      url: /tests
+    - title: API
+      url: /api
+    - title: CLI
+      url: /cli
+  header:
+    - title: '<img src="https://travis-ci.org/unifire-app/aspect.svg?branch=master" />'
+      url: https://travis-ci.org/unifire-app/aspect
+    - title: '<img src="https://codecov.io/gh/unifire-app/aspect/branch/master/graph/badge.svg" />'
+      url: https://codecov.io/gh/unifire-app/aspect
+    - title: '<img src="/assets/luarocks.svg" />'
+      url: https://luarocks.org/modules/unifire/aspect
+  footer:
+    - title: GitHub
+      icon: github
+      brand: true
+      url: https://github.com/unifire-app/pages
+    - title: Issues
+      icon: bug
+      url: https://github.com/unifire-app/pages/issues?state=open
+  homepage:
+    - title: View on GitHub
+      icon: github
+      brand: true
+      url: https://github.com/unifire-app/pages
+
+icons:
+  favicon: aspect.png

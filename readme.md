@@ -3,7 +3,7 @@ Aspect Lua Template
 
 [![Build Status](https://travis-ci.org/unifire-app/aspect.svg?branch=master)](https://travis-ci.org/unifire-app/aspect)
 [![codecov](https://codecov.io/gh/unifire-app/aspect/branch/master/graph/badge.svg)](https://codecov.io/gh/unifire-app/aspect)
-[![Luarocks](./assets/luarocks.svg)](https://luarocks.org/modules/unifire/aspect)
+[![Luarocks](docs/assets/luarocks.svg)](https://luarocks.org/modules/unifire/aspect)
 
 <!-- {% raw %} -->
 
@@ -12,7 +12,7 @@ Aspect Lua Template
 #### [Syntax](./docs/syntax.md) | [Tags](./docs/tags.md) | [Filters](./docs/filters.md) | [Functions](./docs/funcs.md) | [Tests](./docs/tests.md)
 
 
-<img align="right" src="./assets/aspect.png" width="128">
+<img align="right" src="docs/assets/aspect.png" width="128">
 
 The key-features are...
 * _Well known_: The most popular syntax is used - 
@@ -25,7 +25,7 @@ The key-features are...
   This allows the developer to define their own custom tags, filters, functions and operators, and to create their own DSL.
 * _Supports_ lua 5.1/5.2/5.3 and luajit 2.0/2.1 (with OpenResty)
 * Has [console renderer](./docs/cli.md).
-* **[List of all features](./docs/features.md)**
+* **[List of all features](docs/behaviors.md)**
 
 Synopsis
 --------

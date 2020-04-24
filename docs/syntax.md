@@ -1,5 +1,7 @@
-[Aspect](./../readme.md) › Template Syntax
-===============
+---
+layout: page
+title: Template Syntax
+---
 
 <!-- {% raw %} -->
 
@@ -33,34 +35,6 @@ Below is a minimal template that illustrates a few basics. We will cover further
 There are two kinds of delimiters: `{% ... %}` and `{{ ... }}`. 
 The first one is used to execute statements such as for-loops, the latter outputs the result of an expression.
 
-Table Of Content
-----------------
-
-- [Variables](#variables)
-  - [Global Variables](#global-variables)
-  - [Setting Variables](#setting-variables)
-- [Filters](#filters)
-- [Functions](#functions)
-- [Named Arguments](#named-arguments)
-- [Control Structure](#control-structure)
-- [Comments](#comments)
-- [Template Inheritance](#template-inheritance)
-- [Macros](#macros)
-- [Expressions](#expressions)
-  - [Literals](#literals)
-- [Operators](#operators)
-  - [Math Operators](#math-operators)
-  - [Logic Operators](#logic-operators)
-  - [Comparisons Operators](#comparisons-operators)
-  - [Containment Operators](#containment-operator)
-  - [Test Operators](#test-operator)
-  - [Other Operators](#other-operators)
-  - [Operator Precedence](#operator-precedence)
-- [Whitespace Control](#whitespace-control)
-- [HTML Escaping](#html-escaping)
-  - [Manual Escaping](#working-with-manual-escaping)
-  - [Automatic Escaping](#working-with-automatic-escaping)
-
 Variables
 ---------
 
@@ -87,8 +61,6 @@ The following variables are always available in templates:
 * `_context`: references the current context;
 * `_charset`: references the current charset.
 
-[Back to TOC](#table-of-content)
-
 ### Setting Variables
 
 You can assign values to variables inside code blocks. Assignments use the [set](./tags/set.md) tag:
@@ -97,8 +69,6 @@ You can assign values to variables inside code blocks. Assignments use the [set]
 {% set foo = [1, 2] %}
 {% set foo = {'foo': 'bar'} %}
 ```
-
-[Back to TOC](#table-of-content)
 
 Filters
 -------
@@ -127,8 +97,6 @@ To apply a filter on a section of code, wrap it with the [apply](./tags/apply.md
 ```
 Go to the [filters](./filters.md) list to learn more about built-in filters.
 
-[Back to TOC](#table-of-content)
-
 Functions
 ---------
 
@@ -143,8 +111,6 @@ For instance, the `range` function returns a list containing an arithmetic progr
 ```
 
 Go to the [functions](./funcs.md) list to learn more about the built-in functions.
-
-[Back to TOC](#table-of-content)
 
 Named Arguments
 ---------------
@@ -183,8 +149,6 @@ in which case positional arguments must always come before named arguments:
 **Note.** 
 Each function and filter documentation page has a section where the names of all arguments are listed when supported.
 
-[Back to TOC](#table-of-content)
-
 Control Structure
 -----------------
 
@@ -216,8 +180,6 @@ The [if](./tags/if.md) tag can be used to test an expression:
 
 Go to the [tags](./tags.md) list to learn more about the built-in tags.
 
-[Back to TOC](#table-of-content)
-
 Comments
 --------
 
@@ -231,8 +193,6 @@ This is useful for debugging or to add information for other template designers 
     {% endfor %}
 #}
 ```
-
-[Back to TOC](#table-of-content)
 
 Template Inheritance
 --------------------
@@ -307,16 +267,12 @@ It's possible to render the contents of the parent block by using the [parent](.
 
 **Note.** Aspect also supports multiple inheritance via "horizontal reuse" with the help of the [use](./tags/extends.md#use) tag.
 
-[Back to TOC](#table-of-content)
-
 Macros
 ------
 
 Macros are comparable with functions in regular programming languages. 
 They are useful to reuse HTML fragments to not repeat yourself. 
 They are described in the [macro](./tags/macro.md) tag documentation.
-
-[Back to TOC](#table-of-content)
 
 Expressions
 -----------
@@ -361,8 +317,6 @@ Arrays and hashes can be nested:
 {% set foo = [1, {"foo": "bar"}] %}
 ```
 
-[Back to TOC](#table-of-content)
-
 Operators
 ---------
 
@@ -376,8 +330,6 @@ Operators
 * `*`: Multiplies the left operand with the right one. `{{ 2 * 2 }}` would return 4.
 * `**`: Raises the left operand to the power of the right operand. `{{ 2 ** 3 }}` would return 8.
 
-[Back to TOC](#table-of-content)
-
 ### Logic operators
 
 * `and`: Returns true if the left and the right operands are both true.
@@ -385,16 +337,12 @@ Operators
 * `not`: Negates a statement.
 * `(expr)`: Groups an expression.
 
-[Back to TOC](#table-of-content)
-
 ### Comparisons operators
 
 The following comparison operators are supported in any expression: `==`, `!=`, `<`, `>`, `>=`, and `<=`.
 
 **Note.** Aspect automatically cast values to numbers then `<`, `>`, `>=`, and `<=` used. 
 But NOT cast to anything with `==` and `!=`, i. g. `"0" == 0` is `false`.
-
-[Back to TOC](#table-of-content)
 
 ### Containment Operator
 
@@ -417,8 +365,6 @@ To perform a negative test, use the `not in` operator:
 {% if not (1 in [1, 2, 3]) %}
 ```
 
-[Back to TOC](#table-of-content)
-
 ### Test Operator
 
 The `is` operator performs tests. Tests can be used to test a variable against a common expression. The right operand is name of the test:
@@ -436,8 +382,6 @@ Tests can be negated by using the `is not` operator:
 {# is equivalent to #}
 {% if not (name is odd) %} {% endif %}
 ```
-
-[Back to TOC](#table-of-content)
 
 ### Other Operators
 
@@ -458,8 +402,6 @@ The following operators don't fit into any of the other categories:
   {{ foo ?? 'no' }}
   ```
 
-[Back to TOC](#table-of-content)
-
 ### Operator precedence
 
 Operator precedence, from the higher to the lower priority:
@@ -478,8 +420,6 @@ Operator precedence, from the higher to the lower priority:
 12. `? ... : ...` (any)
 13. `and` (boolean)
 14. `or` (boolean)
-
-[Back to TOC](#table-of-content)
 
 Whitespace Control
 ------------------
@@ -518,8 +458,6 @@ It is possible to use the modifiers on one side of a tag or on both sides:
 {# outputs '<li>\nno spaces    </li>' #}
 ```
 
-[Back to TOC](#table-of-content)
-
 HTML Escaping
 -------------
 
@@ -550,8 +488,6 @@ but depending on the escaping context, you might want to explicitly use an other
 {{ user.username|e('url') }}
 ```
 
-[Back to TOC](#table-of-content)
-
 ## Working with Automatic Escaping
 
 Whether automatic escaping is enabled or not, you can mark a section of a template to be escaped 
@@ -564,7 +500,5 @@ or not by using the [autoescape](./tags/autoescape.md) tag:
 ```
 
 Currently auto-escaping uses only the html escaping strategy. 
-
-[Back to TOC](#table-of-content)
 
 <!-- {% endraw %} -->

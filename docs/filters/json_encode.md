@@ -1,5 +1,9 @@
-[Aspect](./../../readme.md) › [Filters](./../filters.md) › json_encode
-====================
+---
+layout: page
+title: Filters › json_encode
+---
+
+[← filters](./../filters.md)
 
 <!-- {% raw %} -->
 
@@ -9,6 +13,6 @@ The `json_encode` filter returns the JSON representation of a value:
 {{ data|json_encode() }}
 ```
 
-For this filter you have to install json package (`cjson`, `json`) or configure `aspect.config` manually. 
+For this filter you have to install any json package (`cjson`, `json`) or configure `aspect.config` manually. 
 
 <!-- {% endraw %} -->

@@ -1,5 +1,9 @@
-[Aspect](./../../readme.md) › [Filters](./../filters.md) › striptags
-==================
+---
+layout: page
+title: Filters › striptags
+---
+
+[← filters](./../filters.md)
 
 <!-- {% raw %} -->
 

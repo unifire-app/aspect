@@ -1,5 +1,9 @@
-[Aspect](./../../readme.md) › [Filters](./../filters.md) › merge
-==============
+---
+layout: page
+title: Filters › merge
+---
+
+[← filters](./../filters.md)
 
 <!-- {% raw %} -->
 

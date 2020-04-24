@@ -1,5 +1,9 @@
-[Aspect](./../../readme.md) › [Filters](./../filters.md) › replace
-================
+---
+layout: page
+title: Filters › replace
+---
+
+[← filters](./../filters.md)
 
 <!-- {% raw %} -->
 

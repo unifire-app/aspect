@@ -1,5 +1,9 @@
-[Aspect](./../../readme.md) › [Filters](./../filters.md) › length
-================
+---
+layout: page
+title: Filters › length
+---
+
+[← filters](./../filters.md)
 
 <!-- {% raw %} -->
 
@@ -17,9 +21,8 @@ The `length` filter returns the number of items of a sequence or mapping, or the
 ```
 
 `length` behavior:
-
-* string ([luautf8](https://luarocks.org/modules/dannote/utf8) package installed): count of characters 
-* string (without [luautf8](https://luarocks.org/modules/dannote/utf8) package): count of bytes
+ 
+* string: count of bytes (this is not count of symbols)
 * table with `__len` meta function: result of `table:__len()`
 * table with `__pairs` meta function: count of elements `table:__pairs()`
 * table: count of elements 

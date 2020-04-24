@@ -1,5 +1,7 @@
-[Aspect](./../readme.md) › Command Line
-===================
+---
+layout: page
+title: Command Line
+---
 
 <!-- {% raw %} -->
 

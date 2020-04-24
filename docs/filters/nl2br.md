@@ -1,5 +1,9 @@
-[Aspect](./../../readme.md) › [Filters](./../filters.md) › nl2br
-==============
+---
+layout: page
+title: Filters › nl2br
+---
+
+[← filters](./../filters.md)
 
 <!-- {% raw %} -->
 

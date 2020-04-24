@@ -1,5 +1,9 @@
-[Aspect](./../../readme.md) › [Filters](./../filters.md) › date_modify
-==================
+---
+layout: page
+title: Filters › date_modify
+---
+
+[← filters](./../filters.md)
 
 <!-- {% raw %} -->
 

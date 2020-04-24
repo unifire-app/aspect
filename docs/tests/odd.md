@@ -1,5 +1,9 @@
-[Aspect](./../../readme.md) › [Tests](./../tests.md) › odd
-=========
+---
+layout: page
+title: Tests › odd
+---
+
+[← tests](./../tests.md)
 
 <!-- {% raw %} -->
 

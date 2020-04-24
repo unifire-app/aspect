@@ -1,5 +1,7 @@
-[Aspect](./../readme.md) › Functions
-===============================
+---
+layout: page
+title: Functions
+---
 
 <!-- {% raw %} -->
 

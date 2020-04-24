@@ -1,26 +1,7 @@
-[Aspect](./../readme.md) › Features
-========
-
-<!-- {% raw %} -->
-
-* Sandboxed execution mode. Every aspect of the template execution is monitored and explicitly whitelisted or blacklisted, 
-  whatever is preferred. This makes it possible to execute untrusted templates.
-* Powerful [automatic HTML escaping](./syntax.md#escape-control) system for cross site scripting prevention.
-* [Template inheritance](./syntax.md#template-inheritance) makes it possible to use the same or a similar layout for all templates.
-* High performance with just in time compilation to Lua bytecode. 
-  Aspect will translate your template sources on first load into Lua bytecode for best runtime performance.
-* Easy to debug with a debug system that integrates template compile and runtime errors into the standard Lua traceback system.
-* [Configurable syntax](./api.md#extending).
-* [Iterator supported](./api.md#iterator) and countable objects.
-* Supports lua 5.1/5.2/5.3 and luajit 2.0/2.1 (including OpenResty)
-* Keys sequence `a.b.c.d` returns `nil` if variable `a` or any keys doesn't exits.
-* [Two level cache](./api.md#cache) (lua level and bytecode level).
-* Date support.
-* [Chain rendering](./api.md#rendering-templates) (renders data chunk by chunk).
-* Change some Lua behaviours (see below).
-
-Behaviours
-==========
+---
+layout: page
+title: Behaviors
+---
 
 ## Working with strings
 

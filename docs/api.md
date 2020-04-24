@@ -1,32 +1,13 @@
-[Aspect](./../readme.md) › API Documentation
-============================================
+---
+layout: page
+title: API Documentation
+---
 
 <!-- {% raw %} -->
 
 This chapter describes the API to Aspect and not the template language. 
 It will be most useful as reference to those implementing the template interface to the application 
 and not those who are creating Aspect templates.
-
-Table Of Content
-----------------
-
-- [Basic API Usage](#basic-api-usage)
-- [Rendering Templates](#rendering-templates)
-- [Options](#options)
-- [Cache](#cache)
-- [Loaders](#loaders)
-- [Extending](#extending)
-  - [Add tags](#add-tags)
-  - [Add filters](#add-filters)
-  - [Add functions](#add-functions)
-  - [Add operators](#add-operators)
-  - [Behaviors](#behaviors)
-    - [Condition behaviour](#condition-behaviour)
-    - [Empty string behaviour](#empty-string-behaviour)
-    - [Number behaviour](#number-behaviour)
-  - [Custom escaper](#custom-escaper)
-  - [Date processing](#date-processing)
-- [Iterator and countable objects](#iterator-and-countable-objects)
 
 Basic API Usage
 --------------
@@ -58,8 +39,6 @@ aspect:display("dashboard.tpl", {
 })
 ```
 
-[Back to TOC](#table-of-content)
-
 ## Render result
 
 ```lua
@@ -75,8 +54,6 @@ local output, err = aspect:display(template, vars)
   end
   ```
 - `err` is `aspect.error` object and contains error information. `nil` if no errors.
-
-[Back to TOC](#table-of-content)
 
 Rendering Templates
 -------------------
@@ -111,8 +88,6 @@ Rendering Templates
 **Note**. `render` functions and `display` functions returns `aspect.output` object with template result 
 (if result not displayed) and more useful information
 
-[Back to TOC](#table-of-content)
-
 Options
 -------
 
@@ -141,8 +116,6 @@ The following options are available:
   Function used for saving byte-code of the template.
 * `autoescape` _boolean_
   Enables or disables auto-escaping with 'html' strategy. 
-
-[Back to TOC](#table-of-content)
 
 Cache
 -----
@@ -198,8 +171,6 @@ local template = aspect.new({
 })
 ```
 
-[Back to TOC](#table-of-content)
-
 Loaders
 -------
 
@@ -219,8 +190,6 @@ aspect:display("pages/about.html", vars)
 
 loads `/var/project/templates/pages/about.html` template.
 
-[Back to TOC](#table-of-content)
-
 ### Resty loader
 
 ```lua
@@ -235,8 +204,6 @@ aspect:display("pages/about.html", vars)
 
 loads `/.templates/pages/about.html` template (via [ngx.location.capture](https://github.com/openresty/lua-nginx-module#ngxlocationcapture)).
 
-[Back to TOC](#table-of-content)
-
 ### Array loader
 
 ```lua
@@ -247,8 +214,6 @@ tpls["theme.tpl"] = [[<html> ... template ... </html>]]
 
 aspect.loader = tpls
 ```
-
-[Back to TOC](#table-of-content)
 
 Extending
 ---------
@@ -295,8 +260,6 @@ end
 
 See [aspect.tags](../src/aspect/tags.lua) for more examples.
 
-[Back to TOC](#table-of-content)
-
 ## Add filters
 
 ```lua
@@ -316,8 +279,6 @@ end)
 ```
 
 See [aspect.filters](../src/aspect/filters.lua) for more examples.
-
-[Back to TOC](#table-of-content)
 
 ## Add functions
 
@@ -345,8 +306,6 @@ end)
 ```
 
 See [aspect.funcs](../src/aspect/funcs.lua) for more examples.
-
-[Back to TOC](#table-of-content)
 
 ## Add tests
 
@@ -378,8 +337,6 @@ Result:
 
 See [aspect.tests](../src/aspect/tests.lua) for more examples.
 
-[Back to TOC](#table-of-content)
-
 ## Add operators
 
 For example add bitwise operator `&` (using [bitop](http://bitop.luajit.org/) package): 
@@ -405,8 +362,6 @@ table.insert(ops, {
 ```
 
 See [aspect.ast.ops](../src/aspect/ast/ops.lua) for more examples.
-
-[Back to TOC](#table-of-content)
 
 ## Behaviors
 
@@ -456,8 +411,6 @@ is_false['0'] = true
  
 Now example output `Unacceptable condition!` because `zero` will be casted to false.
 
-[Back to TOC](#table-of-content)
-
 ### Empty string behaviour
 
 Configure `aspect.config.is_empty_string` table. Indicate which values ​​are empty string or values ​​with specific metatable.
@@ -468,8 +421,6 @@ is_empty_string[ngx.null] = true
 is_empty_string[getmetatable(cbson.null())] = true
 ```
 
-[Back to TOC](#table-of-content)
-
 ### Number behaviour
 
 Configure `aspect.config.is_n` table.  Indicate which objects can behave like numbers.
@@ -478,8 +429,6 @@ Configure `aspect.config.is_n` table.  Indicate which objects can behave like nu
 local is_n = require("aspect.config").is_n
 is_n[getmetatable(cbson.number(0))] = 0
 ```
-
-[Back to TOC](#table-of-content)
 
 ## Custom escaper
 
@@ -495,8 +444,6 @@ end
 {{ data.raw|e("csv") }}
 ```
 
-[Back to TOC](#table-of-content)
-
 ## Date processing
 
 ### strtotime
@@ -507,8 +454,6 @@ Parse about any textual datetime description into a Unix timestamp:
 local strtotime = require("aspect.utils.date").strtotime
 local ts, info = strtotime("2009-02-13 23:31:30")
 ```
-
-[Back to TOC](#table-of-content)
 
 ### Date localization
 
@@ -523,8 +468,6 @@ months["diciembre"] = 12    -- add long name of december on spain
 -- ...
 ```
 There 1 - january, 12 - december.
-
-[Back to TOC](#table-of-content)
 
 ### Date parser
 
@@ -570,8 +513,6 @@ How parsers work:
 
 See `date.parsers` for more information.
 
-[Back to TOC](#table-of-content)
-
 Iterator and countable objects
 -------------------------------
 
@@ -582,7 +523,5 @@ For example see [range iterator](../src/aspect/utils/range.lua).
 
 As in Lua 5.2+, the Aspect allows to determine the length of objects through the `__len()` function. 
 Works for all lua/luajit versions.
-
-[Back to TOC](#table-of-content)
 
 <!-- {% endraw %} -->

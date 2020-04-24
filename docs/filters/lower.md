@@ -1,5 +1,9 @@
-[Aspect](./../../readme.md) › [Filters](./../filters.md) › lower
-==============
+---
+layout: page
+title: Filters › lower
+---
+
+[← filters](./../filters.md)
 
 Filter `lower`:
 * no args

@@ -1,5 +1,9 @@
-[Aspect](./../../readme.md) › [Functions](./../funcs.md) › dump
-==============
+---
+layout: page
+title: Functions › dump
+---
+
+[← functions](./../funcs.md)
 
 <!-- {% raw %} -->
 

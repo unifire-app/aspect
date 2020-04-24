@@ -1,5 +1,9 @@
-[Aspect](./../../readme.md) › [Functions](./../funcs.md) › include
-==================
+---
+layout: page
+title: Functions › include
+---
+
+[← functions](./../funcs.md)
 
 <!-- {% raw %} -->
 

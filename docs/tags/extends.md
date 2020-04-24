@@ -1,5 +1,9 @@
-[Aspect](./../../readme.md) › [Tags](./../tags.md) › extends
-=========
+---
+layout: page
+title: Tags › extends
+---
+
+[← tags](./../tags.md)
 
 <!-- {% raw %} -->
 

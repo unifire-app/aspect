@@ -1,5 +1,9 @@
-[Aspect](./../../readme.md) › [Tags](./../tags.md) › macro
-=====
+---
+layout: page
+title: Tags › macro
+---
+
+[← tags](./../tags.md)
 
 <!-- {% raw %} -->
 

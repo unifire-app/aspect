@@ -1,5 +1,9 @@
-[Aspect](./../../readme.md) › [Tests](./../tests.md) › divisible by
-===================
+---
+layout: page
+title: Tests › divisible by
+---
+
+[← tests](./../tests.md)
 
 <!-- {% raw %} -->
 

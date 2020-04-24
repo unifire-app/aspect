@@ -3,6 +3,8 @@ layout: page
 title: Behaviors
 ---
 
+<!-- {% raw %} -->
+
 ## Working with strings
 
 | Value         | String evaluation  |

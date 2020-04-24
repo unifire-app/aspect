@@ -58,6 +58,10 @@ links:
       icon: github
       brand: true
       url: https://github.com/unifire-app/aspect
+social:
+  github:
+    user: unifire-app
+    repo: aspect
 
 icons:
   favicon: assets/aspect.png

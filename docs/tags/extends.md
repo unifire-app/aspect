@@ -9,12 +9,12 @@ title: Tags › extends
 
 The `extends` tag can be used to extend a template from another one.
 
-`block`
+Tag `block`
 -------
 
-## Parent Template
+### Parent Template
 
-Let's define a base template, `base.html`, which defines a simple HTML skeleton document:
+Let's define a base template, `base.view`, which defines a simple HTML skeleton document:
 
 ```twig
 <!DOCTYPE html>
@@ -36,16 +36,16 @@ Let's define a base template, `base.html`, which defines a simple HTML skeleton 
 </html>
 ```
 
-In this example, the [block](#block) tags define four blocks that child templates can fill in.
+In this example, the [block](#tag-block) tags define four blocks that child templates can fill in.
 
 All the `block` tag does is to tell the template engine that a child template may override those portions of the template.
 
-## Child Template
+### Child Template
 
 A child template might look like this:
 
 ```twig
-{% extends "base.html" %}
+{% extends "base.view" %}
 
 {% block title %}Index{% endblock %}
 {% block head %}
@@ -73,7 +73,7 @@ This limitation exists because a block tag works in "both" directions.
 That is, a `block` tag doesn't just provide a hole to fill - it also defines the content that fills the hole in the `parent`. 
 If there were two similarly-named `block` tags in a template, that template's parent wouldn't know which one of the blocks' content to use.
 
-## Block function
+### Function `block`
 When a template uses inheritance and if you want to print a block multiple times, use the `block` function:
 
 ```twig
@@ -88,7 +88,7 @@ The `block` function can also be used to display one block from another template
 
 ```twig
 	
-{{ block("title", "common_blocks.html") }}
+{{ block("title", "common_blocks.view") }}
 ```
 
 Use the `defined` test to check if a block exists in the context of the current template:
@@ -98,12 +98,12 @@ Use the `defined` test to check if a block exists in the context of the current 
     ...
 {% endif %}
 
-{% if block("footer", "common_blocks.html") is defined %}
+{% if block("footer", "common_blocks.view") is defined %}
     ...
 {% endif %}
 ```
 
-## Named Block End-Tags
+### Named Block End-Tags
 
 Aspect allows you to put the name of the block after the end tag for better readability 
 (the name after the `endblock` word must match the block name):
@@ -116,7 +116,7 @@ Aspect allows you to put the name of the block after the end tag for better read
 {% endblock sidebar %}
 ```
 
-## Block Nesting and Scope
+### Block Nesting and Scope
 
 Blocks can be nested for more complex layouts. Per default, blocks have access to variables from outer scopes:
 
@@ -126,8 +126,8 @@ Blocks can be nested for more complex layouts. Per default, blocks have access t
 {% endfor %}
 ```
 
-`parent`
---------
+Function `parent`
+------------
 
 When a template uses inheritance, it's possible to render the contents of the parent 
 block when overriding a block by using the parent function:
@@ -139,7 +139,7 @@ block when overriding a block by using the parent function:
     {{ parent() }}
 {% endblock %}
 ```
-The parent() call will return the content of the sidebar block as defined in the base.html template.
+The parent() call will return the content of the sidebar block as defined in the base.view template.
 
 How do blocks work?
 -------------------
@@ -149,7 +149,7 @@ A block provides a way to change how a certain part of a template is rendered bu
 Let's take the following example to illustrate how a block works and more importantly, how it does not work:
 
 ```twig
-{# base.tpl #}
+{# base.view #}
 
 {% for post in posts %}
     {% block post %}
@@ -163,9 +163,9 @@ If you render this template, the result would be exactly the same with or withou
 The `block` inside the `for` loop is just a way to make it overridable by a child template:
 
 ```twig
-{# child.tpl #}
+{# child.view #}
 
-{% extends "base.tpl" %}
+{% extends "base.view" %}
 
 {% block post %}
     <article>
@@ -222,7 +222,7 @@ a template can only extend one other template.
 This limitation makes template inheritance simple to understand and easy to debug:
 
 ```twig
-{% extends "base.html" %}
+{% extends "base.view" %}
 
 {% block title %}{% endblock %}
 {% block content %}{% endblock %}
@@ -231,19 +231,19 @@ This limitation makes template inheritance simple to understand and easy to debu
 Horizontal reuse is a way to achieve the same goal as multiple inheritance, but without the associated complexity:
 
 ```twig
-{% extends "base.html" %}
+{% extends "base.view" %}
 
-{% use "blocks.html" %}
+{% use "blocks.view" %}
 
 {% block title %}{% endblock %}
 {% block content %}{% endblock %}
 ```
 
-The `use` statement tells Aspect to import the blocks defined in `blocks.html` into the current template 
+The `use` statement tells Aspect to import the blocks defined in `blocks.view` into the current template 
 (it's like `macros`, but for blocks):
 
 ```twig
-{# blocks.html #}
+{# blocks.view #}
 
 {% block sidebar %}{% endblock %}
 ```
@@ -252,7 +252,7 @@ In this example, the `use` statement imports the `sidebar` block into the main t
 The code is mostly equivalent to the following one (the imported blocks are not outputted automatically):
 
 ```twig
-{% extends "base.html" %}
+{% extends "base.view" %}
 
 {% block sidebar %}{% endblock %}
 {% block title %}{% endblock %}

@@ -4,7 +4,8 @@ ChangeLog
 Master
 ------
 
-*no changes*
+- Run docs on github pages [aspect.unifire.app](https://aspect.unifire.app/)
+- Reformat docs
 
 1.12
 ----

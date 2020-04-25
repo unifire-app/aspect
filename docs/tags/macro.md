@@ -7,6 +7,9 @@ title: Tags › macro
 
 <!-- {% raw %} -->
 
+Using Macros
+------------
+
 Macros are comparable with functions in regular programming languages. 
 They are useful to reuse template fragments to not repeat yourself.
 

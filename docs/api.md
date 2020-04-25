@@ -116,6 +116,7 @@ The following options are available:
   Function used for saving byte-code of the template.
 * `autoescape` _boolean_
   Enables or disables auto-escaping with 'html' strategy. 
+* `env` _table_ sets the environment to be used by all templates (from current Aspect instance).
 
 Cache
 -----
@@ -218,7 +219,7 @@ aspect.loader = tpls
 Extending
 ---------
 
-## Add tags
+### Add tags
 
 Add inline tag `{% foo %}`:
 
@@ -260,7 +261,7 @@ end
 
 See [aspect.tags](https://github.com/unifire-app/aspect/tree/master/src/aspect/src/aspect/tags.lua) for more examples.
 
-## Add filters
+### Add filters
 
 ```lua
 local filters = require("aspect.filters")
@@ -280,7 +281,7 @@ end)
 
 See [aspect.filters](https://github.com/unifire-app/aspect/tree/master/src/aspect/src/aspect/filters.lua) for more examples.
 
-## Add functions
+### Add functions
 
 Add function `{{ foo(arg1=x, arg2=y) }}`:
 
@@ -307,7 +308,7 @@ end)
 
 See [aspect.funcs](https://github.com/unifire-app/aspect/tree/master/src/aspect/src/aspect/funcs.lua) for more examples.
 
-## Add tests
+### Add tests
 
 Add tests `foo`, `bar` and `baz`
 
@@ -337,7 +338,7 @@ Result:
 
 See [aspect.tests](https://github.com/unifire-app/aspect/tree/master/src/aspect/src/aspect/tests.lua) for more examples.
 
-## Add operators
+### Add operators
 
 For example add bitwise operator `&` (using [bitop](http://bitop.luajit.org/) package): 
 
@@ -361,9 +362,21 @@ table.insert(ops, {
 })
 ```
 
+Don't forget add bitop package to template's environment using `env` [option](#options):
+
+```lua
+local aspect = require("aspect.template").new {
+    --- ...
+    env = {
+        bitop = bitop or require("bitop")
+    }
+}
+```
+
 See [aspect.ast.ops](../src/aspect/ast/ops.lua) for more examples.
 
-## Behaviors
+Behaviors
+---------
 
 ### Condition behaviour
 
@@ -444,7 +457,8 @@ end
 {{ data.raw|e("csv") }}
 ```
 
-## Date processing
+Date processing
+---------------
 
 ### strtotime
 

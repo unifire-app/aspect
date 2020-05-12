@@ -25,18 +25,28 @@ license:
 links:
   pages:
     - title: Syntax
+      icon: angle-right
       url: /syntax
     - title: Tags
+      icon: angle-right
       url: /tags
     - title: Filters
+      icon: angle-right
       url: /filters
     - title: Funcs
+      icon: angle-right
       url: /funcs
     - title: Tests
+      icon: angle-right
       url: /tests
+    - title: Spec
+      icon: angle-right
+      url: /spec
     - title: API
+      icon: angle-right
       url: /api
     - title: CLI
+      icon: angle-right
       url: /cli
   header:
     - title: '<img src="https://travis-ci.org/unifire-app/aspect.svg?branch=master" />'

@@ -1,11 +1,32 @@
 ---
 layout: page
-title: Behaviors
+title: Specification
 ---
 
 <!-- {% raw %} -->
 
+- **What is it**: templater
+- **Syntax**: twig, jinja, django, liquid
+- **Language**: Lua 5.1+
+- **Dependency**: none
+- **Compiler**: [simple tokenizer](https://github.com/unifire-app/aspect/blob/master/src/aspect/tokenizer.lua) + [AST](https://github.com/unifire-app/aspect/blob/master/src/aspect/ast.lua)
+- **Unittest**: [busted](https://olivinelabs.com/busted/)
+
+## Working with keys
+
+Keys sequence `a.b.c` returns `nil` if variable `a` or any other keys (`b` or `c`) doesn't exits.
+The sequence of keys `a.b.c` may be represented as lua code
+```lua
+if a and is_table(a) and a.b and is_table(a.b) and a.b.c then
+    return a.b.c
+else
+    return nil
+end
+``` 
+
 ## Working with strings
+
+In case the value should be converted to a string.
 
 | Value         | String evaluation  |
 |---------------|--------------------|
@@ -21,6 +42,9 @@ title: Behaviors
 You may [configure empty-string behavior](./api.md#empty-string-behaviour).
 
 ## Working with numbers
+
+- for math operations
+- in case the value should be converted to a number.
 
 | Value                    | Number evaluation         |
 |--------------------------|---------------------------|
@@ -51,7 +75,7 @@ The rules to determine if an expression is `true` or `false` are (edge cases):
 | nil                         | false              |
 | non-empty table             | true               |
 | table with `__toboolean`    | `__toboolean()`    |
-| table with `__len`        | `__len() ~= 0`   |
+| table with `__len`          | `__len() ~= 0`     |
 | cjson.null                  | false              |
 | cbson.null()                | false              |
 | lyaml.null                  | false              |
@@ -59,13 +83,13 @@ The rules to determine if an expression is `true` or `false` are (edge cases):
 | ngx.null                    | false              |
 | msgpack.null                | false              |
 | userdata with `__toboolean` | `__toboolean()`    |
-| userdata with `__len`     | `__len() ~= 0`   |
+| userdata with `__len`       | `__len() ~= 0`     |
 
 Functions `__toboolean()` and `__len()` should be a part of the metatable. 
 
 ## Working with cycles
 
-Aspect allows define own object-iterators via metatable.
+Aspect supports iterators as in Lua 5.2+ but also for Lua 5.1 and LuaJIT.
 
 | Value                    | Action               |
 |--------------------------|----------------------|
@@ -77,12 +101,14 @@ Aspect allows define own object-iterators via metatable.
 | userdata with `__pairs`  | iterate with `__pairs()` |
 | userdata                 | not iterate          |
 | table with `__pairs`     | iterate with `__pairs()` instead of `pairs()` |
-| table                    | iterate with `pairs()` |
+| other table              | iterate with `pairs()` |
 
 The function `__pairs()` should be a part of the metatable 
 and compatible with basic function `pairs()` (returns `iterator`, `key`, `value`) 
 
 ## Working with counting
+
+When it is necessary to count the number of elements (filter `length` or variable `loop.length`).
 
 | Value                    | Number evaluation    |
 |--------------------------|----------------------|
@@ -92,10 +118,10 @@ and compatible with basic function `pairs()` (returns `iterator`, `key`, `value`
 | nil                      | 0                    |
 | true/false               | 0                    |
 | userdata                 | 0                    |
-| table                    | count of keys        |
-| table with `__len`     | `__len(...)`       |
+| table with `__len`       | `__len(...)`         |
 | table with `__pairs`     | invoke `__pairs()` and count elements |
-| userdata with `__len`  | `__len(...)`       |
+| other tables             | count of keys        |
+| userdata with `__len`    | `__len(...)`         |
 | userdata with `__pairs`  | invoke `__pairs()` and count elements |
 
 <!-- {% endraw %} -->

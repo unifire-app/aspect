@@ -4,8 +4,11 @@ ChangeLog
 Master
 ------
 
+- Add `apply` tag
 - Run docs on github pages [aspect.unifire.app](https://aspect.unifire.app/)
 - Reformat docs
+- Add option `--dump` for CLI command (useful for debug)
+- Dynamic keys now works (`a[b]` or `a['b' ~ c]`)
 
 1.12
 ----

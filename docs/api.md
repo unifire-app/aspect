@@ -88,6 +88,44 @@ Rendering Templates
 **Note**. `render` functions and `display` functions returns `aspect.output` object with template result 
 (if result not displayed) and more useful information
 
+Debug Templates
+---------------
+
+If compilation errors or template execution fail, you can get an `aspect.error` error object that contains fields:
+- **code** — code or type of error
+  - `syntax` - template syntax error
+  - `compile` - template compilation error not related to syntax (unknown filter, wrong arguments, etc)
+  - `compiler` - internal compiler's error
+  - `runtime` - error executing template
+- **name** — name of the template in which the error was occurred
+- **line** — line of the template in which the error was occurred
+- **message** — the error message
+- **context** — fragment of the template where the error occurred (`runtime` and `compiler` errors have no context)
+- **callstack** — trace template calls as a string.
+- **traceback** — Lua trace back 
+
+The error object `aspect.error` can be converted to a string with a detailed description of the error.
+
+```lua
+local output, error = aspect:render("launch.view")
+if error then
+    print(tostring(error))
+end
+```
+
+```lua
+local builder, error = aspect:compile("launch.view")
+if builder then 
+    print("Lua code of the template launch.view:", builder:get_code())
+else
+    print("Error occurred:", tostring(error))
+end
+```
+
+```bash
+aspect --dump /path/to/launch.view
+```
+
 Options
 -------
 

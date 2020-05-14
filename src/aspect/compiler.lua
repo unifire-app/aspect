@@ -14,7 +14,6 @@ local err = require("aspect.err")
 local quote_string = require("aspect.utils").quote_string
 local get_keys = require("aspect.utils").keys
 local strcount = require("aspect.utils").strcount
-local table_export = require("aspect.utils").table_export
 local compiler_error = err.compiler_error
 local sub = string.sub
 local strlen = string.len
@@ -41,6 +40,7 @@ local special = config.compiler.special
 --- @field code_start_line number
 --- @field var_space table own table of variables
 --- @field var_space_no number stack number of own table of variables
+--- @field used_vars table global variable what used
 --- @field append_text fun(tpl:aspect.compiler, text:string)
 --- @field append_expr fun(tpl:aspect.compiler, expr:string)
 --- @field append_code fun(tpl:aspect.compiler, code:string)
@@ -70,6 +70,9 @@ local _ = {}
 --- @field tags table<aspect.tag>
 --- @field code table stack of code. Each level is isolated code (block or macro). 0 level is body
 --- @field stats boolean
+--- @field used_tpl table list of used templates in the code
+--- @field used_vars table list of used global variables
+--- @field vars table list of local variables
 local compiler = {
     version = 1,
 }
@@ -91,7 +94,7 @@ function compiler.new(aspect, name, stats)
         extends = nil,
         blocks = {},
         uses = {},
-        uses_tpl = {},
+        used_tpl = {},
         used_vars = {},
         vars = {},
         deps = {},
@@ -209,6 +212,7 @@ function compiler:parse(source)
     self.body = {}
     self.code = {self.body}
     self.vars = {{}}
+    self.used_vars = {{}}
     self.macros = {}
     self.blocks = {}
     while tag_pos do
@@ -224,7 +228,6 @@ function compiler:parse(source)
                 frag = rstrip(frag, wcp)
             end
             if frag ~= "" then
-                -- print("APPEND", frag)
                 self:append_text(frag)
             end
         end
@@ -266,7 +269,9 @@ function compiler:parse(source)
             tok = nil
             self.tag_name = nil
         elseif t == "#" then -- '{#'
-            tag_pos = find(source, "#}", p, true)
+            local end_comment = find(source, "#}", p, true)
+            self.line = self.line + strcount(sub(source, tag_pos, end_comment - 1), "\n")
+            tag_pos = end_comment
             l = tag_pos + 2
         else
             tag_pos = tag_pos + 2
@@ -359,47 +364,37 @@ function compiler:parse_variable(tok)
         --    tok:next()
         --    var = {"_context"}
         end
-        --if remember and not self.var_names[tok:get_token()] then
-        --    self.var_names[tok:get_token()] = remember
-        --end
         if not var then
             var = {self:parse_var_name(tok)}
+            self:use_var(var[1])
             if not self:has_local_var(var[1]) then
-                if self.stats then
-                    if self.used_vars[var[1]] then
-                        keys = self.used_vars[var[1]]
-                        keys.where[#keys.where + 1] = {line = self.line, tag = self.tag_name}
-                    else
-                        keys = {where = {{line = self.line, tag = self.tag_name}}, keys = {}}
-                        self.used_vars[var[1]] = keys
-                    end
-                end
                 var[1] = "_context." .. var[1]
             end
+        else
+            self:use_var(var[1])
         end
         while tok:is(".") or tok:is("[") do
             local mode = tok:get_token()
             tok:next()
-            if tok:is_word() then
-                if keys then
-                    keys.keys[tok:get_token()] = 1
-                    keys = nil
-                end
-                insert(var, '"' .. tok:get_token() .. '"')
+            if mode == "." then -- a.b
+                insert(var, '"' .. tok:require_type('word'):get_token() .. '"')
                 tok:next()
-            elseif tok:is_string() then
-                if keys then
-                    keys.keys[tok:get_token()] = true
-                    keys = nil
-                end
-                insert(var, tok:get_token())
-                tok:next()
-                if mode == "[" then
-                    tok:require("]"):next()
-                end
-            else
-                compiler_error(tok, "syntax", "expecting word or quoted string")
+            elseif mode == "[" then -- a[b]
+                insert(var, self:parse_expression(tok))
+                tok:require("]"):next()
             end
+            --if tok:is_word() then
+            --    insert(var, '"' .. tok:get_token() .. '"')
+            --    tok:next()
+            --elseif tok:is_string() then
+            --    insert(var, tok:get_token())
+            --    tok:next()
+            --    if mode == "[" then
+            --        tok:require("]"):next()
+            --    end
+            --else
+            --    compiler_error(tok, "syntax", "expecting word or quoted string")
+            --end
         end
         if #var == 1 then
             return var[1]
@@ -850,7 +845,21 @@ function compiler:get_checkpoint()
     end
 end
 
---- Add local variable name to scope (used for includes and blocks)
+--- Add ref to another template
+--- @param name string template name
+function compiler:use_template(name)
+    if not self.tag_name then
+        return
+    end
+    if not self.used_tpl[name] then
+        self.used_tpl[self.tag_name] = {}
+    end
+    if self.tag_name then
+        self.used_tpl[self.tag_name][name] = true
+    end
+end
+
+--- Add local variable name to scope (used for includes, blocks and macros)
 --- @param name string
 function compiler:push_var(name)
     if #self.tags > 0 then
@@ -867,6 +876,22 @@ function compiler:push_var(name)
     else
         vars[name] = vars[name] + 1
     end
+end
+
+function compiler:use_var(name)
+    local vars = self.vars[#self.vars]
+    if vars[name] then -- this is local variable
+        return
+    end
+    local used_vars = self.used_vars[#self.used_vars]
+    if not used_vars[name] then
+        used_vars[name] = {
+            where = {},
+            keys = {}
+        }
+    end
+    insert(used_vars[name].where, {line = self.line, tag = self.tag_name})
+    return used_vars[name]
 end
 
 --- Returns all variables name defined in the scope (without global)
@@ -914,11 +939,12 @@ function compiler:push_tag(name, code_space, code_space_name, var_space)
     end
     tag.code_space = self.code[#self.code]
     tag.code_start_line = #tag.code_space
-    if var_space then
-        insert(self.vars, var_space)
+    if var_space then -- use own variable namespace
+        insert(self.vars, var_space) -- create namespace for local variables
+        self.used_vars[#self.vars] = {} -- create namespace for global variables (usage statistics)
         tag.var_space_no = #self.vars
-        tag.used_vars = {}
     end
+    tag.used_vars = self.used_vars[#self.vars]
     tag.var_space = self.vars[#self.vars]
 
     local prev = self.tags[#self.tags]
@@ -970,10 +996,12 @@ function compiler:pop_tag(name)
                 end
             end
             if tag.var_space_no then
-                if tag.var_space_no ~= #self.vars then -- dummy protection
-                    compiler_error(nil, "compiler", "invalid vars space layer in the tag " .. name)
+                if tag.var_space_no ~= #self.vars or tag.var_space_no ~= #self.used_vars then -- dummy protection
+                    compiler_error(nil, "compiler", "invalid vars space layer in the tag " .. name
+                            .. " (space no " ..tag.var_space_no .. ", vars " .. #self.vars .. ", used_vars " .. #self.used_vars .. ")")
                 else
                     remove(self.vars)
+                    remove(self.used_vars)
                 end
             end
             return remove(self.tags)

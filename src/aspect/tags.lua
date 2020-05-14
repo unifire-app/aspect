@@ -85,7 +85,7 @@ function tags.tag_extends(compiler, tok)
     local name = compiler:parse_expression(tok, info)
     if info.type == "string" then
         compiler.extends = {value = name, static = true}
-        compiler.uses_tpl[name] = true
+        compiler:use_template(name)
     else
         compiler.extends = {value = name, static = false}
     end
@@ -133,6 +133,8 @@ function tags.tag_endblock(compiler, tok)
     end
     compiler.blocks[tag.block_name].parent = tag.parent
     compiler.blocks[tag.block_name].end_line = compiler.line
+    compiler.blocks[tag.block_name].used_vars = tag.used_vars
+    --compiler.blocks[tag.block_name].tag = tag
     local vars = utils.implode_hashes(compiler:get_local_vars())
     if vars then
         return '__.blocks.' .. tag.block_name .. '.body(__, __.setmetatable({ ' .. vars .. '}, { __index = _context }))' ;
@@ -150,7 +152,7 @@ function tags.tag_use(compiler, tok)
             name = tok:get_token(),
             line = compiler.line
         }
-        compiler.uses_tpl[uses.name] = true
+        compiler:use_template(uses.name)
         compiler.uses[#compiler.uses + 1] = uses
         tok:next()
         if tok:is('with') then
@@ -228,7 +230,7 @@ function tags.tag_include(compiler, tok, ...)
         with_context = true
     }
     if info.type == "string" then
-        compiler.uses_tpl[args.name] = true
+        compiler.use_template(args.name)
     end
     if tok:is('ignore') then
         tok:next():require('missing'):next()
@@ -305,7 +307,7 @@ function tags.tag_import(compiler, tok)
     local info = {}
     local from = compiler:parse_expression(tok, info)
     if info.type == "string" then
-        compiler.uses_tpl[from] = true
+        compiler:use_template(from)
     end
     tok:require("as"):next()
     local name = compiler:parse_var_name(tok)
@@ -320,7 +322,7 @@ function tags.tag_from(compiler, tok)
     local info = {}
     local from = compiler:parse_expression(tok, info)
     if info.type == "string" then
-        compiler.uses_tpl[from] = true
+        compiler:use_template(from)
     end
     tok:require("import"):next()
     local names, aliases = {}, {}

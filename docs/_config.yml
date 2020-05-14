@@ -25,21 +25,21 @@ license:
 links:
   pages:
     - title: Syntax
-      url: /syntax
+      url: /syntax.html
     - title: Tags
-      url: /tags
+      url: /tags.html
     - title: Filters
-      url: /filters
+      url: /filters.html
     - title: Funcs
-      url: /funcs
+      url: /funcs.html
     - title: Tests
-      url: /tests
+      url: /tests.html
     - title: Spec
-      url: /spec
+      url: /spec.html
     - title: API
-      url: /api
+      url: /api.html
     - title: CLI
-      url: /cli
+      url: /cli.html
   header:
     - title: '<img src="https://travis-ci.org/unifire-app/aspect.svg?branch=master" />'
       url: https://travis-ci.org/unifire-app/aspect

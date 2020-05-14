@@ -154,11 +154,22 @@ function template.new(options)
     return tpl
 end
 
---- Compiler factory
---- @param name string
+--- Compile the template
 --- @return aspect.compiler
-function template:get_compiler(name)
-    return self.compiler.new(self, name)
+--- @return aspect.error
+function template:compile(name)
+    local source, error, ok, cmp
+    source, error = self.loader(name, self)
+    if not source then
+        return nil, nil, err.new(error)
+    end
+    cmp = self.compiler.new(self, name)
+    ok, error = cmp:run(source)
+    if not ok then
+        return nil, error
+    else
+        return cmp
+    end
 end
 
 --- @param name string
@@ -186,7 +197,7 @@ function template:get_view(name)
     end
     local view, error, build = self:load(name)
     if view then
-        if view.uses then -- lazy load {%use%} tags
+        if view.uses then -- lazy load {% use %} tags
             for _, use in ipairs(view.uses) do
                 local use_view, use_error = self:get_view(use.name)
                 if use_view then -- use template loaded
@@ -226,8 +237,8 @@ end
 --- This method works without internal template cache.
 --- @param name string the view name
 --- @return aspect.view|nil
---- @return aspect.error|nil
---- @return aspect.compiler|nil
+--- @return aspect.error or nil if OK
+--- @return aspect.compiler or nil of the template from cache
 function template:load(name)
     local bytecode, luacode, source, build, ok, error, f
     if self.bytecode_load then
@@ -247,7 +258,6 @@ function template:load(name)
         end
     end
     source, error = self.loader(name, self)
-
 
     if source then
         build = self.compiler.new(self, name)
@@ -273,7 +283,7 @@ function template:load(name)
             return nil, error, build
         end
     elseif error then
-        return nil, err.new(error)
+        return nil, err.new(error, "compile")
     else
         return nil
     end

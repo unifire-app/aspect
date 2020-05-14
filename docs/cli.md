@@ -26,7 +26,7 @@ Render data from STDIN (using `-`):
 aspect - path/to/template.tmpl
 ```
 
-Read template from STDIN (using -):
+Read template from STDIN (using `-`):
 ```bash
 aspect path/to/fixture.json -
 ```

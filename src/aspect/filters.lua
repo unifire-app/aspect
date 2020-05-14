@@ -20,6 +20,7 @@ local batch = require("aspect.utils.batch")
 local nkeys = utils.nkeys
 local escape = utils.escape
 local trim = utils.trim
+local split = utils.split
 local output = require("aspect.output")
 local json = require("aspect.config").json
 local date = require("aspect.utils.date")
@@ -418,34 +419,7 @@ filters.add('split', {
         [1] = {name = 'delim', type = 'string'},
         [2] = {name = 'count', type = 'number'}
     }
-}, function (v, delim, n)
-    local i1,ls, plain = 1,{}, true
-    if not delim then
-        delim = '%s+'
-        plain = false
-    end
-    if delim == '' then
-        return {v}
-    end
-    while true do
-        local i2,i3 = find(v, delim, i1, plain)
-        if not i2 then
-            local last = sub(v, i1)
-            if last ~= '' then insert(ls, last) end
-            if #ls == 1 and ls[1] == '' then
-                return {}
-            else
-                return ls
-            end
-        end
-        insert(ls,sub(v,i1,i2-1))
-        if n and #ls == n then
-            ls[#ls] = sub(v, i1)
-            return ls
-        end
-        i1 = i3 + 1
-    end
-end)
+}, split)
 
 filters.add('striptags', {
     input = 'string',

@@ -82,7 +82,9 @@ local vars = {
         float_value = 2.1,
         integer_value = 7,
         string_value = "is table value",
-    }
+    },
+
+    key_string_value = "string_value"
 }
 vars.table_inf = vars
 
@@ -159,6 +161,11 @@ templates["basic_08"] = {
 templates["basic_09"] = {
     [[{{ table_1.integer_value }} and1 { not a tag } and2 {{ table_1.string_value }}]],
     "7 and1 { not a tag } and2 is table value"
+}
+
+templates["basic_10"] = {
+    [[{{ table_1[key_string_value] }} and {{ table_1['float_' ~ 'value'] }} ]],
+    "is table value and 2.1"
 }
 --
 --templates["basic_10"] = {
@@ -1014,7 +1021,7 @@ describe("Testing compiler.", function()
         it("Checks AST: " .. e.expr, function ()
             local template = factory()
             local ast = astree.new()
-            local ok, f = pcall(ast.parse, ast, template:get_compiler("runtime"), tokenizer.new(e.expr))
+            local ok, f = pcall(ast.parse, ast, template.compiler.new(template, "runtime"), tokenizer.new(e.expr))
             if not ok then
                 error(tostring(err.new(f)))
             end

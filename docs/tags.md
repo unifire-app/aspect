@@ -5,6 +5,7 @@ title: Tags
 
 <!-- {% raw %} -->
 
+* [apply](./tags/apply.md) — apply filters on a block of template data.
 * [autoescape](./tags/autoescape.md) — automatically escaping
 * [do](./tags/do.md) — run expression
 * [extends](./tags/extends.md), [block](./tags/extends.md#block), [use](./tags/extends.md#use) - 

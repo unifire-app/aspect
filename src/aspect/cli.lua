@@ -1,8 +1,11 @@
 local var_dump   = require("aspect.utils").var_dump
 local dump       = require("aspect.utils").dump
+local numerate   = require("aspect.utils").numerate_lines
+local get_keys   = require("aspect.utils").keys
 local aspect     = require("aspect.template")
 local fs_loader  = require("aspect.loader.filesystem")
 local json       = require("aspect.config").json
+local table      = table
 
 local cli = {
     aliases = {
@@ -23,6 +26,9 @@ local cli = {
 
         dump = true,
         p = "dump",
+
+        arg = true,
+        a = "arg"
     }
 }
 
@@ -56,7 +62,14 @@ function cli.parse_args(arguments, aliases, with_values)
                     if not arguments[i + 1] or (arguments[i + 1] and arguments[i + 1]:match("^%-")) then
                         return nil, nil, "no value for '".. _name .. "'"
                     end
-                    vals[name] = arguments[i + 1]
+                    if vals[name] then
+                        if type(vals[name]) ~= "table" then
+                            vals[name] = {vals[name]}
+                        end
+                        table.insert(vals[name], arguments[i + 1])
+                    else
+                        vals[name] = arguments[i + 1]
+                    end
                     i = i + 1
                 elseif not with_values[name] and value then
                     return nil, nil, "flag '" .. _name .. "' should be without value"
@@ -98,7 +111,7 @@ end
 function cli.run(arguments)
     arguments = arguments or {}
     local autoescape = false
-    local options, paths, err = cli.parse_args(arguments, cli.aliases, {include = true} )
+    local options, paths, err = cli.parse_args(arguments, cli.aliases, {include = true, arg = true} )
     if err then
         return 1, "[ERROR] " .. err
     end
@@ -121,9 +134,10 @@ Options:
   --help           -h       print this help
   --include <dir>  -I<dir>  use <dir> for loading other templates
   --escape         -e       enables auto-escaping with 'html' strategy.
-  --lint           -l       just lint the template
-  --dump           -p       dump information about template
+  --lint                    just lint the template
+  --dump                    dump information about template
   --debug          -d       print debug information
+  --arg            -a       argument
 
 Examples:
   Render JSON file to STDOUT or file:
@@ -144,11 +158,17 @@ Examples:
         io.stderr:write("[DEBUG] " .. dump(...) .. "\n")
     end
 
+    if options.debug then
+        verbose("command options", options)
+    end
+
     if options.escape then
         autoescape = true
     end
 
-    local template_file, template, tpl, loader, build = paths[1], nil, nil, nil, nil
+    local template_file, template, tpl, loader = paths[1], nil, nil, nil
+    --- @type aspect.compiler
+    local build
     local data_file, data = paths[2], nil
 
     --- Select template
@@ -170,7 +190,7 @@ Examples:
         return 1, "[ERROR] Failed to load template: " .. err
     end
     if options.debug then
-        verbose("template (" .. string.len(template) .. " bytes): ", template)
+        verbose("template (" .. string.len(template) .. " bytes): ", numerate(template))
     end
     if options.include then
         if options.debug then
@@ -190,13 +210,47 @@ Examples:
         return 1, "[ERROR] Failed to load and compile template: " .. tostring(err)
     end
     if options.debug then
-        verbose("template code: ", build:get_code())
+        verbose("template code: ", numerate(build:get_code()))
     end
     if options.lint then
         return 0
     end
     if options.dump then
-        return 0
+        local out = {}
+        if next(build.used_tpl) then
+            table.insert(out, "REFS:")
+            for tn, t in pairs(build.used_tpl) do
+                table.insert(out, "  " .. tn .. ": " .. table.concat(get_keys(t), ", "))
+            end
+        end
+        for bn, b in pairs(build.blocks) do
+            table.insert(out, "BLOCK: " .. bn)
+            table.insert(out, "  lines: " .. b.start_line .. "-" .. b.end_line)
+            table.insert(out, "  use parent(): " .. (b.parent and 'yes' or 'no'))
+            if next(b.used_vars) then
+                table.insert(out, "  used variables: ")
+                for vn, v in pairs(b.used_vars) do
+                    table.insert(out, "    " .. vn .. ":")
+                    local keys = get_keys(v.keys)
+                    if #keys > 0 then
+                        table.insert(out, "      keys: " .. table.concat(keys, ", "))
+                    end
+                    table.insert(out, "      where: ")
+                    for _, w in pairs(v.where) do
+                        table.insert(out, "        - " .. template_file .. ":" .. w.line .. " in tag " .. (w.tag or "--"))
+                    end
+                end
+            end
+            --table.insert(out, "Block " .. bn .. ", lines " .. b.start_line .. "-" .. b.end_line .. ": " .. dump(b))
+        end
+        for mn, m in pairs(build.blocks) do
+
+        end
+        table.insert(out, "TEMPLATE:")
+        table.insert(out, numerate(template, "  "))
+        table.insert(out, "CODE:")
+        table.insert(out, numerate(build:get_code(), "  "))
+        return 0, table.concat(out, "\n")
     end
 
     --- Read data

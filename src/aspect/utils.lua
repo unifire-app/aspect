@@ -8,6 +8,8 @@ local str_rep  = string.rep
 local sub = string.sub
 local find = string.find
 local reverse = string.reverse
+local gmatch = string.gmatch
+local format = string.format
 local getmetatable = getmetatable
 local nkeys = table.nkeys
 
@@ -281,6 +283,7 @@ function utils.dump_table(tbl, indent, tables)
             else
                 tables[table_id] = true
                 output = output .. formatting .. utils.dump_table(v, indent + 1, tables) .. "\n"
+                tables[table_id] = nil
             end
         else
             output = output .. formatting .. "("..type(v)..") " .. tostring(v) .. "\n"
@@ -336,6 +339,40 @@ function utils.rtrim(s, chrs)
     return s
 end
 
+--- Split string by delimiter
+--- @param str string
+--- @param delim string
+--- @param n number
+--- @return table<string>
+function utils.split(str, delim, n)
+    local i1,ls, plain = 1,{}, true
+    if not delim then
+        delim = '%s+'
+        plain = false
+    end
+    if delim == '' then
+        return {str}
+    end
+    while true do
+        local i2,i3 = find(str, delim, i1, plain)
+        if not i2 then
+            local last = sub(str, i1)
+            if last ~= '' then insert(ls, last) end
+            if #ls == 1 and ls[1] == '' then
+                return {}
+            else
+                return ls
+            end
+        end
+        insert(ls,sub(str,i1,i2-1))
+        if n and #ls == n then
+            ls[#ls] = sub(str, i1)
+            return ls
+        end
+        i1 = i3 + 1
+    end
+end
+
 --- Generate lua code for casting value to another type. Supported types:
 ---  number, string, table, iterator, boolean, boolean|any, any
 --- @param value string lua code of the value
@@ -372,6 +409,19 @@ function utils.cast_lua(value, curr_type, to_type)
     else
         return value
     end
+end
+
+--- Numerate lines in the text
+--- @param text string
+--- @return string
+function utils.numerate_lines(text, tab)
+    tab = tab or ""
+    local lines, i = {}, 1
+    for _, s in ipairs(utils.split(text, "\n")) do
+        insert(lines, tab .. format("%3d", i) .. "| " .. s)
+        i = i + 1
+    end
+    return concat(lines, "\n")
 end
 
 return utils

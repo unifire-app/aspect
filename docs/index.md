@@ -72,6 +72,7 @@ package.path = '/path/to/aspect/src/?.lua;' .. package.path
 
 ## Documentation links
 
+- [Specification](spec.md)
 - [Lua API](api.md)
 - [Template Syntax](syntax.md)
 - [All Tags](tags.md)
@@ -95,22 +96,22 @@ The key-features are...
 * _Flexible_: Aspect is powered by a flexible lexer and parser. 
   This allows the developer to define their own custom tags, filters, functions and operators, and to create their own DSL.
 * _Supports_ lua 5.1/5.2/5.3 and luajit 2.0/2.1
-* Has [console renderer](./docs/cli.md).
+* Has [console renderer](./cli.md).
 * No dependencies. Pure Lua. 
 * Sandboxed execution mode. Every aspect of the template execution is monitored and explicitly whitelisted or blacklisted, 
   whatever is preferred. This makes it possible to execute untrusted templates.
-* Powerful [automatic HTML escaping](./syntax.md#escape-control) system for cross site scripting prevention.
+* Powerful [automatic HTML escaping](./syntax.md#html-escaping) system for cross site scripting prevention.
 * [Template inheritance](./syntax.md#template-inheritance) makes it possible to use the same or a similar layout for all templates.
 * High performance with just in time compilation to Lua bytecode. 
   Aspect will translate your template sources on first load into Lua bytecode for best runtime performance.
 * Easy to debug with a debug system that integrates template compile and runtime errors into the standard Lua traceback system.
 * [Configurable syntax](./api.md#extending).
-* [Iterator supported](./api.md#iterator) and countable objects.
+* [Iterator supported and countable objects](./api.md#iterator-and-countable-objects).
 * Supports lua 5.1/5.2/5.3 and luajit 2.0/2.1 (including OpenResty)
 * Keys sequence `a.b.c.d` returns `nil` if variable `a` or any keys doesn't exits.
 * [Two level cache](./api.md#cache) (lua level and bytecode level).
 * Date support.
 * [Chain rendering](./api.md#rendering-templates) (renders data chunk by chunk).
-* Change some [Lua behaviours](./behaviors.md).
+* Change some [Lua behaviours](./spec.md).
 
 <!-- {% endraw %} -->

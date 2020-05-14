@@ -1,0 +1,50 @@
+Use inline {{ var1 }}.
+Get key {{ var2.key }}.
+
+Try if:
+{% if var3.boolean %}
+    if condition
+{% endif %}
+
+Try for:
+{% for k, v
+    in
+    var4.list %}
+    Try {{ loop.length }}.
+    Print {{ k }} and {{ v }}
+{% endfor %}
+
+{# checkout
+multiline
+comments #}
+
+Try include:
+
+{% include 'footer.view' %}
+
+Try uses
+
+{% use "blocks.view" %}
+
+Try macros:
+
+{% from 'macros.view' import square as mk_square %}
+
+{% macro mk1(x, y, z) %}
+    <pre>{{ x }}^2 + {{ y }}^2 + {{ z }}^2 = {{ x**2
+        + y**2
+        + z**2 }}</pre>
+{% endmacro %}
+
+{{ _self.mk1(z=2, x=3, y=var4.y) }}
+
+Try blocks:
+
+{% block one %}
+Use block with variable {{ var5.text }}
+    {% set var6 = 'new variable' %}
+{% endblock %}
+
+{% block two %}
+Use block without variable but with {{ parent() }}
+{% endblock %}

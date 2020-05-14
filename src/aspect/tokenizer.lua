@@ -1,4 +1,4 @@
-local compiler_error = require("aspect.err").compiler_error
+local compiler_error = require("aspect.error").compiler_error
 local setmetatable = setmetatable
 local concat = table.concat
 local strlen = string.len

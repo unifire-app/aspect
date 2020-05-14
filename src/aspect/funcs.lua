@@ -1,6 +1,6 @@
 local unpack = unpack or table.unpack
 local concat = table.concat
-local err = require("aspect.err")
+local err = require("aspect.error")
 local compiler_error = err.compiler_error
 local runtime_error = err.runtime_error
 local config = require("aspect.config")

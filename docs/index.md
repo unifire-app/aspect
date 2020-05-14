@@ -72,6 +72,9 @@ package.path = '/path/to/aspect/src/?.lua;' .. package.path
 
 ## Documentation links
 
+<div class="row">
+<div class="col-lg-6" markdown="1">
+
 **For template designers:**
 
 - [Specification](./spec.md)
@@ -83,12 +86,17 @@ package.path = '/path/to/aspect/src/?.lua;' .. package.path
 - [Tests](./tests.md)
 - [Tests](./tests.md)
 
+</div>
+<div class="col-lg-6" markdown="1">
+
 **For developers:**
 
 - [Lua API](./api.md)
 - [CLI](./cli.md)
 - [Extending](./api.md#extending)
 
+</div>
+</div>
 
 </div>
 </div>

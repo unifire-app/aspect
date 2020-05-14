@@ -312,6 +312,16 @@ templates["set_02"] = {
     ]],
     "var_2: variable 2 and"
 }
+
+templates["apply_00"] = {
+    [[
+    {% apply|upper %}
+        val: {{ string_1 }}
+    {% endapply %}
+    ]],
+    "VAL: STRING VALUE"
+}
+
 templates["include_00"] = {
     [[
     {% set integer_1 = 42 %}
@@ -705,6 +715,15 @@ templates["filter:escape_03"] = {
 
 templates["filter:escape_04"] = {
     "{{ string_html|escape }}",
+    "&lt;b&gt;Hello&lt;/b&gt;"
+}
+
+templates["filter:escape_05"] = {
+    [[
+    {% apply|escape %}
+      {{ string_html }}
+    {% endapply %}
+    ]],
     "&lt;b&gt;Hello&lt;/b&gt;"
 }
 
@@ -1240,7 +1259,7 @@ describe("Testing CLI.", function ()
         local code, message = cli.run({
             "--include=spec/fixture",
             "spec/fixture/data.json",
-            "spec/fixture/greeting.twig"
+            "spec/fixture/greeting.view"
         })
         assert.is.equals(0, code)
         assert.is.equals(message, [[

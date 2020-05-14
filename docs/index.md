@@ -72,13 +72,22 @@ package.path = '/path/to/aspect/src/?.lua;' .. package.path
 
 ## Documentation links
 
-- [Specification](spec.md)
-- [Lua API](api.md)
-- [Template Syntax](syntax.md)
-- [All Tags](tags.md)
-- [All Filters](filters.md)
-- [All Functions](funcs.md)
-- [All Tests](tests.md)
+**For template designers:**
+
+- [Specification](./spec.md)
+- [Template Syntax](./syntax.md)
+- [Operators](./syntax.md#operators)
+- [Tags](./tags.md)
+- [Filters](./filters.md)
+- [Functions](./funcs.md)
+- [Tests](./tests.md)
+- [Tests](./tests.md)
+
+**For developers:**
+
+- [Lua API](./api.md)
+- [CLI](./cli.md)
+- [Extending](./api.md#extending)
 
 
 </div>

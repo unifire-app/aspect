@@ -113,14 +113,18 @@ if error then
 end
 ```
 
+To get more information (lua code, used variables e.g.) about the template, use the builder object `aspect.compiler`
+
 ```lua
 local builder, error = aspect:compile("launch.view")
 if builder then 
-    print("Lua code of the template launch.view:", builder:get_code())
+    print("Lua code of the template launch.view:\n", builder:get_code())
 else
-    print("Error occurred:", tostring(error))
+    print("Error occurred: ", tostring(error))
 end
 ```
+
+Or just use the `--dump` option on the CLI:
 
 ```bash
 aspect --dump /path/to/launch.view
@@ -154,12 +158,12 @@ The following options are available:
   Function used for saving byte-code of the template.
 * `autoescape` _boolean_
   Enables or disables auto-escaping with 'html' strategy. 
-* `env` _table_ sets the environment to be used by all templates (from current Aspect instance).
+* `env` _table_ sets the environment to be used by all templates (for current Aspect instance).
 
 Cache
 -----
 
-Aspect template has 3 level of cache:
+Aspect templating engine has 3 cache levels:
 
 1. lua code cache — normal (Aspect's functions `luacode_load` and `luacode_save`).
 2. byte code cache — fast (Aspect's functions `bytecode_load` and `bytecode_save`).

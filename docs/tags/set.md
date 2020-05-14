@@ -22,7 +22,7 @@ After the set call, the foo variable is available in the template like any other
 {{ foo }}
 ```
 
-The assigned value can be any valid [Aspect expression](../syntax.md#expression):
+The assigned value can be any valid [Aspect expression](../syntax.md#expressions):
 
 ```twig
 {% set foo = [1, 2] %}

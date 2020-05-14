@@ -48,3 +48,11 @@ Use block with variable {{ var5.text }}
 {% block two %}
 Use block without variable but with {{ parent() }}
 {% endblock %}
+
+{% set var7 -%}
+    Just use {{ var8.boop }} and {{ var7 }}.
+{%- endset %}
+
+{% apply|upper %}
+    Hello there. {{ var9 }}
+{% endapply %}

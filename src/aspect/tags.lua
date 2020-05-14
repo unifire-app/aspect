@@ -51,14 +51,6 @@ function tags.tag_set(compiler, tok)
     end
 end
 
---- {% do %}
---- @param compiler aspect.compiler
---- @param tok aspect.tokenizer
---- @return string
-function tags.tag_do(compiler, tok)
-    return compiler:parse_expression(tok)
-end
-
 --- {% endset %}
 --- @param compiler aspect.compiler
 --- @param tok aspect.tokenizer
@@ -69,6 +61,52 @@ function tags.tag_endset(compiler, tok)
     compiler:push_var(tag.var)
     return {
         tag.var .. " = " .. tag.final,
+        "end"
+    }
+end
+
+--- {% do %}
+--- @param compiler aspect.compiler
+--- @param tok aspect.tokenizer
+--- @return string
+function tags.tag_do(compiler, tok)
+    return compiler:parse_expression(tok)
+end
+
+
+--- {% apply %}
+--- @param compiler aspect.compiler
+--- @param tok aspect.tokenizer
+--- @return string
+function tags.tag_apply(compiler, tok)
+    tok:require("|")
+    local tag = compiler:push_tag("apply")
+    local id = tag.id
+    if tok:is("|") then
+        tag.final = compiler:parse_filters(tok, '__.concat(_' .. tag.id .. ')')
+    else
+        tag.final = '__.concat(_' .. tag.id .. ')'
+    end
+    tag.append_text = function (_, text)
+        return '_' .. id .. '[#_'.. id .. ' + 1] = ' .. quote_string(text)
+    end
+    tag.append_expr = function (_, lua)
+        return '_' .. id .. '[#_'.. id .. ' + 1] = ' .. lua
+    end
+    return {
+        "do",
+        "local _" .. tag.id .. " = {}"
+    }
+end
+
+--- {% endapply %}
+--- @param compiler aspect.compiler
+--- @param tok aspect.tokenizer
+--- @return string
+function tags.tag_endapply(compiler, tok)
+    local tag = compiler:pop_tag("apply")
+    return {
+        "__(" .. tag.final .. ")",
         "end"
     }
 end

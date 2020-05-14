@@ -94,6 +94,7 @@ package.path = '/path/to/aspect/src/?.lua;' .. package.path
 - [Lua API](./api.md)
 - [CLI](./cli.md)
 - [Extending](./api.md#extending)
+- [Changelog](https://github.com/unifire-app/aspect/blob/master/changelog.md)
 
 </div>
 </div>

@@ -11,7 +11,7 @@ local config = {}
 config.json = {
     encode = nil,
     decode = nil,
-    error = "JSON encode/decode no available. Please install `cjson` or `json` or configure `require('aspect.config').json` before Aspect usage"
+    error = "JSON encode/decode no available. Please install `cjson` or `json` or configure `require('aspect.config').json` before using Aspect"
 }
 
 --- escape filter settings (HTML strategy)
@@ -65,6 +65,9 @@ do
                 config.is_false[json.null] = true
                 config.is_empty_string[json.null] = true
             end
+            if json.empty_array then
+                config.is_false[json.empty_array] = true
+            end
         end
     end
 
@@ -90,14 +93,18 @@ do
         config.is_empty_string[lyaml.null] = true
     end
 
-    --- https://www.tarantool.io/ru/doc/1.10/reference/reference_lua/msgpack/
+    --- https://www.tarantool.io/ru/doc/2.4/reference/reference_lua/msgpack/
     local has_msgpack, msgpack = pcall(require, "msgpack")
     if has_msgpack then
         config.is_false[msgpack.NULL] = true
         config.is_empty_string[msgpack.NULL] = true
     end
 
-    --config.is_n[getmetatable(require("aspect.utils.date")())] = true
+    --- https://www.tarantool.io/en/doc/2.4/reference/reference_lua/box_null/
+    if box and box.NULL then
+        config.is_false[box.NULL] = true
+        config.is_empty_string[box.NULL] = true
+    end
 end
 
 --- Compiler configuration

@@ -14,3 +14,21 @@ More Information
 ----------------
 
 Read the [documentation](https://aspect.unifire.app/) for more information.
+
+
+**For template designers:**
+
+- [Specification](./docs/spec.md)
+- [Template Syntax](./docs/syntax.md)
+- [Operators](./docs/syntax.md#operators)
+- [Tags](./docs/tags.md)
+- [Filters](./docs/filters.md)
+- [Functions](./docs/funcs.md)
+- [Tests](./docs/tests.md)
+
+**For developers:**
+
+- [Lua API](./docs/api.md)
+- [CLI](./docs/cli.md)
+- [Extending](./docs/api.md#extending)
+- [Changelog](./changelog.md)

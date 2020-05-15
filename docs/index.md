@@ -124,7 +124,7 @@ The key-features are...
 * Easy to debug with a debug system that integrates template compile and runtime errors into the standard Lua traceback system.
 * [Configurable syntax](./api.md#extending).
 * [Iterator supported and countable objects](./api.md#iterator-and-countable-objects).
-* Supports lua 5.1/5.2/5.3 and luajit 2.0/2.1 (including OpenResty)
+* Supports lua 5.1/5.2/5.3 and luajit 2.0/2.1 (including OpenResty, Tarantool)
 * Keys sequence `a.b.c.d` returns `nil` if variable `a` or any keys doesn't exits.
 * [Two level cache](./api.md#cache) (lua level and bytecode level).
 * Date support.

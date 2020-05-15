@@ -76,8 +76,8 @@ The rules to determine if an expression is `true` or `false` are (edge cases):
 | non-empty table             | true               |        |
 | table with `__toboolean`    | `__toboolean()`    |        |
 | table with `__len`          | `__len() ~= 0`     |        |
-| cjson.null                  | false              | see [cjson](https://github.com/openresty/lua-cjson)
-| cjson.empty_array           | false              | see [cjson](https://github.com/openresty/lua-cjson)
+| cjson.null                  | false              | see [cjson](https://github.com/openresty/lua-cjson) |
+| cjson.empty_array           | false              | see [cjson](https://github.com/openresty/lua-cjson) |
 | cbson.null()                | false              | see [cbson](https://github.com/isage/lua-cbson) |
 | cbson.null()                | false              | see [cbson](https://github.com/isage/lua-cbson) |
 | cbson.array()               | false              | see [cbson](https://github.com/isage/lua-cbson) |

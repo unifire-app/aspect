@@ -7,7 +7,8 @@ exclude:
   - src
   - bin
 remote_theme: bzick/jekyll-docs-theme
-google_analytics: UA-164241665-1
+analytics:
+  google: UA-164241665-1
 
 # theme configuration
 

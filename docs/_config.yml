@@ -18,7 +18,7 @@ ui:
   header:
     light:
       color1: "#373737"
-      color2: "#c74802"
+      color2: "#EE722E"
       trianglify: true
 
 project:

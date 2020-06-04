@@ -15,11 +15,11 @@ analytics:
 
 ui:
   mode: 'light'
-  header:
-    light:
-      color1: "#373737"
-      color2: "#EE722E"
-      trianglify: true
+#  header:
+#    light:
+#      color1: "#373737"
+#      color2: "#EE722E"
+#      trianglify: true
 
 project:
   download_url: https://github.com/unifire-app/aspect/releases

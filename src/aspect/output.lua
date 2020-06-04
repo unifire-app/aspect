@@ -199,11 +199,11 @@ end
 --- Add block to runtime scope
 --- @param view aspect.view
 function output:add_blocks(view)
-    if view.has_blocks then
+    if next(view.blocks) then
         for n, b in pairs(view.blocks) do
             if not self.blocks[n] then
                 self.blocks[n] = b
-            elseif self.blocks[n].parent then
+            elseif self.blocks[n].parent then -- the block has parent ref
                 local p
                 if not self.parents then
                     self.parents = {}

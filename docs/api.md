@@ -60,15 +60,15 @@ Rendering Templates
 
 * To render the template with some variables, call the `render()` method:
   ```lua
-  print(aspect:render('index.html', {the = 'variables', go = 'here'}))
+  local result, error = aspect:render('index.html', {the = 'variables', go = 'here'})
   ```
 * If a template defines blocks, they can be rendered individually via the `render_block()`:
   ```lua
-  print(aspect:render_block('index.html', 'block_name', {the = 'variables', go = 'here'})) 
+  local result, error = aspect:render_block('index.html', 'block_name', {the = 'variables', go = 'here'})
   ```
 * If a template defines macros, they can be rendered individually via the `render_macro()`:
   ```lua
-  print(aspect:render_macro('index.html', 'macro_name', {the = 'variables', go = 'here'})) 
+  local result, error = aspect:render_macro('index.html', 'macro_name', {the = 'variables', go = 'here'}) 
   ```
 * The `display()`, `display_block()`, `display_macro()` methods are shortcuts to output the rendered template.
   
@@ -77,9 +77,11 @@ Rendering Templates
   aspect:display_block('index.html', 'block_name', {the = 'variables', go = 'here'})
   aspect:display_macro('index.html', 'macro_name', {the = 'variables', go = 'here'})
   ```
+  
   Also method has some options for output:
+  
   ```lua 
-  aspect:display('index.html', vars, {chunk_size = 8198, print = ngx.print})
+  aspect:render('index.html', vars, {chunk_size = 8198, print = ngx.print})
   ```
   Possible options are:
   * `chunk_size` (number) - buffer size before sending data to `print`. By default - `nil`, buffer disabled.

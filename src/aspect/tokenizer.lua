@@ -6,8 +6,10 @@ local tonumber = tonumber
 local patterns = require("aspect.config").tokenizer.patterns
 local compiler = require("aspect.config").compiler
 local utils = require("aspect.utils")
+local starts_with = utils.starts_with
 local strfind = string.find
 local strsub = string.sub
+local ipairs = ipairs
 
 --- @class aspect.tokenizer
 --- @field tok function
@@ -27,27 +29,28 @@ local straight = {
 }
 
 local matches = {
-    {patterns.WSPACE,   "space"},
-    {patterns.NUMBER3,  "number",  tonumber},
-    {patterns.WORD,     "word"},
-    {patterns.NUMBER4,  "number",  tonumber},
-    {patterns.NUMBER5,  "number",  tonumber},
-    { patterns.STRING1, "string",  unquote },
-    { patterns.STRING2, "string",  unquote },
-    { patterns.STRING3, "string",  unquote },
-    {'^}}',             "stop"},
-    {'^%%}',            "stop"},
-    {'^%-}}',           "stop"},
-    {'^%-%%}',          "stop"},
-    {'^==',             nil},
-    {'^!=',             nil},
-    {'^%?:',            nil},
-    {'^%?%?',           nil},
-    {'^<=',             nil},
-    {'^>=',             nil},
-    {'^%*%*',           nil},
-    {'^//',             nil},
-    {'^.',              nil}
+    -- pattern          type       sanitizer   strict
+    {patterns.WSPACE,   "space",   nil,       false},
+    {patterns.NUMBER3,  "number",  tonumber,  false},
+    {patterns.WORD,     "word",    nil,       false},
+    {patterns.NUMBER4,  "number",  tonumber,  false},
+    {patterns.NUMBER5,  "number",  tonumber,  false},
+    {patterns.STRING1,  "string",  unquote,   false},
+    {patterns.STRING2,  "string",  unquote,   false},
+    {patterns.STRING3,  "string",  unquote,   false},
+    {'}}',              "stop",    nil,       true },
+    {'%}',              "stop",    nil,       true },
+    {'-}}',             "stop",    nil,       true },
+    {'-%}',             "stop",    nil,       true },
+    {'==',              nil,       nil,       true },
+    {'!=',              nil,       nil,       true },
+    {'?:',              nil,       nil,       true },
+    {'??',              nil,       nil,       true },
+    {'<=',              nil,       nil,       true },
+    {'>=',              nil,       nil,       true },
+    {'**',              nil,       nil,       true },
+    {'/',               nil,       nil,       true },
+    {'^.',              nil,       nil,       false }
 }
 
 --- Start the tokenizer
@@ -60,11 +63,21 @@ function tokenizer.new(s)
     local idx, resume = 1, true
     while idx <= #s and resume do
         for _,m in ipairs(matches) do
-            local pat = m[1]
-            local typ = m[2]
-            local i1, i2 = strfind(s,pat,idx)
-            if i1 then
-                local tok = strsub(s,i1,i2)
+            local typ, tok = m[2]
+            local i1, i2
+            if m[4] then
+                if starts_with(s,m[1],idx) then
+                    tok = m[1]
+                    i2 = idx + #tok - 1
+                end
+            else
+                i1, i2 = strfind(s,m[1],idx)
+                if i1 then
+                    tok = strsub(s,i1,i2)
+                end
+            end
+            if tok then
+                --local tok = strsub(s,i1,i2)
                 if not typ then
                     typ = tok
                 end

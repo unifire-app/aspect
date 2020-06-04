@@ -4,7 +4,14 @@ ChangeLog
 Develop
 -------
 
-not yet
+- Add `aspect:eval(...)` method
+- Add benchmark `benchmark/bench-01.lua`
+- Improve compiler performance. 
+
+Changes breaking compatibility:
+
+- Change `aspect.view` structure.
+- Change `aspect.view` structure. Broken cache capabilities. 
 
 1.13
 ----

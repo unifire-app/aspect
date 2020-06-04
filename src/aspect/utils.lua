@@ -4,6 +4,7 @@ local tostring = tostring
 local type = type
 local concat = table.concat
 local insert = table.insert
+local getn = table.getn
 local str_rep  = string.rep
 local sub = string.sub
 local find = string.find
@@ -11,9 +12,13 @@ local reverse = string.reverse
 local gmatch = string.gmatch
 local format = string.format
 local getmetatable = getmetatable
-local nkeys = table.nkeys
+local nkeys = table.nkeys -- luajit 2.1
+local isarray = table.isarray -- luajit 2.1
+local pcall = pcall
 
-local utils = {}
+local utils = {
+    starts_with = string.startswith
+}
 
 --- Total number of elements in this table.
 --- Supported __len metamethod and table.nkeys (if possible)
@@ -30,6 +35,8 @@ function utils.nkeys(t)
         end
     elseif nkeys then
         return nkeys(t)
+    elseif isarray and isarray(t) then
+        return getn(t)
     else
         local i = 0
         for _ in pairs(t) do i = i + 1 end
@@ -59,6 +66,9 @@ function utils.trim(s, left, right, chrs)
     local f = 1
     local t
     if left then
+        if not s then
+            utils.var_dump("Not s")
+        end
         local i1, i2 = find(s,'^'..chrs..'*')
         if i2 >= i1 then
             f = i2+1
@@ -275,18 +285,23 @@ function utils.dump_table(tbl, indent, tables)
             formatting = formatting .. "[" .. tostring(k) .. "]" .. " = "
         end
         if type(v) == "table" then
-            local table_id = tostring(v)
-            if tables[table_id] then
-                output = output .. formatting .. "*** recursive ***\n"
+            if tables[v] then
+                output = output .. formatting .. "*** recursion ***\n"
             elseif type(k) == "string" and k:sub(1, 1) == "_" then
-                output = output .. formatting .. "*** private table ***\n"
+                output = output .. formatting .. "(table) " .. "*** private field with table ***\n"
             else
-                tables[table_id] = true
+                tables[v] = true
                 output = output .. formatting .. utils.dump_table(v, indent + 1, tables) .. "\n"
-                tables[table_id] = nil
+                tables[v] = nil
             end
+        elseif type(v) == "userdata" then
+            local ok, str = pcall(tostring, v)
+            if not ok then
+                str = "*** could not convert to string: " .. tostring(str) .. " ***"
+            end
+            output = output .. formatting .. "(" .. type(v) .. ") " .. str .. "\n"
         else
-            output = output .. formatting .. "("..type(v)..") " .. tostring(v) .. "\n"
+            output = output .. formatting .. "(" .. type(v) .. ") " .. tostring(v) .. "\n"
         end
     end
 
@@ -423,5 +438,17 @@ function utils.numerate_lines(text, tab)
     end
     return concat(lines, "\n")
 end
+
+--if not utils.starts_with then
+    --- Return True if input-string starts with prefix, otherwise return False.
+    --- @param str string
+    --- @param prefix string
+    --- @param start number
+    function utils.starts_with(str, prefix, start)
+        start = start or 1
+        return str:sub(start, start + #prefix -1) == prefix
+        --return str:sub(start or 1, #prefix) == prefix
+    end
+--end
 
 return utils

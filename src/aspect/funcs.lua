@@ -53,7 +53,9 @@ func.add('parent', {
             return '__.fn.parent(__, ' .. quote_string(tag.block_name) .. ', nil)' ;
         end
     end
-}, function (__, name, context)
+},
+    --- @param __ aspect.output
+function (__, name, context)
     local block
     if __.parents and __.parents[name] then
         local parents = __.parents[name]

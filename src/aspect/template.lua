@@ -6,7 +6,6 @@ local filters = require("aspect.filters")
 local tests = require("aspect.tests")
 local err = require("aspect.error")
 local utils = require("aspect.utils")
-local tag_type = require("aspect.config").compiler.tag_type
 local var_dump = utils.var_dump
 local loadcode
 local loadchunk
@@ -20,30 +19,28 @@ local pairs = pairs
 local ipairs = ipairs
 local type = type
 local pcall = pcall
+local next = next
 local jit = jit
 
 
---- View
+--- View. Object representation of template.
 --- @class aspect.view
---- @field name string
---- @field body function
---- @field macros table<fun(__:aspect.output, context:table)>
---- @field blocks table<aspect.template.block>
---- @field vars table<string>
---- @field uses table<string>
---- @field extends string|boolean
---- @field cached string
---- @field has_blocks boolean
---- @field has_macros boolean
-local _ = {}
+--- @field v number view version
+--- @field name string the template name
+--- @field body function body function
+--- @field macros table hashtable of the macros
+--- @field blocks table<aspect.template.block> hashtable of the blocks
+--- @field uses table<aspect.template.use> hashtable of {% use %} tags
+--- @field extends string|boolean parent template if parent's name is string, or just true if name unknown (dynamically)
 
 --- @class aspect.template.block
---- @field desc string block description
 --- @field body fun(__: aspect.output, context: table) block's code
 --- @field vars table used context variables
 --- @field parent boolean use parent() function inside
-local _ = {}
 
+--- @class aspect.template.use
+--- @field name string the external template name
+--- @field with table blocks map like { remote_name = "local_name", ... }
 
 --- @class aspect.template
 --- @field compiler aspect.compiler
@@ -55,7 +52,7 @@ local _ = {}
 --- @field bytecode_load fun(name: string, tpl: aspect.template):string
 --- @field bytecode_save fun(name: string, bytecode: string, tpl: aspect.template)
 local template = {
-    _VERSION = "1.13",
+    _VERSION = "1.14",
     _NAME = "aspect",
 }
 local mt = { __index = template }
@@ -90,14 +87,10 @@ do
             if error then
                 return nil, err.new("Error loading '" .. name .. "' code: " .. tostring(error))
             end
-        end
-        if type(code) ~= 'function' then
+        elseif type(code) ~= 'function' then
             return nil, err.new("loaded view '" .. name .. "' is not valid a function or bytecode")
         end
-        local view = code()
-        view.has_blocks = (utils.nkeys(view.blocks) > 0)
-        view.has_macros = (utils.nkeys(view.macros) > 0)
-        return view
+        return code(), nil, code
     end
 end
 
@@ -154,16 +147,22 @@ function template.new(options)
     return tpl
 end
 
---- Compile the template
+--- Parse the template.
+--- If `source` not nil then code will be parsed else source code will be loaded via loader by name.
+--- @param name string the template name
+--- @param source string|nil
 --- @return aspect.compiler
 --- @return aspect.error
-function template:compile(name)
-    local source, error, ok, cmp
-    source, error = self.loader(name, self)
+function template:parse(name, source)
+    local error, ok
     if not source then
-        return nil, nil, err.new(error)
+        source, error = self.loader(name, self)
+        if not source then
+            return nil, nil, err.new(error)
+        end
     end
-    cmp = self.compiler.new(self, name)
+
+    local cmp = self.compiler.new(self, name)
     ok, error = cmp:run(source)
     if not ok then
         return nil, error
@@ -172,22 +171,91 @@ function template:compile(name)
     end
 end
 
+--- Prepare the view (import blocks from {% use %} tags)
+--- @param tpl aspect.template
+--- @param view aspect.view
+local function expand(tpl, view)
+    -- lazy load {% use %} tags
+    if view.uses then
+        for _, use in ipairs(view.uses) do
+            local use_view, use_error = tpl:get_view(use.name)
+            if use_view then -- use template loaded
+                if next(use_view) then -- loaded template has blocks
+                    if use.with then -- we use peace of blocks
+                        for n, a in pairs(use.with) do
+                            if not view.blocks[a] and use_view.blocks[n] then
+                                view.blocks[a] = use_view.blocks[n]
+                            end
+                        end
+                    else
+                        for n, b in pairs(use_view.blocks) do
+                            if not view.blocks[n] then
+                                view.blocks[n] = b
+                            end
+                        end
+                    end
+                end
+            else
+                return err.new("Failed to load block from template " .. view.name .. ": " .. err.new(use_error):get_message())
+                               :set_name(view.name, use_view and use_view.line or nil)
+            end
+        end
+    end
+end
+
+--- Parse, compile and prepare the template.
+--- If `source` not nil then code will be compiled else source code will be loaded via loader by name.
+--- If `aspect.error` and `aspect.compiler` is nil — the template not found
 --- @param name string
 --- @param source string
+--- @param cache boolean save into cache
+--- @return aspect.error if error occurred
 --- @return aspect.compiler
---- @return aspect.error
-function template:compile_code(name, source)
-    local cmp = self.compiler.new(self, name)
-    local ok, error = cmp:run(source)
-    if not ok then
-        return nil, error
-    else
-        return cmp
+--- @return aspect.view result view
+--- @return function view as function for dumping to bytecode
+function template:compile(name, source, cache)
+    local ok, error, code, func, view
+    if not source then
+        source, error = self.loader(name, self)
+        if not source then
+            if error then
+                return err.new(error, "compile"), nil, nil, nil
+            else
+                return nil
+            end
+        end
     end
+
+    local build = self.compiler.new(self, name)
+    ok, error = build:run(source)
+
+    if not ok then
+        return error, build, nil, nil
+    end
+    code = build:get_code()
+    func, error = loadchunk(self, code, name .. ".lua")
+    if error then
+        return nil, err.new("Error loading '" .. name .. "' code: " .. tostring(error))
+    end
+
+    view, error = loadcode(self, code, name)
+    if not view then
+        return error, build, nil, nil
+    end
+    error = expand(self, view)
+    if error then
+        return error, build, view, func
+    end
+    if self.cache and cache then
+        self.cache[view.name] = view
+    end
+
+    return nil, build, view, func
 end
 
 --- Returns the view
 --- @param name string the view name
+--- @param source string the source code
 --- @return aspect.view|nil
 --- @return aspect.error|nil
 --- @return aspect.compiler|nil
@@ -195,42 +263,7 @@ function template:get_view(name)
     if self.cache and self.cache[name] then
         return self.cache[name]
     end
-    local view, error, build = self:load(name)
-    if view then
-        if view.uses then -- lazy load {% use %} tags
-            for _, use in ipairs(view.uses) do
-                local use_view, use_error = self:get_view(use.name)
-                if use_view then -- use template loaded
-                    if use_view.has_blocks then -- loaded template has blocks
-                        if use.with then -- we use peace of blocks
-                            for n, a in pairs(use.with) do
-                                if not view.blocks[a] and use_view.blocks[n] then
-                                    view.blocks[a] = use_view.blocks[n]
-                                end
-                            end
-                        else
-                            for n, b in pairs(use_view.blocks) do
-                                if not view.blocks[n] then
-                                    view.blocks[n] = b
-                                end
-                            end
-                        end
-                    end
-                else
-                    return nil, err.new("Failed to load block from template " .. name .. ": " .. err.new(use_error):get_message())
-                        :set_name(self.name, use_view.line), build
-                end
-            end
-        end
-        if self.cache then -- if cache are enabled
-            self.cache[name] = view
-        end
-        return view
-    elseif error then
-        return nil, err.new(error), build
-    else
-        return nil
-    end
+    return self:load(name)
 end
 
 --- Load template and compile template if needed.
@@ -240,66 +273,75 @@ end
 --- @return aspect.error or nil if OK
 --- @return aspect.compiler or nil of the template from cache
 function template:load(name)
-    local bytecode, luacode, source, build, ok, error, f
+    local bytecode, luacode, build, error, f, view
     if self.bytecode_load then
         bytecode, error = self.bytecode_load(name, self)
         if bytecode then
-            return loadcode(self, bytecode, name)
+            view = loadcode(self, bytecode, name)
         elseif error then
             return nil, err.new(error)
         end
     end
-    if self.luacode_load then
+    if not view and self.luacode_load then
         luacode, error = self.luacode_load(name, self)
         if luacode then
-            return loadcode(self, luacode, name)
+            view, error, f = loadcode(self, luacode, name)
+            if error then
+                return nil, error
+            end
+            if self.bytecode_save then
+                self.bytecode_save(name, function_dump(f), self)
+            end
         elseif error then
             return nil, err.new(error)
         end
     end
-    source, error = self.loader(name, self)
-
-    if source then
-        build = self.compiler.new(self, name)
-        ok, error = build:run(source)
-        if ok then
-            luacode = build:get_code()
-            local view, load_error = loadcode(self, luacode, name)
-            if not view then
-                return nil, load_error
-            end
-            if self.luacode_save then
-                self.luacode_save(name, luacode, self)
-            end
-            if self.bytecode_save then
-                f, error = (loadstring or load)(luacode, name .. ".lua")
-                if not f then
-                    return nil, err.new(error or "Failed to dump a view " .. name), build
-                end
-                self.bytecode_save(name, function_dump(f), self)
-            end
-            return view, nil, build
-        else
-            return nil, error, build
+    if view then
+        error = expand(self, view)
+        if error then
+            return nil, error
         end
-    elseif error then
-        return nil, err.new(error, "compile")
-    else
+        if self.cache then
+            self.cache[view.name] = view
+        end
+        return view
+    end
+    error, build, view, f = self:compile(name)
+    if error then
+        return nil, error, build
+    elseif not view then
         return nil
     end
+
+    if self.luacode_save then
+        self.luacode_save(name, build:get_code(), self)
+    end
+    if self.bytecode_save then
+        self.bytecode_save(name, function_dump(f), self)
+    end
+
+    return view, nil, build
 end
 
---- Returns template result as string
 --- @param name string
+--- @param source string
 --- @param vars table
---- @return aspect.output template result
---- @return aspect.error if error occur
-function template:render(name, vars, options)
-    local out, ok = output.new(self.opts, vars, options or {}), nil
-    local view, error = self:get_view(name)
-    if not view then
-        return out, err.new(error or "Template '" .. tostring(name) .. "' not found")
+--- @param options table|nil
+--- @overload fun(source:string, vars:table, name:string)
+--- @overload fun(source:string, vars:table)
+function template:eval(source, vars, options, name)
+    local error, build, view = self:compile(name or "eval", source, name)
+    if error then
+        return nil, error, build
     end
+    return self:render_view(view, vars, options)
+end
+
+--- @param view aspect.view
+--- @param vars table
+--- @param options table
+function template:render_view(view, vars, options)
+    local out, ok, error = output.new(self.opts, vars, options or {}), nil, nil
     out:add_blocks(view)
     while view.extends do
         local extends = view.extends
@@ -338,6 +380,19 @@ function template:render(name, vars, options)
             message = tostring(error)
         })
     end
+end
+
+--- Returns template result as string
+--- @param name string the template name
+--- @param vars table
+--- @return aspect.output template result
+--- @return aspect.error if error occur
+function template:render(name, vars, options)
+    local view, error = self:get_view(name)
+    if not view then
+        return nil, err.new(error or "Template '" .. tostring(name) .. "' not found")
+    end
+    return self:render_view(view, vars, options)
 end
 
 --- Returns macro result as string
@@ -406,7 +461,7 @@ function template:display(name, vars, chunk_size)
     })
 end
 
---- Generate template result send into callback chunk by chunk
+--- The generated data from the template is sent in the reverse order as it is generated.
 --- @param name string|table
 --- @param vars table
 --- @param callback fun(out:aspect.output, chunk:string)

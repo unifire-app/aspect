@@ -87,9 +87,8 @@ end
 
 function err.new(e, code)
     if type(e) ~= 'table' then
-        e = tostring(e)
         e = {
-            message = e,
+            message = tostring(e),
         }
     elseif e._NAME == "error" then
         return e

@@ -7,6 +7,7 @@ local filters = require("aspect.filters").fn
 local funcs = require("aspect.funcs")
 local var_dump = require("aspect.utils").var_dump
 local dump_table = require("aspect.utils").dump_table
+local numerate_lines = require("aspect.utils").numerate_lines
 local batch = require("aspect.utils.batch")
 local date = require("aspect.utils.date")
 local err = require("aspect.error")
@@ -1171,7 +1172,7 @@ describe("Testing template syntax.", function ()
         local template = factory(v[4] or {})
         local compiled = {}
         template.luacode_save = function (name, code)
-            compiled[#compiled + 1] = "\n==== Compiled template " .. name .. ":\n" .. code
+            compiled[#compiled + 1] = code
         end
         it("Run template " .. k, function ()
             compiled = {}
@@ -1181,7 +1182,8 @@ describe("Testing template syntax.", function ()
             elseif not v[2] and v[3] then
                 assert.is.equals(err.message .. " [" .. err.name .. ":" .. err.line .. "]", v[3])
             else
-                error(tostring(err) .. "\n\nTest template ".. k ..":\n" .. v[1] .. "\nCompiled template:\n" .. table.concat(compiled))
+                error(tostring(err) .. "\n\nTest template ".. k ..":\n" .. numerate_lines(v[1])
+                        .. "\nCompiled template " .. k .. ":\n" .. numerate_lines(table.concat(compiled)))
             end
         end)
     end
@@ -1221,7 +1223,9 @@ end)
 describe("Testing cache.", function ()
     it("bytecode and luacode cache", function ()
         local template = aspect.new()
+        local i, luacode, bytecode = 0
         template.loader = function(name)
+            i = i + 10000
             if templates[name] then
                 return templates[name][1]
             else
@@ -1231,24 +1235,43 @@ describe("Testing cache.", function ()
 
         template.bytecode_load = function (name)
             assert.is.equals("basic_00", name)
-            return nil
+            i = i + 1
+            return bytecode
         end
         template.luacode_load = function (name)
             assert.is.equals("basic_00", name)
-            return nil
+            i = i + 100
+            return luacode
         end
         template.bytecode_save = function (name, code)
             assert.is.equals("basic_00", name)
             assert.is_true(string.len(code) > 0)
+            bytecode = code
+            i = i + 10
             return nil
         end
         template.luacode_save = function (name, code)
             assert.is.equals("basic_00", name)
             assert.is_true(string.len(code) > 0)
+            luacode = code
+            i = i + 1000
             return nil
         end
 
+
         assert.is.equals("1 and 2 and string and 17", strip(template:render("basic_00", vars).result))
+        assert.is.equals(11111, i, "not all cache functions called. [1] call")
+
+        template.cache = {}
+        i = 0
+        assert.is.equals("1 and 2 and string and 17", strip(template:render("basic_00", vars).result))
+        assert.is.equals(1, i, "not all cache functions called. [2] call")
+
+        template.cache = {}
+        bytecode = nil
+        i = 0
+        assert.is.equals("1 and 2 and string and 17", strip(template:render("basic_00", vars).result))
+        assert.is.equals(111, i, "not all cache functions called. [3] call")
     end)
 end)
 

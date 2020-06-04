@@ -12,6 +12,12 @@ title: Specification
 - **Compiler**: [simple tokenizer](https://github.com/unifire-app/aspect/blob/master/src/aspect/tokenizer.lua) + [AST](https://github.com/unifire-app/aspect/blob/master/src/aspect/ast.lua)
 - **Unittest**: [busted](https://olivinelabs.com/busted/)
 
+## Limitations
+
+- New (local) variables cannot be called by the following names (by internal limitation): `and`, `break`, `do`, `else`, `elseif`, 
+  `end`, `false`, `for`, `function`, `if`, `in`, `local`, `nil`, `not`, `or`, `repeat`, `return`, `then`, 
+  `true`, `until`, `while`.
+
 ## Working with keys
 
 Keys sequence `a.b.c` returns `nil` if variable `a` or any other keys (`b` or `c`) doesn't exits.

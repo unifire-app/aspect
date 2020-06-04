@@ -41,6 +41,7 @@ Try macros:
 Try blocks:
 
 {% block one %}
+    {# @desc Block named as one #}
 Use block with variable {{ var5.text }}
     {% set var6 = 'new variable' %}
 {% endblock %}

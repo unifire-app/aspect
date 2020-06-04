@@ -44,7 +44,6 @@ local special = config.compiler.special
 --- @field append_text fun(tpl:aspect.compiler, text:string)
 --- @field append_expr fun(tpl:aspect.compiler, expr:string)
 --- @field append_code fun(tpl:aspect.compiler, code:string)
-local _ = {}
 
 --- @class aspect.compiler.blocks
 --- @field code table<string> list of lua code of the block
@@ -53,7 +52,6 @@ local _ = {}
 --- @field desc string the description
 --- @field start_line number of line there block started
 --- @field end_line number of line there block ended
-local _ = {}
 
 --- @class aspect.compiler
 --- @field aspect aspect.template

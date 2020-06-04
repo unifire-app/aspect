@@ -11,6 +11,15 @@ analytics:
   google: UA-164241665-1
 
 # theme configuration
+# #373737 #EE722E
+
+ui:
+  mode: 'light'
+  header:
+    light:
+      color1: "#373737"
+      color2: "#EE722E"
+      trianglify: true
 
 project:
   download_url: https://github.com/unifire-app/aspect/releases

@@ -12,11 +12,7 @@ none
 - Add `aspect:eval(...)` method
 - Add benchmark `benchmark/bench-01.lua`
 - Improve compiler performance. 
-
-Changes breaking compatibility:
-
-- Change `aspect.view` structure.
-- Change `aspect.view` structure. Broken cache capabilities. 
+- Update docs
 
 1.13
 ----

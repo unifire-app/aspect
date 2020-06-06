@@ -303,7 +303,7 @@ function tags.endbar(compiler, tok)
 end
 ```
 
-See [aspect.tags](https://github.com/unifire-app/aspect/tree/master/src/aspect/src/aspect/tags.lua) for more examples.
+See [aspect.tags](https://github.com/unifire-app/aspect/tree/master/src/aspect/tags.lua) for more examples.
 
 ### Add filters
 

@@ -9,6 +9,7 @@ exclude:
 remote_theme: bzick/jekyll-docs-theme
 analytics:
   google: UA-164241665-1
+  yandex: 64680703
 
 # theme configuration
 # #373737 #EE722E

@@ -18,4 +18,6 @@ title: Tags
 * [verbatim](./tags/verbatim.md) — do not evaluate Aspect tags
 * [with](./tags/with.md) — create new scope for variables
 
+[Add tags](./api.md#add-tags)
+
 <!-- {% endraw %} -->

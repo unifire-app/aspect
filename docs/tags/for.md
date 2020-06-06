@@ -7,7 +7,7 @@ title: Tags › for
 
 <!-- {% raw %} -->
 
-Loop over each item in a sequence (also see [iterator](../api.md#iterator-and-countable-objects)). 
+Loop over each item in a sequence (also see [iterators](../api.md#iterator-and-countable-objects)). 
 For example, to display a list of users provided in a variable called `users`:
 
 ```twig
@@ -19,7 +19,7 @@ For example, to display a list of users provided in a variable called `users`:
 </ul>
 ```
 
-**Note**, however, that **Lua tables (no array) are not ordered**.
+**Note** that Lua tables (no array) are **not ordered**.
 
 **Note** how the tag [works with different data](./../spec.md#working-with-cycles)
 

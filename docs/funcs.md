@@ -12,4 +12,6 @@ title: Functions
 * [parent()](./tags/extends.md#function-parent)
 * [range(low, high, step)](./funcs/range.md)
 
+[Add functions](./api.md#add-functions)
+
 <!-- {% endraw %} -->

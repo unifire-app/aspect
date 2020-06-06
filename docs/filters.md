@@ -29,4 +29,6 @@ title: Filters
 * [trim](./filters/trim.md)
 * [upper](./filters/lower.md)
 
+[Add filters](./api.md#add-filters)
+
 <!-- {% endraw %} -->

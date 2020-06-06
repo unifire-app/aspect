@@ -19,7 +19,10 @@ For example, to display a list of users provided in a variable called `users`:
 </ul>
 ```
 
-Note, however, that **Lua tables (no array) are not ordered**.
+**Note**, however, that **Lua tables (no array) are not ordered**.
+
+**Note** how the tag [works with different data](./../spec.md#working-with-cycles)
+
 
 The `else` clause
 -----------------
@@ -36,10 +39,27 @@ If no iteration took place because the sequence was empty, you can render a repl
 </ul>
 ```
 
+The `break` clause
+------------------
+
+Break ends execution of the current `for` loop
+
+```twig
+<ul>
+{% for key in users %}
+    <li>{{ users.name }}</li>
+    {% if loop.index > 10 %}
+    <li>and more</li>
+        {% break %}   
+    {% endif %}
+{% endfor %}
+</ul>
+```
+
 Iterating over Keys
 -------------------
 
-By default, a loop iterates over the values of the sequence. You can iterate on keys by using the `keys` filter:
+By default, a loop iterates over the values of the sequence. You can iterate on keys by using the [keys](./../filters/keys.md) filter:
 
 ```twig
 <h1>Members</h1>
@@ -82,21 +102,6 @@ Inside of a `for` loop block you can access some special variables:
 | `loop.prev_item`    | The item from the previous iteration of the loop. `Nil` during the first iteration. |
 | `loop.next_item`    | The item from the following iteration of the loop. `Nil` during the last iteration. |
 | `loop.has_more`     | True if has more items. |
-
-Behavior
---------
-
-| Value                     | action               |
-|---------------------------|----------------------|
-| string                    | not iterate          |
-| empty table               | not iterate          |
-| number                    | not iterate          |
-| nil                       | not iterate          |
-| true/false                | not iterate          |
-| userdata                  | not iterate          |
-| userdata with `__pairs()` | iterate with `value:__pairs()` |
-| table                     | iterate with `pairs()` |
-| table with `__pairs()`    | iterate with `value:__pairs()` instead of `pairs()` |
 
 
 <!-- {% endraw %} -->

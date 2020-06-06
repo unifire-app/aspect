@@ -77,11 +77,11 @@ The rules to determine if an expression is `true` or `false` are (edge cases):
 | numeric zero                | false              |        |
 | whitespace-only string      | true               |        |
 | string "0" or '0'           | true               |        |
-| empty table                 | false              |        |
 | nil                         | false              |        |
-| non-empty table             | true               |        |
 | table with `__toboolean`    | `__toboolean()`    |        |
 | table with `__len`          | `__len() ~= 0`     |        |
+| empty table                 | false              |        |
+| non-empty table             | true               |        |
 | cjson.null                  | false              | see [cjson](https://github.com/openresty/lua-cjson) |
 | cjson.empty_array           | false              | see [cjson](https://github.com/openresty/lua-cjson) |
 | cbson.null()                | false              | see [cbson](https://github.com/isage/lua-cbson) |
@@ -101,7 +101,7 @@ You may [configure `false` behavior](./api.md#condition-behaviour).
 
 ## Working with cycles
 
-Aspect supports iterators as in Lua 5.2+ but also for Lua 5.1 and LuaJIT.
+Aspect supports iterators from Lua 5.2+ versions for Lua 5.1 and LuaJIT versions.
 
 | Value                    | Action               |
 |--------------------------|----------------------|

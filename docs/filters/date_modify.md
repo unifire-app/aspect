@@ -12,10 +12,10 @@ Filter `date_modify`:
 
 ---
 
-The `date_modify` filter modifies a date with a given modifier values:
+The `date_modify` filter modifies a [date](./date.md) with a given modifier values:
 
 ```twig
-{{ post.published_at|date_modify({days: -2})|date("m/d/Y") }}
+{{ post.published_at|date_modify({days: -2})|date("Y-m-d") }}
 ```
 
 Positive number increase value, negative value decrease value.

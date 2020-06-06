@@ -17,13 +17,12 @@ Parsing
 
 Value must have number/words representing date and/or time. 
 Use commas and spaces as delimiters. 
-Strings enclosed by parenthesis is treated as a comment and is ignored, these parentheses may be nested. 
 The stated day of the week is ignored whether its correct or not. A string containing an invalid date is an error. 
 For example, a string containing two years or two months is an error. 
 Time must be supplied if date is not given, vice versa.
 
 **Time Format.**  Hours, minutes, and seconds are separated by colons, although all need not be specified. 
-"10:", "10:11", and "10:11:12" are all valid. 
+"10:11", and "10:11:12" are all valid. 
 If the 24-hour clock is used, it is an error to specify "PM" for times later than 12 noon. 
 For example, "23:15 PM" is an error.
 
@@ -32,18 +31,17 @@ Hours and minutes offset are separated by colons.
 Another format is `[sign][number]`. If `[number]` is less than 24, it is the offset in hours e.g. "-10" = -10 hours. 
 Otherwise it is the offset in houndred hours e.g. "+75" = "+115" = +1.25 hours.
 
-**Date Format.**  Short dates can use either a "/" or "-" date separator, but must follow the month/day/year format
-
-**Supported ISO 8601 Formats.**
+**Supported Format.**
 
 * YYYY-MM-DD — where YYYY is the year, MM is the month of the year, and DD is the day of the month ("2000-12-31", "20001231").
-* YYYY-DDD — where YYYY is the year, DDD is the day of the year ("1995-035", "1995035").
-* YYYY-WDD-D — where YYYY is the year, DDD is the day of the year ("1997-W01-1", "1997W017").
-* DATE HH:MM:SS.SSS — Where DATE is the date format discuss above, HH is the hour, 
-  MM is the miute, SS.SSS is the seconds (fraction is optional) ("1995-02-04 24:00:51.536", "1976-W01-1 12:12:12.123").
-* DATE TIME +HH:MM, DATE TIME -HHMM, DATE TIME Z, — 
+* DATE HH:MM:SS — Where DATE is the date format discuss above, HH is the hour, 
+  MM is the miute, SS is the seconds ("1995-02-04 24:00:51", "1976-W01-1 12:12:12.123").
+* DATE TIME +HH:MM, DATE TIME -HHMM, DATE TIME Z
+
+[Add your date formats](./../api.md#date-parser).
 
 **Parsable month value.**
+
 If a function needs a month value it must be a string or a number. 
 If the month is a string, it must be the name of the month full or abbreviated. 
 If the month is a number, that number must be 1-12 (January-December).
@@ -62,6 +60,8 @@ If the month is a number, that number must be 1-12 (January-December).
 |10     | Oct          | October   |
 |11     | Nov          | November  |
 |12     | Dec          | December  |
+
+[Add localization of months](./../api.md#date-localization).
 
 Formatting
 ----------

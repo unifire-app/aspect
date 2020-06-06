@@ -56,7 +56,8 @@ Template syntax is very popular. This syntax is used in Twig, Jinja, Django, Liq
 
 ```lua
 local aspect = require("aspect.template").new(options)
-local result, error = aspect:eval("<div>Hello, {{ username }}", vars)
+local result, error 
+    = aspect:eval("<div>Hello, {{ username }}</div>", vars)
 ```
 
 [Command line](./cli.md):
@@ -140,9 +141,9 @@ package.path = '/path/to/aspect/src/?.lua;' .. package.path
 * _No dependencies_. No FFI. Pure Lua. 
 * _Secure_. Aspect has powerful [automatic HTML escaping](./syntax.md#html-escaping) system for cross site scripting prevention.
 * [Template inheritance](./syntax.md#template-inheritance) makes it possible to use the same or a similar layout for all templates.
-* Easy to [debug](api.md#debug-templates) with a debug system that integrates template compile and runtime errors into the standard Lua traceback system.
+* Aspect provides a convenient [debugging](api.md#debug-templates) process.
 * [Iterator supported and countable objects](./api.md#iterator-and-countable-objects).
-* Date supports.
+* [Date is supported](./filters/date.md).
 * [Chain rendering](./api.md#rendering-templates) (renders data chunk by chunk).
 
 <!-- {% endraw %} -->

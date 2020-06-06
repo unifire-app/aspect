@@ -323,7 +323,7 @@ filters.add("foo", {
 end)
 ```
 
-See [aspect.filters](https://github.com/unifire-app/aspect/tree/master/src/aspect/src/aspect/filters.lua) for more examples.
+See [aspect.filters](https://github.com/unifire-app/aspect/tree/master/src/aspect/filters.lua) for more examples.
 
 ### Add functions
 
@@ -350,7 +350,7 @@ funcs.add("foo", {
 end)
 ```
 
-See [aspect.funcs](https://github.com/unifire-app/aspect/tree/master/src/aspect/src/aspect/funcs.lua) for more examples.
+See [aspect.funcs](https://github.com/unifire-app/aspect/tree/master/src/aspect/funcs.lua) for more examples.
 
 ### Add tests
 
@@ -380,7 +380,7 @@ Result:
 {{ a is baz quux(c) }}
 ```
 
-See [aspect.tests](https://github.com/unifire-app/aspect/tree/master/src/aspect/src/aspect/tests.lua) for more examples.
+See [aspect.tests](https://github.com/unifire-app/aspect/tree/master/src/aspect/tests.lua) for more examples.
 
 ### Add operators
 
@@ -406,18 +406,18 @@ table.insert(ops, {
 })
 ```
 
-Don't forget add bitop package to template's environment using `env` [option](#options):
+Don't forget add `bitop` package to template environment using `env` [option](#options):
 
 ```lua
-local aspect = require("aspect.template").new {
+local aspect = require("aspect.template").new({
     --- ...
     env = {
-        bitop = bitop or require("bitop")
+        bit = bitop or require("bitop")
     }
-}
+})
 ```
 
-See [aspect.ast.ops](../src/aspect/ast/ops.lua) for more examples.
+See [aspect.ast.ops](https://github.com/unifire-app/aspect/tree/master/src/aspect/ast/ops.lua) for more examples.
 
 Behaviors
 ---------

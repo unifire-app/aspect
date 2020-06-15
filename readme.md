@@ -1,6 +1,8 @@
 Aspect Lua Template
 ===================
 
+<img align="right" src="./docs/aspect.png" width="200">
+
 [![Build Status](https://travis-ci.org/unifire-app/aspect.svg?branch=master)](https://travis-ci.org/unifire-app/aspect)
 [![codecov](https://codecov.io/gh/unifire-app/aspect/branch/master/graph/badge.svg)](https://codecov.io/gh/unifire-app/aspect)
 [![Luarocks](docs/assets/luarocks.svg)](https://luarocks.org/modules/unifire/aspect)

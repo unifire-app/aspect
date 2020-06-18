@@ -94,12 +94,11 @@ function err.new(e, code)
         return e
     end
 
-
     return setmetatable({
         code = e.code or code or "internal",
         line = e.line or 0,
         name = e.name or "runtime",
-        message = e.message,
+        message = e.message or 'problems',
         callstack = nil,
         traceback = e.traceback or traceback(),
         context = e.context,
@@ -112,8 +111,8 @@ function err:set_code(code)
 end
 
 function err:set_name(name, line, callstack)
-    self.name = name
-    self.line = line
+    self.name = name or 'unknown'
+    self.line = line or 0
     self.callstack = callstack
     return self
 end

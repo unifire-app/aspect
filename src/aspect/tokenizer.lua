@@ -77,7 +77,6 @@ function tokenizer.new(s)
                 end
             end
             if tok then
-                --local tok = strsub(s,i1,i2)
                 if not typ then
                     typ = tok
                 end

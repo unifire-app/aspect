@@ -45,19 +45,36 @@ local special = config.compiler.special
 --- @field append_expr fun(tpl:aspect.compiler, expr:string)
 --- @field append_code fun(tpl:aspect.compiler, code:string)
 
---- @class aspect.compiler.blocks
---- @field code table<string> list of lua code of the block
+--- @class aspect.compiler.template.var
+--- @field name string
+--- @field role number how used 0 - plain, 1 - iterator, 2 - hash, 3 - mixed
+--- @field line number first use
+--- @field keys string[]
+
+--- @class aspect.compiler.block
+--- @field code string[] list of lua code of the block
 --- @field parent boolean has parent function inside
---- @field vars table list of used variables
+--- @field used_vars table<string, aspect.compiler.template.var> list of used variables
 --- @field desc string the description
 --- @field start_line number of line there block started
 --- @field end_line number of line there block ended
 
+--- @class aspect.compiler.macro
+--- @field code string[] list of lua code of the block
+--- @field args aspect.compiler.macro.arg[] list of used variables
+--- @field desc string the description
+--- @field start_line number of line there block started
+--- @field end_line number of line there block ended
+
+--- @class aspect.compiler.macro.arg
+--- @field name string
+--- @field default any
+
 --- @class aspect.compiler
 --- @field aspect aspect.template
 --- @field name string
---- @field blocks table<aspect.compiler.blocks>
---- @field macros table<table> table of macros with their code (witch array)
+--- @field blocks table<string, aspect.compiler.block> table of blocks
+--- @field macros table<string, aspect.compiler.macro> table of macros with their code (witch array)
 --- @field extends string|boolean if true then we has dynamic extend
 --- @field import table
 --- @field uses table
@@ -65,11 +82,11 @@ local special = config.compiler.special
 --- @field tag_name string the current tag
 --- @field ignore string|nil
 --- @field tok aspect.tokenizer
---- @field tags table<aspect.tag>
+--- @field tags aspect.tag[]
 --- @field code table stack of code. Each level is isolated code (block or macro). 0 level is body
 --- @field stats boolean
---- @field used_tpl table list of used templates in the code
---- @field used_vars table list of used global variables
+--- @field refs table list of used templates in the code
+--- @field used_vars table<string, aspect.compiler.template.var> list of used global variables
 --- @field vars table list of local variables
 local compiler = {
     version = 1,
@@ -92,7 +109,7 @@ function compiler.new(aspect, name, stats)
         extends = nil,
         blocks = {},
         uses = {},
-        used_tpl = {},
+        refs = {},
         used_vars = {},
         vars = {},
         deps = {},
@@ -168,12 +185,12 @@ function compiler:get_code()
 
     if self.blocks then
         for n, b in pairs(self.blocks) do
-            insert(code, "_self.blocks." .. n .. " = {")
-            insert(code, "\tparent = " .. tostring(b.parent) .. ",")
-            insert(code, "\tdesc = " .. quote_string(b.desc or "") .. ",")
+            --insert(code, "_self.blocks." .. n .. " = {")
+            --insert(code, "\tparent = " .. tostring(b.parent) .. ",")
+            --insert(code, "\tdesc = " .. quote_string(b.desc or "") .. ",")
             --insert(code, "\tvars = " .. table_export(b.vars or {}, "\t") .. ",")
-            insert(code, "}")
-            insert(code, "function _self.blocks." .. n .. ".body(__, _context)")
+            --insert(code, "}")
+            insert(code, "function _self.blocks." .. n .. "(__, _context)")
             --insert(code, "\t_context = ...")
             for _, v in ipairs(b.code) do
                 insert(code, "\t" .. v)
@@ -309,6 +326,8 @@ function compiler:parse(source)
     end
 end
 
+--- @param tok aspect.tokenizer
+--- @param opts table
 function compiler:parse_var_name(tok, opts)
     opts = opts or {}
     opts.var_system = false
@@ -849,11 +868,11 @@ function compiler:use_template(name)
     if not self.tag_name then
         return
     end
-    if not self.used_tpl[name] then
-        self.used_tpl[self.tag_name] = {}
+    if not self.refs[name] then
+        self.refs[self.tag_name] = {}
     end
     if self.tag_name then
-        self.used_tpl[self.tag_name][name] = true
+        self.refs[self.tag_name][name] = true
     end
 end
 

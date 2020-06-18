@@ -146,7 +146,8 @@ function tags.tag_block(compiler, tok)
         parent = false,
         vars = {},
         desc = nil,
-        start_line = compiler.line
+        start_line = compiler.line,
+        start_pos = tok:get_pos()
     }
     local tag_for, pos = compiler:get_last_tag("for") -- may be {{ loop }} used in the block (which may be replaced)
     while tag_for do
@@ -175,9 +176,9 @@ function tags.tag_endblock(compiler, tok)
     --compiler.blocks[tag.block_name].tag = tag
     local vars = utils.implode_hashes(compiler:get_local_vars())
     if vars then
-        return '__.blocks.' .. tag.block_name .. '.body(__, __.setmetatable({ ' .. vars .. '}, { __index = _context }))' ;
+        return '__.blocks.' .. tag.block_name .. '.f(__, __.setmetatable({ ' .. vars .. ' }, { __index = _context }))' ;
     else
-        return '__.blocks.' .. tag.block_name .. '.body(__, _context)' ;
+        return '__.blocks.' .. tag.block_name .. '.f(__, _context)' ;
     end
 end
 

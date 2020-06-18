@@ -217,9 +217,9 @@ Examples:
     end
     if options.dump then
         local out = {}
-        if next(build.used_tpl) then
+        if next(build.refs) then
             table.insert(out, "REFS:")
-            for tn, t in pairs(build.used_tpl) do
+            for tn, t in pairs(build.refs) do
                 table.insert(out, "  " .. tn .. ": " .. table.concat(get_keys(t), ", "))
             end
         end

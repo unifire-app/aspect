@@ -195,9 +195,9 @@ local function expand(tpl, view)
                         end
                     end
                 end
-            else
-                return err.new("Failed to load block from template " .. view.name .. ": " .. err.new(use_error):get_message())
-                               :set_name(view.name, use_view and use_view.line or nil)
+            elseif use_error then
+                return err.new("Failed to load block from template " .. view.name .. ": "
+                    .. err.new(use_error):get_message()):set_name(view.name, use_view and use_view.line or nil)
             end
         end
     end
@@ -342,7 +342,7 @@ end
 --- @param options table
 function template:render_view(view, vars, options)
     local out, ok, error = output.new(self.opts, vars, options or {}), nil, nil
-    out:add_blocks(view)
+    out:push_view(view)
     while view.extends do
         local extends = view.extends
         if extends == true then -- dynamic extends
@@ -365,7 +365,7 @@ function template:render_view(view, vars, options)
             return nil, err.new(e or "Template '" .. tostring(view.extends) .. "' not found while extending " .. name)
         end
         view = v
-        out:add_blocks(view)
+        out:push_view(view)
     end
     ok, error = pcall(view.body, out, vars)
     if ok then
@@ -435,7 +435,7 @@ function template:render_block(name, block_name, vars)
         return nil, err.new(error or "Template '" .. tostring(name) .. "' not found")
     end
     if view.blocks and view.blocks[block_name] then
-        ok, error = pcall(view.blocks[block_name].body, out, vars)
+        ok, error = pcall(view.blocks[block_name], out, vars)
         if ok then
             return tostring(out)
         else

@@ -36,6 +36,7 @@ local _parents = {}
 --- @field fixture table runtime output fragments
 --- @field line number
 --- @field view aspect.view
+--- @field views aspect.view[]
 --- @field stack table<aspect.view,number,string>
 --- @field parents table<aspect.output.parent>
 --- @field blocks table
@@ -196,6 +197,26 @@ function output:pop_state()
     return self
 end
 
+--- Extending the view with another view
+--- @param view aspect.view
+function output:push_view(view)
+    if not self.views then
+        self.views = {view}
+    else
+        self.views[#self.views + 1] = view
+    end
+    if next(view.blocks) then
+        for n, b in pairs(view.blocks) do
+            if not self.blocks[n] then
+                self.blocks[n] = {
+                    f = b,
+                    i = #self.views, -- for parent() function
+                }
+            end
+        end
+    end
+end
+
 --- Add block to runtime scope
 --- @param view aspect.view
 function output:add_blocks(view)
@@ -203,27 +224,27 @@ function output:add_blocks(view)
         for n, b in pairs(view.blocks) do
             if not self.blocks[n] then
                 self.blocks[n] = b
-            elseif self.blocks[n].parent then -- the block has parent ref
-                local p
-                if not self.parents then
-                    self.parents = {}
-                end
-                if not self.parents[n] then
-                    p = {
-                        pos = 1,
-                        list = {},
-                        closed = false
-                    }
-                    self.parents[n] = p
-                else
-                    p = self.parents[n]
-                end
-                if not p.closed then
-                    insert(p.list, b)
-                end
-                if not b.parent then -- if there is no parent () function in the parent block, stop collecting parent blocks
-                    p.closed = true
-                end
+            --elseif self.blocks[n].parent then -- the block has parent ref
+            --    local p
+            --    if not self.parents then
+            --        self.parents = {}
+            --    end
+            --    if not self.parents[n] then
+            --        p = {
+            --            pos = 1,
+            --            list = {},
+            --            closed = false
+            --        }
+            --        self.parents[n] = p
+            --    else
+            --        p = self.parents[n]
+            --    end
+            --    if not p.closed then
+            --        insert(p.list, b)
+            --    end
+            --    if not b.parent then -- if there is no parent () function in the parent block, stop collecting parent blocks
+            --        p.closed = true
+            --    end
             end
         end
     end

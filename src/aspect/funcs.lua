@@ -31,6 +31,32 @@ function func.add(name, info, fn)
     func.parsers[name] = info.parser
 end
 
+--- @param __ aspect.output
+--- @param name string
+--- @param context table
+local function parent(__, name, context)
+    local block
+
+    if __.blocks[name] then
+        for i = __.blocks[name].i + 1, #__.views do
+            block = __.views[i].blocks[name]
+            if block then
+                break
+            end
+        end
+    else
+        return nil
+    end
+
+    if context then
+        if block then
+            block(__, context)
+        end
+    elseif block then
+        return true
+    end
+end
+
 --- Function {{ parent() }}
 func.add('parent', {
     args = {},
@@ -53,28 +79,31 @@ func.add('parent', {
             return '__.fn.parent(__, ' .. quote_string(tag.block_name) .. ', nil)' ;
         end
     end
-},
-    --- @param __ aspect.output
-function (__, name, context)
-    local block
-    if __.parents and __.parents[name] then
-        local parents = __.parents[name]
-        if parents.list and parents.list[parents.pos] then
-            block = parents.list[parents.pos]
-            parents.pos = parents.pos + 1
+}, parent)
+
+--- @param __ aspect.output
+--- @param name string
+--- @param template string|nil
+local function block(__, context, name, template)
+    local f
+    if template then
+        local view = __:get_view(template)
+        if view.blocks[name] then
+            f = view.blocks[name]
+        end
+    elseif __.blocks[name] then
+        f = __.blocks[name].f
+    end
+    if context then
+        if f then
+            f(__, context)
+        else
+            runtime_error(__, "block " .. name .. " not found")
         end
     else
-        return nil
+        return f ~= nil
     end
-
-    if context then
-        if block then
-            block.body(__, context)
-        end
-    elseif block then
-        return true
-    end
-end)
+end
 
 --- Function {{ block(name, [template]) }}
 func.add('block', {
@@ -98,26 +127,7 @@ func.add('block', {
             return '__.fn.block(__, nil, ' .. args.name .. ', ' .. (args.template or 'nil') .. ')'
         end
     end
-}, function (__, context, name, template)
-    local block
-    if template then
-        local view = __:get_view(template)
-        if view.blocks[name] then
-            block = view.blocks[name]
-        end
-    elseif __.blocks[name] then
-        block = __.blocks[name]
-    end
-    if context then
-        if block then
-            block.body(__, context)
-        else
-            runtime_error(__, "block " .. name .. " not found")
-        end
-    else
-        return block ~= nil
-    end
-end)
+}, block)
 
 --- Function {{ include(name, [vars], [ignore_missing], [with_context]) }}
 func.add('include', {

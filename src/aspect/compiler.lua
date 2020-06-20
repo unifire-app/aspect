@@ -7,6 +7,7 @@ local find = string.find
 local insert = table.insert
 local remove = table.remove
 local concat = table.concat
+local next = next
 local tokenizer = require("aspect.tokenizer")
 local tags = require("aspect.tags")
 local tests = require("aspect.tests")
@@ -35,32 +36,26 @@ local special = config.compiler.special
 --- @field id number unique ID of the tag in compilation
 --- @field name string tag name
 --- @field line number where the tag opened
---- @field code_space table own table for code
---- @field code_space_no number stack number of own table of code
---- @field code_start_line number
---- @field var_space table own table of variables
---- @field var_space_no number stack number of own table of variables
---- @field used_vars table global variable what used
+--- @field ctx aspect.compiler.context|nil
 --- @field append_text fun(tpl:aspect.compiler, text:string)
 --- @field append_expr fun(tpl:aspect.compiler, expr:string)
 --- @field append_code fun(tpl:aspect.compiler, code:string)
 
---- @class aspect.compiler.template.var
+--- @class aspect.compiler.var_ref
 --- @field name string
 --- @field role number how used 0 - plain, 1 - iterator, 2 - hash, 3 - mixed
 --- @field line number first use
---- @field keys string[]
+--- @field keys table<string,number>
 
 --- @class aspect.compiler.block
---- @field code string[] list of lua code of the block
+--- @field ctx aspect.compiler.context
 --- @field parent boolean has parent function inside
---- @field used_vars table<string, aspect.compiler.template.var> list of used variables
 --- @field desc string the description
 --- @field start_line number of line there block started
 --- @field end_line number of line there block ended
 
 --- @class aspect.compiler.macro
---- @field code string[] list of lua code of the block
+--- @field ctx aspect.compiler.context
 --- @field args aspect.compiler.macro.arg[] list of used variables
 --- @field desc string the description
 --- @field start_line number of line there block started
@@ -70,24 +65,28 @@ local special = config.compiler.special
 --- @field name string
 --- @field default any
 
+--- @class aspect.compiler.context
+--- @field name string
+--- @field code string[]
+--- @field tpl_refs table<string, table>
+--- @field var_refs table<string, aspect.compiler.var_ref>
+--- @field vars table local variables
+
 --- @class aspect.compiler
+--- @field ctx_stack aspect.compiler.context[]
+--- @field ctx aspect.compiler.context current context
 --- @field aspect aspect.template
 --- @field name string
 --- @field blocks table<string, aspect.compiler.block> table of blocks
 --- @field macros table<string, aspect.compiler.macro> table of macros with their code (witch array)
 --- @field extends string|boolean if true then we has dynamic extend
 --- @field import table
---- @field uses table
 --- @field line number
+--- @field prev_line number
 --- @field tag_name string the current tag
 --- @field ignore string|nil
---- @field tok aspect.tokenizer
 --- @field tags aspect.tag[]
---- @field code table stack of code. Each level is isolated code (block or macro). 0 level is body
 --- @field stats boolean
---- @field refs table list of used templates in the code
---- @field used_vars table<string, aspect.compiler.template.var> list of used global variables
---- @field vars table list of local variables
 local compiler = {
     version = 1,
 }
@@ -100,22 +99,17 @@ local mt = { __index = compiler }
 function compiler.new(aspect, name, stats)
     return setmetatable({
         aspect = aspect,
+        ctx = nil,
+        ctx_stack = {},
         name = name,
         line = 1,
         prev_line = 1,
-        body = {},
-        code = {},
         macros = {},
         extends = nil,
         blocks = {},
         uses = {},
-        refs = {},
-        used_vars = {},
-        vars = {},
-        deps = {},
         tags = {},
         idx  = 0,
-        use_vars = {},
         tag_type = nil,
         import = {},
         ignore = nil,
@@ -137,16 +131,13 @@ function compiler:run(source)
 end
 
 function compiler:get_code()
-
     local code = {
         "local _self = {",
         "\tv = " .. self.version .. ",",
         "\tname = " .. quote_string(self.name) .. ",",
         "\tblocks = {},",
         "\tmacros = {},",
-        --"\tvars = {},",
     }
-    --insert(code, "\tvars = " .. write(self.used_vars))
     if self.extends then
         if self.extends.static then
             insert(code,"\textends = " .. self.extends.value .. ",")
@@ -171,12 +162,10 @@ function compiler:get_code()
 
     insert(code, "function _self.body(__, _context)")
     if self.extends then
-        --insert(code, "\t_context = ...")
         insert(code, "\treturn " .. self.extends.value)
-    elseif #self.body then
-        --insert(code, "\t_context = ...")
+    elseif #self.ctx.code then
         insert(code, "\t__:push_state(_self, 1)")
-        for _, v in ipairs(self.body) do
+        for _, v in ipairs(self.ctx.code) do
             insert(code, "\t" .. v)
         end
         insert(code, "\t__:pop_state()")
@@ -185,14 +174,8 @@ function compiler:get_code()
 
     if self.blocks then
         for n, b in pairs(self.blocks) do
-            --insert(code, "_self.blocks." .. n .. " = {")
-            --insert(code, "\tparent = " .. tostring(b.parent) .. ",")
-            --insert(code, "\tdesc = " .. quote_string(b.desc or "") .. ",")
-            --insert(code, "\tvars = " .. table_export(b.vars or {}, "\t") .. ",")
-            --insert(code, "}")
             insert(code, "function _self.blocks." .. n .. "(__, _context)")
-            --insert(code, "\t_context = ...")
-            for _, v in ipairs(b.code) do
+            for _, v in ipairs(b.ctx.code) do
                 insert(code, "\t" .. v)
             end
             insert(code, "end\n")
@@ -202,7 +185,7 @@ function compiler:get_code()
     if self.macros then
         for n, m in pairs(self.macros) do
             insert(code, "function _self.macros." .. n .. "(__, _context)")
-            for _, v in ipairs(m) do
+            for _, v in ipairs(m.ctx.code) do
                 insert(code, "\t" .. v)
             end
             insert(code, "end\n")
@@ -224,12 +207,10 @@ function compiler:parse(source)
         ["{%"] = tag_type.CONTROL,
         ["{#"] = tag_type.COMMENT,
     }
-    self.body = {}
-    self.code = {self.body}
-    self.vars = {{}}
-    self.used_vars = {{}}
+    self.ctx_stack = {}
     self.macros = {}
     self.blocks = {}
+    self:start_context(true, true)
     while tag_pos do
         if l <= tag_pos - 1 then -- cut text before tag
             local frag = sub(source, l, tag_pos - 1)
@@ -252,7 +233,7 @@ function compiler:parse(source)
         end
         if t == "{" then -- '{{'
             self.tag_type = tag_type.EXPRESSION
-            local tok = tokenizer.new(sub(source, tag_pos + 2))
+            local tok = tokenizer.new(source, tag_pos + 2)
             local info = {}
             local expr = self:parse_expression(tok, info)
             self:append_expr(expr, info.raw)
@@ -266,7 +247,7 @@ function compiler:parse(source)
             tok = nil
         elseif t == "%" then -- '{%'
             self.tag_type = tag_type.CONTROL
-            local tok = tokenizer.new(sub(source, tag_pos + 2))
+            local tok = tokenizer.new(source, tag_pos + 2)
             self.tag_name = tok:get_token()
             local tag_name = 'tag_' .. tok:get_token()
             if tags[tag_name] then
@@ -324,6 +305,10 @@ function compiler:parse(source)
     if frag ~= "" then
         self:append_text(frag)
     end
+    if #self.ctx_stack > 1 then
+        compiler_error(nil, "syntax", "Unexpected extra contexts (" .. #self.ctx_stack .. ")")
+    end
+    self.ctx = self:end_context(self.ctx) -- finish last context
 end
 
 --- @param tok aspect.tokenizer
@@ -383,12 +368,12 @@ function compiler:parse_variable(tok)
         end
         if not var then
             var = {self:parse_var_name(tok)}
-            self:use_var(var[1])
+            self:touch_var(var[1])
             if not self:has_local_var(var[1]) then
                 var[1] = "_context." .. var[1]
             end
         else
-            self:use_var(var[1])
+            self:touch_var(var[1])
         end
         while tok:is(".") or tok:is("[") do
             local mode = tok:get_token()
@@ -400,18 +385,6 @@ function compiler:parse_variable(tok)
                 insert(var, self:parse_expression(tok))
                 tok:require("]"):next()
             end
-            --if tok:is_word() then
-            --    insert(var, '"' .. tok:get_token() .. '"')
-            --    tok:next()
-            --elseif tok:is_string() then
-            --    insert(var, tok:get_token())
-            --    tok:next()
-            --    if mode == "[" then
-            --        tok:require("]"):next()
-            --    end
-            --else
-            --    compiler_error(tok, "syntax", "expecting word or quoted string")
-            --end
         end
         if #var == 1 then
             return var[1]
@@ -745,9 +718,6 @@ function compiler:parse_value(tok, info)
         var = self:parse_expression(tok:next(), expr_info)
         info.type = expr_info.type
         tok:require(")"):next()
-        --if tok:is("|") then
-        --    var = self:parse_filters(tok, var, info)
-        --end
     else
         compiler_error(tok, "syntax", "expecting any value")
     end
@@ -798,7 +768,7 @@ end
 function compiler:append_text(text)
     local tag = self:get_last_tag()
     local line = self:get_checkpoint()
-    local code = self.code[#self.code]
+    local code = self.ctx.code
     if line then
         insert(code, line)
     end
@@ -812,7 +782,7 @@ end
 function compiler:append_expr(lua, raw)
     local tag = self:get_last_tag()
     local line = self:get_checkpoint()
-    local code = self.code[#self.code]
+    local code = self.ctx.code
     if line then
         insert(code, line)
     end
@@ -831,8 +801,8 @@ end
 --- @param lua string
 function compiler:append_code(lua)
     local tag = self:get_last_tag()
-    local line= self:get_checkpoint()
-    local code = self.code[#self.code]
+    local line = self:get_checkpoint()
+    local code = self.ctx.code
     if line then
         insert(code, line)
     end
@@ -864,15 +834,14 @@ end
 
 --- Add ref to another template
 --- @param name string template name
-function compiler:use_template(name)
+function compiler:add_template_ref(name)
     if not self.tag_name then
         return
     end
-    if not self.refs[name] then
-        self.refs[self.tag_name] = {}
-    end
-    if self.tag_name then
-        self.refs[self.tag_name][name] = true
+    if not self.ctx.tpl_refs[name] then
+        self.ctx.tpl_refs[name] = { [self.tag_name] = self.line }
+    elseif not self.ctx.tpl_refs[name][self.tag_name] then
+        self.ctx.tpl_refs[name][self.tag_name] = self.line
     end
 end
 
@@ -887,39 +856,38 @@ function compiler:push_var(name)
             tag.vars[name] = true
         end
     end
-    local vars = self.vars[#self.vars]
-    if not vars[name] then
-        vars[name] = 1
+    if not self.ctx.vars[name] then
+        self.ctx.vars[name] = 1
     else
-        vars[name] = vars[name] + 1
+        self.ctx.vars[name] = self.ctx.vars[name] + 1
     end
 end
 
-function compiler:use_var(name)
-    local vars = self.vars[#self.vars]
-    if vars[name] then -- this is local variable
+--- Analyze and add variable ref if its global variable
+--- @param name string template name
+--- @return aspect.compiler.var_ref
+function compiler:touch_var(name)
+    if self.ctx.vars[name] then -- this is local variable
         return
     end
-    local used_vars = self.used_vars[#self.used_vars]
-    if not used_vars[name] then
-        used_vars[name] = {
-            where = {},
+    if not self.ctx.var_refs[name] then
+        self.ctx.var_refs[name] = {
+            line = self.line,
+            role = 0,
             keys = {}
         }
     end
-    insert(used_vars[name].where, {line = self.line, tag = self.tag_name})
-    return used_vars[name]
+    return self.ctx.var_refs[name]
 end
 
---- Returns all variables name defined in the scope (without global)
+--- Returns all variable names defined in the scope (without global)
 --- @return table|nil list of variables like ["variable"] = variable
 function compiler:get_local_vars()
     local vars = {}
-    for k, _ in pairs(self.vars[#self.vars]) do
+    for k, _ in pairs(self.ctx.vars) do
         vars[k] = k
     end
-
-    if utils.nkeys(vars) > 0 then
+    if next(vars) then
         return vars
     else
         return nil
@@ -930,40 +898,26 @@ end
 --- @param name string
 --- @return boolean
 function compiler:has_local_var(name)
-    return self.vars[ #self.vars ][name] ~= nil
+    return self.ctx.vars[name] ~= nil
 end
 
 --- Push the tag into scope stack
 --- @param name string the tag name
---- @param code_space table|nil for lua code
+--- @param create_context boolean|string if string, the string will be name of context
+--- @param isolate_context boolean isolate variables and refs from previous context
 --- @return aspect.tag
-function compiler:push_tag(name, code_space, code_space_name, var_space)
+function compiler:push_tag(name, create_context, isolate_context)
     self.idx = self.idx + 1
     --- @type aspect.tag
     local tag = {
         id = self.idx,
         name = name,
-        line = self.line
+        line = self.line,
+        vars = {}
     }
-    if code_space then
-        insert(self.code, code_space)
-        if code_space_name then
-            tag.code_space_name = code_space_name
-            code_space[#code_space + 1] = "__:push_state(_self, " .. self.line .. ", " .. quote_string(code_space_name) .. ")"
-        end
-        self.prev_line = self.line
-        tag.code_space_no = #self.code
+    if create_context or isolate_context then
+        tag.ctx = self:start_context(create_context, isolate_context)
     end
-    tag.code_space = self.code[#self.code]
-    tag.code_start_line = #tag.code_space
-    if var_space then -- use own variable namespace
-        insert(self.vars, var_space) -- create namespace for local variables
-        self.used_vars[#self.vars] = {} -- create namespace for global variables (usage statistics)
-        tag.var_space_no = #self.vars
-    end
-    tag.used_vars = self.used_vars[#self.vars]
-    tag.var_space = self.vars[#self.vars]
-
     local prev = self.tags[#self.tags]
     if prev then
         if prev.append_text then
@@ -989,7 +943,7 @@ function compiler:pop_tag(name)
         local tag = self.tags[#self.tags]
         if tag.name == name then
             if tag.vars then -- pop variables
-                local vars = self.vars[#self.vars]
+                local vars = self.ctx.vars
                 for var_name, _ in pairs(tag.vars) do
                     if vars[var_name] and vars[var_name] > 0 then
                         vars[var_name] = vars[var_name] - 1
@@ -997,29 +951,12 @@ function compiler:pop_tag(name)
                             vars[var_name] = nil
                         end
                     else
-                        --utils.var_dump(var_name, vars, tag)
                         compiler_error(nil, "compiler", "broken variable scope")
                     end
                 end
             end
-            if tag.code_space_no then
-                if tag.code_space_no ~= #self.code then -- dummy protection
-                    compiler_error(nil, "compiler", "invalid code space layer in the tag " .. name)
-                else
-                    local prev = remove(self.code)
-                    if tag.code_space_name then
-                        prev[#prev + 1] = "__:pop_state()"
-                    end
-                end
-            end
-            if tag.var_space_no then
-                if tag.var_space_no ~= #self.vars or tag.var_space_no ~= #self.used_vars then -- dummy protection
-                    compiler_error(nil, "compiler", "invalid vars space layer in the tag " .. name
-                            .. " (space no " ..tag.var_space_no .. ", vars " .. #self.vars .. ", used_vars " .. #self.used_vars .. ")")
-                else
-                    remove(self.vars)
-                    remove(self.used_vars)
-                end
+            if tag.ctx then
+                self:end_context(tag.ctx)
             end
             return remove(self.tags)
         else
@@ -1053,6 +990,56 @@ function compiler:get_last_tag(name, from)
         return self.tags[#self.tags], #self.tags
     end
     return nil
+end
+
+--- @param name boolean|string
+--- @param isolate boolean
+--- @return aspect.compiler.context
+function compiler:start_context(name, isolate)
+    --- @type aspect.compiler.context
+    local ctx = {}
+    ctx.id = #self.ctx_stack + 1
+    if type(name) == "string" then
+        ctx.name = name
+        ctx.code = {
+            "__:push_state(_self, " .. self.line .. ", " .. quote_string(ctx.name) .. ")"
+        }
+    elseif not name and ctx.id > 1 then
+        ctx.code = self.ctx_stack[#self.ctx_stack].code
+    else
+        ctx.code = {}
+    end
+    if isolate then
+        ctx.vars = {}
+        ctx.tpl_refs = {}
+        ctx.var_refs = {}
+    elseif self.ctx then
+        ctx.vars = self.ctx.vars
+        ctx.tpl_refs = self.ctx.tpl_refs
+        ctx.var_refs = self.ctx.var_refs
+    end
+
+    self.ctx_stack[ctx.id] = ctx
+    self.ctx = ctx
+    return ctx
+end
+
+--- @return aspect.compiler.context
+function compiler:end_context(ctx)
+    if ctx.id ~= self.ctx.id then -- just assert
+        compiler_error(nil, "compiler", "incorrect termination of context")
+    end
+    if #self.ctx_stack > 0 then
+        --- @type aspect.compiler.context
+        local prev_ctx = remove(self.ctx_stack)
+        if prev_ctx.name then
+            insert(prev_ctx.code, "__:pop_state()")
+        end
+        self.ctx = self.ctx_stack[#self.ctx_stack]
+        return prev_ctx
+    else
+        compiler_error(nil, "compiler", "broken context stack")
+    end
 end
 
 return compiler

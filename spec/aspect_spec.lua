@@ -978,8 +978,8 @@ local function factory(ops)
 end
 
 describe("Testing compiler.", function()
+    local str = "for i,j in vers|select('this', \"oh\") %}"
     it("Checks tokenizer", function()
-        local str = "for i,j in vers|select('this', \"oh\") %}"
         local tok = tokenizer.new(str)
         assert.are.equals(tok:get_token(), "for")
         assert.is.True(tok:is_word())
@@ -1035,6 +1035,18 @@ describe("Testing compiler.", function()
         assert.are.equals(tok:get_token(), nil)
 
         assert.are.equals(tok:get_path_as_string() .. "%}", str)
+    end)
+
+    it("Checks tokenizer with offset", function()
+
+        local tok = tokenizer.new(str, 16) -- goto |
+
+        assert.are.equals(tok:get_token(), "|")
+        assert.is.True(tok:is_valid())
+
+        tok:next() -- select
+        tok:require("select")
+        tok:require_type("word")
     end)
 
     for _, e in ipairs(ast_expr) do

@@ -166,7 +166,6 @@ local function strtotime(t)
         for _, matcher in ipairs(parser) do
             local i, j = string.find(t, matcher.pattern, from)
             if i then
-                --var_dump("Found by pattern " .. matcher.pattern .. ": " .. string.sub(t, i, j))
                 local res = matcher.match(string.sub(t, i, j):match("^" .. matcher.pattern .. "$"))
                 if res then
                     union(time, res)
@@ -308,7 +307,6 @@ function date:modify(t)
             local name = date_mods[k]
             d[name] = d[name] + v
         end
-        --var_dump("date:modify", self.info, self.time, d)
     end
     self.time = os.time(d)
     return self

@@ -11,10 +11,17 @@ local strfind = string.find
 local strsub = string.sub
 local ipairs = ipairs
 
+--- Information about the token
+--- 1 - token type
+--- 2 - token string
+--- 3 - whitespace after token
+--- @class aspect.tokenizer.token
+
 --- @class aspect.tokenizer
---- @field tok function
+--- @field tokens table
+--- @field token function
 --- @field token any
---- @field typ string
+--- @field parsed_len number
 local tokenizer = {}
 local mt = {__index = tokenizer}
 
@@ -56,11 +63,11 @@ local matches = {
 --- Start the tokenizer
 --- @param s string input string
 --- @return aspect.tokenizer
-function tokenizer.new(s)
+function tokenizer.new(s, start)
     local tokens = {}
     local indent, final_token
     local parsed_len = 0
-    local idx, resume = 1, true
+    local idx, resume = start or 1, true
     while idx <= #s and resume do
         for _,m in ipairs(matches) do
             local typ, tok = m[2]
@@ -81,8 +88,8 @@ function tokenizer.new(s)
                     typ = tok
                 end
                 idx = i2 + 1
+                parsed_len = parsed_len + strlen(tok)
                 if typ == "stop" then
-                    parsed_len = parsed_len + strlen(tok)
                     final_token = tok
                     resume = false
                     break
@@ -93,14 +100,12 @@ function tokenizer.new(s)
                         indent = tok
                     end
                 else
-                    parsed_len = parsed_len + strlen(tok)
                     tokens[#tokens + 1] = {typ, tok}
                 end
                 break
             end
         end
     end
-    --utils.var_dump("tokens", tokens)
     return setmetatable({
         tokens = tokens,
         i = 1,
@@ -108,6 +113,7 @@ function tokenizer.new(s)
         typ = tokens[1][1],
         finish_token = final_token,
         parsed_len = parsed_len,
+        start = start or 1,
         indent = indent
     }, mt)
 end

@@ -217,6 +217,7 @@ function template:compile(name, source, cache)
     local ok, error, code, func, view
     if not source then
         source, error = self.loader(name, self)
+
         if not source then
             if error then
                 return err.new(error, "compile"), nil, nil, nil
@@ -235,7 +236,7 @@ function template:compile(name, source, cache)
     code = build:get_code()
     func, error = loadchunk(self, code, name .. ".lua")
     if error then
-        return nil, err.new("Error loading '" .. name .. "' code: " .. tostring(error))
+        return err.new("Error loading '" .. name .. "' code: " .. tostring(error) .. "\n" .. utils.numerate_lines(code)), build
     end
 
     view, error = loadcode(self, code, name)
@@ -312,7 +313,6 @@ function template:load(name)
     elseif not view then
         return nil
     end
-
     if self.luacode_save then
         self.luacode_save(name, build:get_code(), self)
     end

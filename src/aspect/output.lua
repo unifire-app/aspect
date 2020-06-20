@@ -29,7 +29,8 @@ local flush = ngx.flush
 --- @class aspect.output.parent
 --- @field list table<aspect.template.block>
 --- @field pos number
-local _parents = {}
+
+--- @class apsect.output.state {view:aspect.view, line:number, name:string}
 
 --- Output handler
 --- @class aspect.output
@@ -37,7 +38,7 @@ local _parents = {}
 --- @field line number
 --- @field view aspect.view
 --- @field views aspect.view[]
---- @field stack table<aspect.view,number,string>
+--- @field stack apsect.output.state[]
 --- @field parents table<aspect.output.parent>
 --- @field blocks table
 --- @field opts table template options and helpers

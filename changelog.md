@@ -4,7 +4,11 @@ ChangeLog
 Develop
 -------
 
-none
+- `with` with expression
+- extra build information
+- `dump` + nil = friends
+- tokenizer with offset
+- add compiler contexts
 
 1.14
 ----

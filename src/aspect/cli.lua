@@ -217,35 +217,37 @@ Examples:
     end
     if options.dump then
         local out = {}
-        if next(build.refs) then
-            table.insert(out, "REFS:")
-            for tn, t in pairs(build.refs) do
-                table.insert(out, "  " .. tn .. ": " .. table.concat(get_keys(t), ", "))
-            end
-        end
-        for bn, b in pairs(build.blocks) do
-            table.insert(out, "BLOCK: " .. bn)
-            table.insert(out, "  lines: " .. b.start_line .. "-" .. b.end_line)
-            table.insert(out, "  use parent(): " .. (b.parent and 'yes' or 'no'))
-            if next(b.used_vars) then
-                table.insert(out, "  used variables: ")
-                for vn, v in pairs(b.used_vars) do
-                    table.insert(out, "    " .. vn .. ":")
-                    local keys = get_keys(v.keys)
-                    if #keys > 0 then
-                        table.insert(out, "      keys: " .. table.concat(keys, ", "))
-                    end
-                    table.insert(out, "      where: ")
-                    for _, w in pairs(v.where) do
-                        table.insert(out, "        - " .. template_file .. ":" .. w.line .. " in tag " .. (w.tag or "--"))
-                    end
-                end
-            end
-            --table.insert(out, "Block " .. bn .. ", lines " .. b.start_line .. "-" .. b.end_line .. ": " .. dump(b))
-        end
-        for mn, m in pairs(build.blocks) do
-
-        end
+        table.insert(out, "REFS:" .. dump(build.ctx.tpl_refs))
+        table.insert(out, "VARS:" .. dump(build.ctx.var_refs))
+        --if next(build.refs) then
+        --    table.insert(out, "REFS:")
+        --    for tn, t in pairs(build.refs) do
+        --        table.insert(out, "  " .. tn .. ": " .. table.concat(get_keys(t), ", "))
+        --    end
+        --end
+        --for bn, b in pairs(build.blocks) do
+        --    table.insert(out, "BLOCK: " .. bn)
+        --    table.insert(out, "  lines: " .. b.start_line .. "-" .. b.end_line)
+        --    table.insert(out, "  use parent(): " .. (b.parent and 'yes' or 'no'))
+        --    if next(b.used_vars) then
+        --        table.insert(out, "  used variables: ")
+        --        for vn, v in pairs(b.used_vars) do
+        --            table.insert(out, "    " .. vn .. ":")
+        --            local keys = get_keys(v.keys)
+        --            if #keys > 0 then
+        --                table.insert(out, "      keys: " .. table.concat(keys, ", "))
+        --            end
+        --            table.insert(out, "      where: ")
+        --            for _, w in pairs(v.where) do
+        --                table.insert(out, "        - " .. template_file .. ":" .. w.line .. " in tag " .. (w.tag or "--"))
+        --            end
+        --        end
+        --    end
+        --    --table.insert(out, "Block " .. bn .. ", lines " .. b.start_line .. "-" .. b.end_line .. ": " .. dump(b))
+        --end
+        --for mn, m in pairs(build.blocks) do
+        --
+        --end
         table.insert(out, "TEMPLATE:")
         table.insert(out, numerate(template, "  "))
         table.insert(out, "CODE:")

@@ -292,7 +292,6 @@ local ops = {
             local ast = require("aspect.ast").new()
             local root = ast:parse(compiler, tok:require("?"):next()):get_root()
             tok:require(":"):next()
-            --var_dump("ROOT", root)
             return root
         end,
         pack  = function (left, right, center)

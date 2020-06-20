@@ -332,7 +332,6 @@ local function pack_node(node)
             end
             cond = cast(cond.value, cond.type, node.op.c)
         end
-        --var_dump(node)
         local v = node.op.pack(left, right, cond)
         if node.op.brackets then
             v = "(" .. v .. ")"

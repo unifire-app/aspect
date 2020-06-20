@@ -123,7 +123,7 @@ function tags.tag_extends(compiler, tok)
     local name = compiler:parse_expression(tok, info)
     if info.type == "string" then
         compiler.extends = {value = name, static = true}
-        compiler:use_template(name)
+        compiler:add_template_ref(name)
     else
         compiler.extends = {value = name, static = false}
     end
@@ -140,21 +140,22 @@ function tags.tag_block(compiler, tok)
         compiler_error(tok, "syntax", "blocks can\'t be defined or used in macro")
     end
     local name = tok:get_token()
-    tok:next()
-    compiler.blocks[name] = {
-        code = {},
+    --- @type aspect.compiler.block
+    local block = {
         parent = false,
-        vars = {},
         desc = nil,
         start_line = compiler.line,
-        start_pos = tok:get_pos()
+        start_pos = tok.start
     }
-    local tag_for, pos = compiler:get_last_tag("for") -- may be {{ loop }} used in the block (which may be replaced)
+    compiler.blocks[name] = block
+    tok:next()
+    local tag_for, pos = compiler:get_last_tag("for") -- may be {{ loop }} used in the block (be replaced)
     while tag_for do
         tag_for.has_loop = true
         tag_for, pos = compiler:get_last_tag("for", pos - 1)
     end
-    local tag = compiler:push_tag("block", compiler.blocks[name].code, "block." .. name, {})
+    local tag = compiler:push_tag("block", "block." .. name, true)
+    block.ctx = tag.ctx
     tag.block_name = name
 end
 
@@ -170,10 +171,12 @@ function tags.tag_endblock(compiler, tok)
             compiler_error(tok, "syntax", "expecting block name " .. tag.block_name)
         end
     end
-    compiler.blocks[tag.block_name].parent = tag.parent
-    compiler.blocks[tag.block_name].end_line = compiler.line
-    compiler.blocks[tag.block_name].used_vars = tag.used_vars
-    --compiler.blocks[tag.block_name].tag = tag
+    local block =  compiler.blocks[tag.block_name]
+    block.parent = tag.parent
+    block.desc = tag.desc
+    block.end_line = compiler.line
+    block.end_pos = tok.start + tok.parsed_len
+
     local vars = utils.implode_hashes(compiler:get_local_vars())
     if vars then
         return '__.blocks.' .. tag.block_name .. '.f(__, __.setmetatable({ ' .. vars .. ' }, { __index = _context }))' ;
@@ -191,7 +194,7 @@ function tags.tag_use(compiler, tok)
             name = tok:get_token(),
             line = compiler.line
         }
-        compiler:use_template(uses.name)
+        compiler:add_template_ref(uses.name)
         compiler.uses[#compiler.uses + 1] = uses
         tok:next()
         if tok:is('with') then
@@ -219,9 +222,15 @@ function tags.tag_macro(compiler, tok)
         compiler_error(tok, "syntax", "expecting a valid macro name")
     end
     local name = tok:get_token()
-    compiler.macros[name] = {}
-    local tag = compiler:push_tag("macro", compiler.macros[name], "macro." .. name, {})
+    local tag = compiler:push_tag("macro", "macro." .. name, true)
     tag.macro_name = name
+    --- @type aspect.compiler.macro
+    local macro = {
+        args = {},
+        start_line = compiler.line,
+        ctx = tag.ctx
+    }
+    compiler.macros[name] = macro
     if tok:next():is("(") then
         local no = 1
         repeat
@@ -238,8 +247,10 @@ function tags.tag_macro(compiler, tok)
             tok:next()
             if tok:is("=") then
                 tok:next()
+                macro.args[no] = { name = key, default = tok:get_token()}
                 compiler:append_code(arg .. compiler:parse_expression(tok))
             else
+                macro.args[no] = { name = key}
                 compiler:append_code(arg .. " nil")
             end
             no = no + 1
@@ -269,7 +280,7 @@ function tags.tag_include(compiler, tok, ...)
         with_context = true
     }
     if info.type == "string" then
-        compiler.use_template(args.name)
+        compiler.add_template_ref(args.name)
     end
     if tok:is('ignore') then
         tok:next():require('missing'):next()
@@ -346,7 +357,7 @@ function tags.tag_import(compiler, tok)
     local info = {}
     local from = compiler:parse_expression(tok, info)
     if info.type == "string" then
-        compiler:use_template(from)
+        compiler:add_template_ref(from)
     end
     tok:require("as"):next()
     local name = compiler:parse_var_name(tok)
@@ -361,7 +372,7 @@ function tags.tag_from(compiler, tok)
     local info = {}
     local from = compiler:parse_expression(tok, info)
     if info.type == "string" then
-        compiler:use_template(from)
+        compiler:add_template_ref(from)
     end
     tok:require("import"):next()
     local names, aliases = {}, {}
@@ -421,7 +432,7 @@ function tags.tag_for(compiler, tok)
             compiler_error(tok, "syntax", "expecting variable name")
         end
     end
-    local tag = compiler:push_tag('for', {})
+    local tag = compiler:push_tag('for', true, false)
     from = compiler:parse_expression(tok:require("in"):next())
     tag.has_loop = false
     tag.from = from
@@ -465,7 +476,7 @@ end
 --- @param compiler aspect.compiler
 function tags.tag_endfor(compiler)
     local tag = compiler:pop_tag('for')
-    local lua = tag.code_space
+    local lua = tag.ctx.code
     local before = {}
     local use_while = false
     if tag.has_loop then
@@ -694,13 +705,11 @@ function tags.tag_with(compiler, tok)
     local vars
     if tok:is("{") then
         vars = compiler:parse_hash(tok)
-
     elseif tok:is_word() then
-        dynamic = tok:get_token()
-        tok:next()
+        dynamic = compiler:parse_expression(tok)
     end
     if tok:is("only") then
-        compiler:push_tag("with", nil, nil, {})
+        compiler:push_tag("with", false, true)
         tok:next()
         if dynamic then
             code[#code + 1] = "local _context = __.t(" .. dynamic .. ")"

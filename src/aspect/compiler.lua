@@ -51,8 +51,10 @@ local special = config.compiler.special
 --- @field ctx aspect.compiler.context
 --- @field parent boolean has parent function inside
 --- @field desc string the description
---- @field start_line number of line there block started
---- @field end_line number of line there block ended
+--- @field start_line number
+--- @field end_line number
+--- @field start_pos number
+--- @field end_pos number
 
 --- @class aspect.compiler.macro
 --- @field ctx aspect.compiler.context
@@ -362,24 +364,28 @@ function compiler:parse_variable(tok)
                 --    tok:next()
                 --    var = {"loop"}
             end
-        --elseif tok:is("_context") then -- magick variable name {{ _context }}
-        --    tok:next()
+        elseif tok:is("_context") then -- magick variable name {{ _context }}
+            tok:next()
         --    var = {"_context"}
         end
+        local var_info
         if not var then
             var = {self:parse_var_name(tok)}
-            self:touch_var(var[1])
-            if not self:has_local_var(var[1]) then
+            var_info = self:touch_var(var[1])
+            if not self.ctx.vars[var[1]] then
                 var[1] = "_context." .. var[1]
             end
         else
-            self:touch_var(var[1])
+            var_info = self:touch_var(var[1])
         end
         while tok:is(".") or tok:is("[") do
             local mode = tok:get_token()
             tok:next()
             if mode == "." then -- a.b
                 insert(var, '"' .. tok:require_type('word'):get_token() .. '"')
+                if var_info then
+                    var_info.keys[tok:get_token()] = self.line
+                end
                 tok:next()
             elseif mode == "[" then -- a[b]
                 insert(var, self:parse_expression(tok))
@@ -873,7 +879,6 @@ function compiler:touch_var(name)
     if not self.ctx.var_refs[name] then
         self.ctx.var_refs[name] = {
             line = self.line,
-            role = 0,
             keys = {}
         }
     end
@@ -892,13 +897,6 @@ function compiler:get_local_vars()
     else
         return nil
     end
-end
-
---- Checks if local variable exists in current scope
---- @param name string
---- @return boolean
-function compiler:has_local_var(name)
-    return self.ctx.vars[name] ~= nil
 end
 
 --- Push the tag into scope stack

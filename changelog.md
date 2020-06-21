@@ -9,6 +9,7 @@ Develop
 - `dump` + nil = friends
 - tokenizer with offset
 - add compiler contexts
+- improve template inheritance algorithm
 
 1.14
 ----

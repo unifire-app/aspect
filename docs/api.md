@@ -143,7 +143,7 @@ local aspect = require("aspect.template").new({
 })
 ```
 
-### Option `debug`
+<!-- ### Option `debug`
 ### Option `loader`
 ### Option `autoescape`
 ### Option `env`
@@ -153,6 +153,7 @@ local aspect = require("aspect.template").new({
 ### Option `bytecode_save`
 ### Option `bytecode_load`
 ### Option `cache`
+-->
 The following options are available:
 * `debug` _boolean_.
   When set to true, templates generates notices in some obscure situations. Also enables `dump` function.

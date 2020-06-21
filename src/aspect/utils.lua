@@ -247,7 +247,6 @@ end
 function utils.dump(...)
     local output, n, data = {}, select("#", ...), {...};
     for i = 1, n do
-    --for _, v in pairs({ ... }) do
         if type(data[i]) == 'table' then
             insert(output, utils.dump_table(data[i], 0, { [tostring(data[i])] = true}))
         else

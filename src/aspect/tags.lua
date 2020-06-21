@@ -223,13 +223,14 @@ function tags.tag_macro(compiler, tok)
     end
     local name = tok:get_token()
     local tag = compiler:push_tag("macro", "macro." .. name, true)
-    tag.macro_name = name
     --- @type aspect.compiler.macro
     local macro = {
+        name = name,
         args = {},
         start_line = compiler.line,
         ctx = tag.ctx
     }
+    tag.macro = macro
     compiler.macros[name] = macro
     if tok:next():is("(") then
         local no = 1
@@ -264,8 +265,9 @@ end
 --- @param tok aspect.tokenizer
 function tags.tag_endmacro(compiler, tok)
     local tag = compiler:pop_tag("macro")
+    tag.macro.end_line = compiler.line
     if tok:is_valid() then
-        tok:require(tag.macro_name):next()
+        tok:require(tag.macro.name):next()
     end
 end
 

@@ -219,6 +219,27 @@ Examples:
         local out = {}
         table.insert(out, "REFS:" .. dump(build.ctx.tpl_refs))
         table.insert(out, "VARS:" .. dump(build.ctx.var_refs))
+        if next(build.blocks) then
+            for bn, b in pairs(build.blocks) do
+                table.insert(out, "BLOCK: " .. bn)
+                table.insert(out, " DESCR: " .. (b.desc or "<none>"))
+                table.insert(out, " LOCATION: "
+                    .. b.start_line .. "-" .. b.end_line .. " lines or " .. b.start_pos .. "-" .. b.end_pos .. " bytes")
+                table.insert(out, " REFS: " .. dump(b.ctx.tpl_refs))
+                table.insert(out, " VARS " .. dump(b.ctx.var_refs))
+            end
+        end
+        if next(build.macros) then
+            for mn, m in pairs(build.macros) do
+                table.insert(out, "MACRO: " .. mn)
+                table.insert(out, " DESCR: " .. (m.desc or "<none>"))
+                table.insert(out, " LOCATION: "
+                        .. m.start_line .. "-" .. m.end_line .. " lines")
+                table.insert(out, " ARGS: " .. dump(m.args))
+                table.insert(out, " REFS: " .. dump(m.ctx.tpl_refs))
+                table.insert(out, " VARS " .. dump(m.ctx.var_refs))
+            end
+        end
         --if next(build.refs) then
         --    table.insert(out, "REFS:")
         --    for tn, t in pairs(build.refs) do

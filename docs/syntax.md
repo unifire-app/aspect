@@ -317,10 +317,9 @@ Arrays and hashes can be nested:
 {% set foo = [1, {"foo": "bar"}] %}
 ```
 
-Operators
----------
+### Operators
 
-### Math operators
+#### Math operators
 
 * `+`: Adds two numbers together (the operands are casted to numbers). `{{ 1 + 1 }}` is 2.
 * `-`: Subtracts the second number from the first one. `{{ 3 - 2 }}` is 1.
@@ -330,21 +329,21 @@ Operators
 * `*`: Multiplies the left operand with the right one. `{{ 2 * 2 }}` would return 4.
 * `**`: Raises the left operand to the power of the right operand. `{{ 2 ** 3 }}` would return 8.
 
-### Logic operators
+#### Logic operators
 
 * `and`: Returns true if the left and the right operands are both true.
 * `or`: Returns true if the left or the right operand is true.
 * `not`: Negates a statement.
 * `(expr)`: Groups an expression.
 
-### Comparisons operators
+#### Comparisons operators
 
 The following comparison operators are supported in any expression: `==`, `!=`, `<`, `>`, `>=`, and `<=`.
 
 **Note.** Aspect automatically cast values to numbers then `<`, `>`, `>=`, and `<=` used. 
 But NOT cast to anything with `==` and `!=`, i. g. `"0" == 0` is `false`.
 
-### Containment Operator
+#### Containment Operator
 
 The `in` operator performs containment test. It returns `true` if the left operand is contained in the right:
 
@@ -365,7 +364,7 @@ To perform a negative test, use the `not in` operator:
 {% if not (1 in [1, 2, 3]) %}
 ```
 
-### Test Operator
+#### Test Operator
 
 The `is` operator performs tests. Tests can be used to test a variable against a common expression. The right operand is name of the test:
 
@@ -383,7 +382,7 @@ Tests can be negated by using the `is not` operator:
 {% if not (name is odd) %} {% endif %}
 ```
 
-### Other Operators
+#### Other Operators
 
 The following operators don't fit into any of the other categories:
 
@@ -402,7 +401,7 @@ The following operators don't fit into any of the other categories:
   {{ foo ?? 'no' }}
   ```
 
-### Operator precedence
+#### Operator precedence
 
 Operator precedence, from the higher to the lower priority:
 
@@ -468,7 +467,7 @@ Aspect supports both, automatic escaping is enabled by default.
 
 The automatic escaping strategy can be configured via the [autoescape](./api.md#options) option.
 
-## Working with Manual Escaping
+### Working with Manual Escaping
 
 If manual escaping is enabled, it is **your** responsibility to escape variables if needed. 
 What to escape? Any variable that comes from an untrusted source.
@@ -488,7 +487,7 @@ but depending on the escaping context, you might want to explicitly use an other
 {{ user.username|e('url') }}
 ```
 
-## Working with Automatic Escaping
+### Working with Automatic Escaping
 
 Whether automatic escaping is enabled or not, you can mark a section of a template to be escaped 
 or not by using the [autoescape](./tags/autoescape.md) tag:

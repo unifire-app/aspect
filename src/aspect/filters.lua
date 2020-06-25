@@ -112,10 +112,10 @@ filters.add('date', {
     args = {
         [1] = {name = 'format', type = 'string'}
     }
-}, function (v, fmt)
+}, function (v, fmt, __)
     local dt = date.new(v)
     if dt then
-        return dt:format(fmt)
+        return dt:format(fmt or "%F %T", __.tz, __.loc)
     else
         return ""
     end

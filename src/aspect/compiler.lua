@@ -43,9 +43,8 @@ local special = config.compiler.special
 
 --- @class aspect.compiler.var_ref
 --- @field name string
---- @field role number how used 0 - plain, 1 - iterator, 2 - hash, 3 - mixed
 --- @field line number first use
---- @field keys table<string,number>
+--- @field keys table<string,number> key-name and line number of first usage
 
 --- @class aspect.compiler.block
 --- @field ctx aspect.compiler.context

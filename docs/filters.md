@@ -23,11 +23,15 @@ title: Filters
 * [merge(items)](./filters/merge.md)
 * [nl2br](./filters/nl2br.md)
 * [raw](./filters/raw.md)
-* [replace()](./filters/replace.md)
+* [replace(what)](./filters/replace.md)
 * [split(delimiter, limit)](./filters/split.md)
 * [striptags](./filters/striptags.md)
 * [trim](./filters/trim.md)
 * [upper](./filters/lower.md)
+* [utf.lower](./filters/utf.lower.md)
+* [utf.length](./filters/utf.length.md)
+* [utf.truncate(length, ending)](./filters/utf.less.md)
+* [utf.upper](./filters/utf.upper.md)
 
 [Add filters](./api.md#add-filters)
 

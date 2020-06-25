@@ -132,47 +132,205 @@ Or just use the `--dump` option on the CLI:
 aspect --dump /path/to/launch.view
 ```
 
-Options
+Оptions
 -------
 
 When creating a new `aspect.template` instance, you can pass an table of options as the constructor argument:
 ```lua
+--- main options
 local aspect = require("aspect.template").new({
     cache = true, 
     debug = true
 })
+
+--- render options
+aspect:display("main.view", vars, {
+    time_zone = 3 * 3600 
+})
 ```
 
-<!-- ### Option `debug`
+
+### Option `debug`
+
+```lua
+debug = boolean
+```
+
+When set to `true`, templates generates notices in some obscure situations. Also:
+
+- enables `dump` function.
+- enables compile-time and runtime notices.
+
+Context:
+
+- main options
+- render options
+
 ### Option `loader`
-### Option `autoescape`
-### Option `env`
-### Option `time_zone`
+
+```lua
+debug = func
+```
+where `func` is
+```lua
+--- @param name string the template name
+--- @param tpl aspect.template current aspect instance
+--- @return string aspect template code
+--- @return string error message
+function func(name, tpl)  end
+```
+Loaders are responsible for loading templates from a resource such as the file system or databases.
+
+Return `nil, nil` if no template found.
+
 ### Option `luacode_save`
+
+```lua
+luacode_save = func
+```
+where `func` is
+```lua
+--- @param name string the template name
+--- @param luacode string lua code of template
+--- @param tpl aspect.template current aspect instance
+function func(name, luacode, tpl)  end
+```
+
 ### Option `luacode_load`
+
+```lua
+luacode_load = func
+```
+where `func` is
+```lua
+--- @param name string the template name
+--- @param tpl aspect.template current aspect instance
+--- @return string|nil lua code of template
+function func(name, tpl)  end
+```
+
+Function used for loading compiled lua code of the template.
+
 ### Option `bytecode_save`
+
+```lua
+bytecode_save = func
+```
+where `func` is
+```lua
+--- @param name string the template name
+--- @param bytecode string bytecode of template
+--- @param tpl aspect.template current aspect instance
+function func(name, bytecode, tpl)  end
+```
+
+Function used for saving byte-code of the template.
+
 ### Option `bytecode_load`
+
+```lua
+luacode_load = func
+```
+where `func` is
+```lua
+--- @param name string the template name
+--- @param tpl aspect.template current aspect instance
+--- @return string|nil bytecode of template
+function func(name, tpl)  end
+```
+
+Function used for loading byte-code of the template.
+
+### Option `autoescape`
+
+```lua
+autoescape = boolean
+```
+
+Enables or disables auto-escaping with 'html' strategy. 
+
+Context:
+
+- main options
+- render options
+
+### Option `env`
+
+```lua
+env = table_or_function
+```
+
+sets the environment to be used by all templates (for current Aspect instance).
+
+Context:
+
+- main options
+- render options
+
 ### Option `cache`
--->
-The following options are available:
-* `debug` _boolean_.
-  When set to true, templates generates notices in some obscure situations. Also enables `dump` function.
-* `cache` _table_ or `false` or `true`
-  Enables or disables in-memory cache. If this parameter is a table, then it will be used to store the cache. 
-  If `true` - own table will be used.
-* `loader` _function_ `fun(name: string, tpl: aspect.template):string,string`.
-  Template source code loader with etag (optionally)
-* `luacode_load` _function_ `fun(name: string, tpl: aspect.template):string`
-  Function used for loading compiled lua code of the template.
-* `luacode_save` _function_ `fun(name: string, luacode: string, tpl: aspect.template)`
-  Function used for saving compiled lua code of the template.
-* `bytecode_load` _function_ `fun(name: string, tpl: aspect.template):string`
-  Function used for loading byte-code of the template.
-* `bytecode_save` _function_ `fun(name: string, bytecode: string, tpl: aspect.template)`
-  Function used for saving byte-code of the template.
-* `autoescape` _boolean_
-  Enables or disables auto-escaping with 'html' strategy. 
-* `env` _table_ sets the environment to be used by all templates (for current Aspect instance).
+
+```lua
+cache = table_or_boolean
+```
+
+Enables or disables in-memory cache. If this parameter is a table, then it will be used to store the cache. 
+
+- `true` - enable cache
+- `false` or `nil` — disable cache
+- `table` (using as `table<string,aspect.view>`) with custom view storage or object with `__newindex` and `__index`
+
+Context:
+
+- main options
+
+### Option `cache_version`
+
+```lua
+cache_version = any
+```
+
+Context:
+
+- main options
+
+### Option `time_zone`
+
+```lua
+time_zone = number
+```
+
+UTC offset in seconds. For example Tokyo (+9 UTC) has offset `9 * 60 * 60` or `32400`. See [date](./filters/date.md).
+
+Context:
+
+- main options
+- render options
+
+### Option `locale`
+
+```lua
+locale = string
+```
+
+Locale Identifier. For example `en`, `de`, `ru`
+
+Context:
+
+- main options
+- render options
+
+
+
+### Option `build_stats`
+
+```lua
+build_stats = boolean
+```
+
+Context:
+
+- render options
+
 
 Cache
 -----

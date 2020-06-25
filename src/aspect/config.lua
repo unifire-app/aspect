@@ -14,6 +14,14 @@ config.json = {
     error = "JSON encode/decode no available. Please install `cjson` or `json` or configure `require('aspect.config').json` before using Aspect"
 }
 
+config.utf8 = {
+    len = nil,
+    lower = nil,
+    upper = nil,
+    sub = nil,
+    match = nil,
+}
+
 --- escape filter settings (HTML strategy)
 config.escape = {
     pattern = "[}{\"><'&]",
@@ -104,6 +112,28 @@ do
     if box and box.NULL then
         config.is_false[box.NULL] = true
         config.is_empty_string[box.NULL] = true
+    end
+end
+
+--- Detect UTF8 module
+do
+    local utf8 = utf8
+    if not utf8 then
+        for _, name in ipairs({"utf8", "lua-utf8"}) do
+            local ok, module = pcall(require, name)
+            if ok then
+                utf8 = module
+                break
+            end
+        end
+    end
+    if utf8 then
+        config.utf8.len   = utf8.len or utf8.length
+        config.utf8.upper = utf8.upper
+        config.utf8.lower = utf8.lower
+        config.utf8.sub   = utf8.sub
+        config.utf8.match = utf8.match
+        config.utf8.find  = utf8.find
     end
 end
 
@@ -260,6 +290,50 @@ config.date = {
         ["oct"] = 10, ["october"]   = 10,
         ["nov"] = 11, ["november"]  = 11,
         ["dec"] = 12, ["december"]  = 12,
+    },
+    months_locale = {
+        en = {
+            [1]  = {"Jan", "January"},
+            [2]  = {"Feb", "February"},
+            [3]  = {"Mar", "March"},
+            [4]  = {"Apr", "April"},
+            [5]  = {"May", "May"},
+            [6]  = {"Jun", "June"},
+            [7]  = {"Jul", "July"},
+            [8]  = {"Aug", "August"},
+            [9]  = {"Sep", "September"},
+            [10] = {"Oct", "October"},
+            [11] = {"Nov", "November"},
+            [12] = {"Dec", "December"},
+        }
+    },
+    week = {
+        ["mon"] = 1, ["monday"]    = 1,
+        ["tue"] = 2, ["tuesday"]   = 2,
+        ["wed"] = 3, ["wednesday"] = 3,
+        ["thu"] = 4, ["thursday"]  = 4,
+        ["fri"] = 5, ["friday"]    = 5,
+        ["sat"] = 6, ["saturday"]  = 6,
+        ["sun"] = 7, ["sunday"]    = 7,
+    },
+    week_locale = {
+        en = {
+            [1] = {"Mon", "Monday"},
+            [2] = {"Tue", "Tuesday"},
+            [3] = {"Wed", "Wednesday"},
+            [4] = {"Thu", "Thursday"},
+            [5] = {"Fri", "Friday"},
+            [6] = {"Sat", "Saturday"},
+            [7] = {"Sun", "Sunday"},
+        },
+    },
+    aliases = {
+        c = "%a %b %d %H:%m%s %Y",
+        r = "%I:%M:%S %p",
+        R = "%I:%M",
+        T = "%H:%M:%S",
+        D = "%m/%d/%y",
+        F = "%Y-%m-%d"
     }
 }
 

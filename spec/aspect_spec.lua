@@ -1206,6 +1206,7 @@ describe("Testing date.", function ()
     local formated = {
         -- zero zone
         {
+            name = "zero zone",
             date = "2009-02-13 23:31:30 UTC+00",
             format = {
                 {"%F %T", os.date("%F %T", 1234567890)},
@@ -1216,6 +1217,7 @@ describe("Testing date.", function ()
         },
         -- custom zone
         {
+            name = "custom zone",
             date = "2009-02-13 23:31:30 UTC+16",
             format = {
                 { "%F %T UTC%Z", "2009-02-13 23:31:30 UTC+16", offset1600 }, -- UTC+16
@@ -1228,8 +1230,9 @@ describe("Testing date.", function ()
                 {"!%F %T UTC%Z", os.date("!%F %T UTC", 1234567890 - offset1600), nil},
             }
         },
-        -- locale
+        -- local zone
         {
+            name = "local zone",
             date = "2009-02-13 23:31:30 UTC+00",
             format = {
                 {"%a, %d %b", "Пт, 13 Фев", 0, 'ru'},
@@ -1243,7 +1246,7 @@ describe("Testing date.", function ()
     }
     for _, v1 in ipairs(formated) do
         for _, v2 in ipairs(v1.format) do
-            it("Formatting date '" .. v1.date .. "' as '" .. v2[1]
+            it("Formatting [" .. v1.name .. "] date '" .. v1.date .. "' as '" .. v2[1]
                 .. "' with offset " .. tostring(v2[2])
                 .. " and locale " ..tostring(v2[4]), function ()
                 local d = date.new(v1.date)

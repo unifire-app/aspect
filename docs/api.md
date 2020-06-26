@@ -132,7 +132,7 @@ Or just use the `--dump` option on the CLI:
 aspect --dump /path/to/launch.view
 ```
 
-Оptions
+Options
 -------
 
 When creating a new `aspect.template` instance, you can pass an table of options as the constructor argument:
@@ -320,7 +320,6 @@ Context:
 - render options
 
 
-
 ### Option `build_stats`
 
 ```lua
@@ -331,6 +330,31 @@ Context:
 
 - render options
 
+Global Config
+-------------
+
+### Configure JSON
+
+Customize JSON encoder and decoder
+
+```lua
+local json = require("aspect.config").json
+json.encode = json_encode_function
+json.decode = json_decode_function
+```
+
+### Configure UTF8
+
+Customize UTF8 binding
+
+```lua
+local utf8 = require("aspect.config").utf8
+utf8.len   = utf8_len_function
+utf8.lower = utf8_lower_function
+utf8.upper = utf8_upper_function
+utf8.sub   = utf8_sub_function
+utf8.match = utf8_match_function
+```
 
 Cache
 -----
@@ -683,10 +707,15 @@ local strtotime = require("aspect.utils.date").strtotime
 local ts, info = strtotime("2009-02-13 23:31:30")
 ```
 
+Table `info` contains more information about date (day, month, year, hour, min, sec, time zone offset) 
+
 ### Date localization
 
-Add or change month localizations. For example add localized months for russian and spain languages. 
+Add or change month and day of the week localizations.  
 
+**Month localization** 
+
+For parser (required utf8 module)
 ```lua
 local months = require("aspect.config").date.months
 months["дек"] = 12          -- add short name of december on russian
@@ -695,7 +724,31 @@ months["dic"] = 12          -- add short name of december on spain
 months["diciembre"] = 12    -- add long name of december on spain
 -- ...
 ```
-There 1 - january, 12 - december.
+For formatter
+```lua
+local months_locale = require("aspect.config").date.months_locale
+months_locale["ru"] = {        -- add Russian name of month 
+    [1]  = {"Янв", "Январь"},  -- {"Jan", "January"}
+    [2]  = {"Фев", "Февраль"}, -- {"Feb", "February"}
+    [3]  = {"Мар", "Март"},    -- {"Mar", "March"}
+    --- ...
+}
+```
+There 1 - january, 12 - december. Index 1 — short name of month, index 2 - normal name of month.
+
+**Week localization**
+
+For formatter
+```lua
+local week_locale = require("aspect.config").date.week_locale
+week_locale["ru"] = {  -- add Russian day of the week
+    [1] = {"Пн", "Понедельник"},  -- {"Mon", "Monday"}
+    [2] = {"Вт", "Вторник"},      -- {"Tue", "Tuesday"}
+    [3] = {"Ср", "Среда"},        -- {"Wed", "Wednesday"}
+    --- ...
+}
+```
+There 1 - monday, 7 - sunday (see ISO8601 part 2.2.8)
 
 ### Date parser
 

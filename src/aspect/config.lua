@@ -15,10 +15,10 @@ config.json = {
 }
 
 config.utf8 = {
-    len = nil,
+    len   = nil,
     lower = nil,
     upper = nil,
-    sub = nil,
+    sub   = nil,
     match = nil,
 }
 

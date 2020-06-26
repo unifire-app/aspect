@@ -27,27 +27,6 @@ matrix:
       env:
         - LUA="luajit=2.1"
         - LUA_CJSON=""
-# testing osx too long
-#        - os: osx
-#          language: generic
-#          env:
-#              - LUA="lua=5.1"
-#        - os: osx
-#          language: generic
-#          env:
-#              - LUA="lua=5.2"
-#        - os: osx
-#          language: generic
-#          env:
-#              - LUA="lua=5.3"
-#        - os: osx
-#          language: generic
-#          env:
-#              - LUA="luajit=2.0"
-#        - os: osx
-#          language: generic
-#          env:
-#              - LUA="luajit=2.1"
 
 before_install:
   - pip install codecov
@@ -57,6 +36,7 @@ before_install:
   - luarocks install busted
   - luarocks install cluacov
   - luarocks install lua-cjson $LUA_CJSON
+  - luarocks install utf8
 
 script:
   - busted -c

@@ -25,14 +25,21 @@ local utils = {
 --- Supported __len metamethod and table.nkeys (if possible)
 --- Note: iterators (tables with __paris metamethod) returns 0
 --- @param t table
+--- @param iterate boolean if t is iterator (has __pairs) then iterate it
 --- @return number
-function utils.nkeys(t)
+function utils.nkeys(t, iterate)
     local mt = getmetatable(t)
     if mt then
         if mt.__len then
             return t:__len()
         elseif mt.__pairs then -- skip iterators
-            return 0
+            if iterate then
+                local i = 0
+                for _ in mt.__pairs(t) do i = i + 1 end
+                return i
+            else
+                return 0
+            end
         end
     elseif nkeys then
         return nkeys(t)

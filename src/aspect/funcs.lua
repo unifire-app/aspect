@@ -224,7 +224,7 @@ func.add("date", {
         [1] = {name = "date", type = "any"}
     }
 }, function (__, args)
-    return date.new(args.date, __.tz, __.loc)
+    return date.new(args.date)
 end)
 
 --- {{ dump(...) }}

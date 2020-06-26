@@ -643,6 +643,10 @@ function compiler:parse_filters(tok, var, info)
     while tok:is("|") do -- parse pipeline filter
         if tok:next():is_word() then
             local filter = tok:get_token()
+            if tok:next():is(".") then
+                filter = filter .. "." .. tok:next():require_type("word"):get_token()
+                tok:next()
+            end
             if not filters.fn[filter] then
                 compiler_error(tok, "compile", "unknown filter " .. filter)
             end
@@ -651,7 +655,7 @@ function compiler:parse_filters(tok, var, info)
             end
             local args
 
-            if tok:next():is("(") then
+            if tok:is("(") then
                 args = self:parse_args(tok:next(), filters.info[filter].args, false, "filter " .. filter)
                 tok:require(")"):next()
             end

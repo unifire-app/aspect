@@ -118,6 +118,7 @@ local vars = {
     string_empty = "",
     string_1 = [[string value]],
     string_2 = [[Hello, World]],
+    string_ru_2 = [[Привет, Мир]],
     string_html = [[<b>Hello</b>]],
     string_list1 = [[a,b,c]],
     string_list2 = "a \tb\n\t c",
@@ -815,6 +816,11 @@ templates["filter:upper_lower_00"] = {
     "HELLO, WORLD [and] hello, world"
 }
 
+templates["filter:utf.upper_utf.lower_00"] = {
+    "{{ string_ru_2|utf.upper }} [and] {{ string_ru_2|utf.lower }}",
+    "ПРИВЕТ, МИР [and] привет, мир"
+}
+
 templates["filter:replace_00"] = {
     "{{ string_2|replace({World: 'User', Hello: 'Hi'}) }}",
     "Hi, User"
@@ -872,7 +878,19 @@ templates["filter:split_03"] = {
     "a: b,c:"
 }
 
+templates["filter:truncate"] = {
+    [[
+    {{- "hello"|utf.truncate(3, "---") -}}
+    ]],
+    "hel---"
+}
 
+templates["filter:utf.truncate"] = {
+    [[
+    {{- "привет"|utf.truncate(3, "---") -}}
+    ]],
+    "при---"
+}
 --templates["function:dump_02"] = {
 --    "{{ dump(table_1) }}",
 --    spaceless(funcs.fn.dump(vars.table_1))

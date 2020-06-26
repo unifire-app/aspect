@@ -220,7 +220,7 @@ function date:format(format, time_zone, locale)
         time = time + offset
     end
     --- replace aliases
-    format = string.gsub(format, "\$(%w)", config.aliases)
+    format = string.gsub(format, "%$(%w)", config.aliases)
     --- replace localizable specs
     local d = os.date("!*t", time)
     format = string.gsub(format, "%%([zZaAbB])", function (spec)

@@ -356,6 +356,8 @@ utf8.sub   = utf8_sub_function
 utf8.match = utf8_match_function
 ```
 
+### Configure default environment
+
 Cache
 -----
 

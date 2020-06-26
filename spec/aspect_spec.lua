@@ -18,6 +18,7 @@ local assert = require("luassert")
 local cjson = require("cjson.safe")
 local tsort,append,remove = table.sort,table.insert,table.remove
 
+local has_utf = config.utf8.match
 
 require('busted.runner')()
 
@@ -1143,10 +1144,10 @@ describe("Testing date.", function ()
         {"2009-02-13T23:31:30",               1234567890 - local_offset, local_offset},
         {"Fri, 13 Feb 2009 23:31:30",         1234567890 - local_offset, local_offset},
         {"Friday, 13-February-2009 23:31:30", 1234567890 - local_offset, local_offset},
-        {"Пт, 13 Фев 2009 23:31:30",          1234567890 - local_offset, local_offset},
-        {"Пятница, 13-Февраль-2009 23:31:30", 1234567890 - local_offset, local_offset},
+        has_utf and {"Пт, 13 Фев 2009 23:31:30",          1234567890 - local_offset, local_offset} or nil,
+        has_utf and {"Пятница, 13-Февраль-2009 23:31:30", 1234567890 - local_offset, local_offset} or nil,
         {"2009-02-13T23:31:30",               1234567890 - local_offset, local_offset},
-        {"Пт, 13 Февраль 2009 23:31:30",      1234567890 - local_offset, local_offset},
+        has_utf and {"Пт, 13 Февраль 2009 23:31:30",      1234567890 - local_offset, local_offset} or nil,
         -- custom zone
         {"2009-02-13 23:31:30 UTC+16",                   1234567890 - offset1600, offset1600},
         {"2009-02-13T23:31:30+16:00",                    1234567890 - offset1600, offset1600},

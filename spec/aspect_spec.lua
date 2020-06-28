@@ -1225,12 +1225,12 @@ describe("Testing date.", function ()
         -- zero zone
         {
             name = "zero zone",
-            date = "2009-02-13 23:31:30 UTC+00",
+            date = "2009-02-13 23:31:30 UTC+0000",
             format = {
                 {"%F %T", os.date("%F %T", 1234567890)},
                 {"!%F %T", "2009-02-13 23:31:30"},
                 {"%F %T UTC%z", os.date("%F %T UTC%z", 1234567890)},
-                {"!%F %T UTC%z", "2009-02-13 23:31:30 UTC+00"},
+                {"!%F %T UTC%z", "2009-02-13 23:31:30 UTC+0000"},
             }
         },
         -- custom zone
@@ -1240,17 +1240,17 @@ describe("Testing date.", function ()
             format = {
                 { "%F %T UTC%Z", "2009-02-13 23:31:30 UTC+16", offset1600 }, -- UTC+16
                 { "!%F %T UTC%Z", "2009-02-13 07:31:30 UTC", offset1600 }, -- UTC+0 time
-                {"%F %T UTC%Z", "2009-02-13 07:31:30 UTC", 0}, -- UTC+0 time
-                {"!%F %T UTC%Z", "2009-02-13 07:31:30 UTC", 0}, -- UTC+0 time
+                { "%F %T UTC%Z", "2009-02-13 07:31:30 UTC", 0}, -- UTC+0 time
+                { "!%F %T UTC%Z", "2009-02-13 07:31:30 UTC", 0}, -- UTC+0 time
                 { "%F %T UTC%Z", "2009-02-13 11:31:30 UTC+4", offset400 }, -- UTC+4 time
                 { "!%F %T UTC%Z", "2009-02-13 07:31:30 UTC", offset400 }, -- UTC+4 time
-                {"%F %T UTC"..local_offset_name, os.date("!%F %T UTC%z", 1234567890 + local_offset - offset1600), nil},
-                {"!%F %T UTC%Z", os.date("!%F %T UTC", 1234567890 - offset1600), nil},
+                { "%F %T UTC"..local_offset_name, os.date("!%F %T UTC%z", 1234567890 + local_offset - offset1600), nil},
+                { "!%F %T UTC%Z", os.date("!%F %T UTC", 1234567890 - offset1600), nil},
             }
         },
-        -- local zone
+        -- locale
         {
-            name = "local zone",
+            name = "locale",
             date = "2009-02-13 23:31:30 UTC+00",
             format = {
                 {"%a, %d %b", "Пт, 13 Фев", 0, 'ru'},

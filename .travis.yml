@@ -36,7 +36,7 @@ before_install:
   - luarocks install busted
   - luarocks install cluacov
   - luarocks install lua-cjson $LUA_CJSON
-  - luarocks install utf8
+  - lua -e 'if utf8 then os.exit(1) else os.exit(0) end' && luarocks install utf8
 
 script:
   - busted -c

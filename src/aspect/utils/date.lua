@@ -256,7 +256,7 @@ end
 --- Returns offset as time zone
 --- @param offset number in seconds
 --- @param delim string hours and minutes delimiter
---- @param short boolean
+--- @param short boolean use short format
 --- @return string like +03:00 or +03
 function date.get_timezone(offset, delim, short)
     delim = delim or ":"
@@ -265,7 +265,7 @@ function date.get_timezone(offset, delim, short)
         if short then
             return ""
         else
-            return sign .. "00"
+            return sign .. "0000"
         end
     end
     offset = math.abs(offset / 60) -- throw away seconds and sign

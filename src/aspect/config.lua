@@ -14,12 +14,17 @@ config.json = {
     error = "JSON encode/decode no available. Please install `cjson` or `json` or configure `require('aspect.config').json` before using Aspect"
 }
 
+--- UTF8 configuration
 config.utf8 = {
     len   = nil,
     lower = nil,
     upper = nil,
     sub   = nil,
     match = nil,
+}
+
+config.env = {
+
 }
 
 --- escape filter settings (HTML strategy)

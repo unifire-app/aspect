@@ -602,15 +602,10 @@ table.insert(ops, {
 })
 ```
 
-Don't forget add `bitop` package to template environment using `env` [option](#options):
+Don't forget add `bitop` package to global environment using [config.env](#configure-env):
 
 ```lua
-local aspect = require("aspect.template").new({
-    --- ...
-    env = {
-        bit = bitop or require("bitop")
-    }
-})
+require("aspect.config").env.bit = bitop or require("bitop")
 ```
 
 See [aspect.ast.ops](https://github.com/unifire-app/aspect/tree/master/src/aspect/ast/ops.lua) for more examples.

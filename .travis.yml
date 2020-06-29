@@ -38,7 +38,7 @@ before_install:
   - hererocks lua_install --$LUA -r latest
   - source lua_install/bin/activate
   - luarocks install busted
-  - lua -e 'if _VERSION ~= "Lua 5.4" then os.exit(1) else os.exit(0) end' && luarocks install cluacov; echo OK # cluacov doesn't work on 5.4
+  - lua -e 'if _VERSION == "Lua 5.4" then os.exit(1) else os.exit(0) end' && luarocks install cluacov; echo OK # cluacov doesn't work on 5.4
   - luarocks install lua-cjson $LUA_CJSON
   - lua -e 'if utf8 then os.exit(1) else os.exit(0) end' && luarocks install utf8; echo OK # lua 5.3+ already has utf8 module
 

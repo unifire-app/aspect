@@ -21,6 +21,10 @@ matrix:
         - LUA_CJSON="2.1.0"
     - os: linux
       env:
+        - LUA="lua=5.4"
+        - LUA_CJSON="2.1.0"
+    - os: linux
+      env:
         - LUA="luajit=2.0"
         - LUA_CJSON="2.1.0"
     - os: linux

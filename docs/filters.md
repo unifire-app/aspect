@@ -27,10 +27,11 @@ title: Filters
 * [split(delimiter, limit)](./filters/split.md)
 * [striptags](./filters/striptags.md)
 * [trim](./filters/trim.md)
+* [truncate](./filters/truncate.md)
 * [upper](./filters/lower.md)
 * [utf.lower](./filters/utf.lower.md)
 * [utf.length](./filters/utf.length.md)
-* [utf.truncate(length, ending)](./filters/utf.less.md)
+* [utf.truncate(length, ending)](./filters/utf.truncate.md)
 * [utf.upper](./filters/utf.upper.md)
 
 [Add filters](./api.md#add-filters)

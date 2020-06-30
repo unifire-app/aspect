@@ -37,10 +37,7 @@ before_install:
   - pip install hererocks
   - hererocks lua_install --$LUA -r latest
   - source lua_install/bin/activate
-  - luarocks install busted
-  - luarocks install cluacov
-  - luarocks install lua-cjson $LUA_CJSON
-  - lua -e 'if utf8 then os.exit(1) else os.exit(0) end' && luarocks install utf8; echo OK # lua 5.3+ already has utf8 module
+  - .travis/before.sh
 
 script:
   - busted -c

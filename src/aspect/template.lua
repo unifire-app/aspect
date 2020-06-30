@@ -6,6 +6,7 @@ local filters = require("aspect.filters")
 local tests = require("aspect.tests")
 local err = require("aspect.error")
 local utils = require("aspect.utils")
+local config = require("aspect.config")
 local var_dump = utils.var_dump
 local loadcode
 local loadchunk
@@ -101,7 +102,7 @@ function template.new(options)
         cache = false,
         compiler = compiler,
         loader = options.loader,
-        env = options.env or {},
+        env = setmetatable(options.env or {}, {__index = config.env}),
         luacode_load = options.luacode_load,
         luacode_save = options.luacode_save,
         bytecode_load = options.bytecode_load,

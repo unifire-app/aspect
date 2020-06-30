@@ -1,4 +1,5 @@
 package.path = "./src/?.lua;" .. package.path
+local config = require("aspect.config")
 local aspect = require("aspect.template")
 local tokenizer = require("aspect.tokenizer")
 local astree = require("aspect.ast")
@@ -9,7 +10,7 @@ local var_dump = require("aspect.utils").var_dump
 local dump_table = require("aspect.utils").dump_table
 local numerate_lines = require("aspect.utils").numerate_lines
 local batch = require("aspect.utils.batch")
-local date = require("aspect.utils.date")
+local date = require("aspect.date")
 local err = require("aspect.error")
 local strip = require("aspect.utils").strip
 local json_encode = require("cjson.safe").encode
@@ -17,6 +18,7 @@ local assert = require("luassert")
 local cjson = require("cjson.safe")
 local tsort,append,remove = table.sort,table.insert,table.remove
 
+local has_utf = config.utf8.match
 
 require('busted.runner')()
 
@@ -48,6 +50,55 @@ for i=1, 1000 do
     large[i] = 10 + i
 end
 
+config.date.months_locale.ru = {
+    [1]  = {"Янв", "Январь"},
+    [2]  = {"Фев", "Февраль"},
+    [3]  = {"Мар", "Март"},
+    [4]  = {"Апр", "Апрель"},
+    [5]  = {"Май", "Май"},
+    [6]  = {"Июн", "Июнь"},
+    [7]  = {"Июл", "Июль"},
+    [8]  = {"Авг", "Август"},
+    [9]  = {"Сен", "Сентябрь"},
+    [10] = {"Окт", "Октябрь"},
+    [11] = {"Ноя", "Ноябрь"},
+    [12] = {"Дек", "Декабрь"},
+}
+config.date.months["янв"] = 1
+config.date.months["фев"] = 2
+config.date.months["мар"] = 3
+config.date.months["апр"] = 4
+config.date.months["май"] = 5
+config.date.months["июн"] = 6
+config.date.months["июл"] = 7
+config.date.months["авг"] = 8
+config.date.months["сен"] = 9
+config.date.months["окт"] = 10
+config.date.months["ноя"] = 11
+config.date.months["дек"] = 12
+
+config.date.months["январь"]  = 1
+config.date.months["февраль"] = 2
+config.date.months["март"]    = 3
+config.date.months["апрель"]  = 4
+config.date.months["май"]     = 5
+config.date.months["июнь"]    = 6
+config.date.months["июль"]    = 7
+config.date.months["август"]  = 8
+config.date.months["сенябрь"] = 9
+config.date.months["октябрь"] = 10
+config.date.months["ноябрь"]  = 11
+config.date.months["декабрь"] = 12
+config.date.week_locale.ru = {
+    [1] = {"Пн", "Понедельник"},
+    [2] = {"Вт", "Вторник"},
+    [3] = {"Ср", "Среда"},
+    [4] = {"Чт", "Четверг"},
+    [5] = {"Пт", "Пятница"},
+    [6] = {"Сб", "Суббота"},
+    [7] = {"Вс", "Воскресение"},
+}
+
 local vars = {
     integer_0 = 0,
     integer_1 = 1,
@@ -67,6 +118,7 @@ local vars = {
     string_empty = "",
     string_1 = [[string value]],
     string_2 = [[Hello, World]],
+    string_ru_2 = [[Привет, Мир]],
     string_html = [[<b>Hello</b>]],
     string_list1 = [[a,b,c]],
     string_list2 = "a \tb\n\t c",
@@ -764,6 +816,11 @@ templates["filter:upper_lower_00"] = {
     "HELLO, WORLD [and] hello, world"
 }
 
+templates["filter:utf.upper_utf.lower_00"] = {
+    "{{ string_ru_2|utf.upper }} [and] {{ string_ru_2|utf.lower }}",
+    "ПРИВЕТ, МИР [and] привет, мир"
+}
+
 templates["filter:replace_00"] = {
     "{{ string_2|replace({World: 'User', Hello: 'Hi'}) }}",
     "Hi, User"
@@ -821,7 +878,19 @@ templates["filter:split_03"] = {
     "a: b,c:"
 }
 
+templates["filter:truncate"] = {
+    [[
+    {{- "hello"|utf.truncate(3, "---") -}}
+    ]],
+    "hel---"
+}
 
+templates["filter:utf.truncate"] = {
+    [[
+    {{- "привет"|utf.truncate(3, "---") -}}
+    ]],
+    "при---"
+}
 --templates["function:dump_02"] = {
 --    "{{ dump(table_1) }}",
 --    spaceless(funcs.fn.dump(vars.table_1))
@@ -1076,7 +1145,10 @@ end)
 
 describe("Testing date.", function ()
     local local_offset = date.local_offset
-    local custom_offset = 16 * 60 * 60 -- use not existing timezone: +16 UTC
+    local local_offset_name = date.get_timezone(local_offset, "", false)
+    local offset1600 = 16 * 60 * 60 -- use not existing timezone: +16 UTC
+    local offset400 = 4 * 60 * 60
+
     local dates = {
         -- zero zone
         {"2009-02-13 23:31:30 UTC+00",       1234567890, 0},
@@ -1090,15 +1162,17 @@ describe("Testing date.", function ()
         {"2009-02-13T23:31:30",               1234567890 - local_offset, local_offset},
         {"Fri, 13 Feb 2009 23:31:30",         1234567890 - local_offset, local_offset},
         {"Friday, 13-February-2009 23:31:30", 1234567890 - local_offset, local_offset},
+        has_utf and {"Пт, 13 Фев 2009 23:31:30",          1234567890 - local_offset, local_offset} or nil,
+        has_utf and {"Пятница, 13-Февраль-2009 23:31:30", 1234567890 - local_offset, local_offset} or nil,
         {"2009-02-13T23:31:30",               1234567890 - local_offset, local_offset},
-        {"Fri, 13 Feb 2009 23:31:30",         1234567890 - local_offset, local_offset},
+        has_utf and {"Пт, 13 Февраль 2009 23:31:30",      1234567890 - local_offset, local_offset} or nil,
         -- custom zone
-        {"2009-02-13 23:31:30 UTC+16",                   1234567890 - custom_offset, custom_offset},
-        {"2009-02-13T23:31:30+16:00",                    1234567890 - custom_offset, custom_offset},
-        {"Fri, 13 Feb 2009 23:31:30 +1600",              1234567890 - custom_offset, custom_offset},
-        {"Friday, 13-February-2009 23:31:30 UTC +16:00", 1234567890 - custom_offset, custom_offset},
-        {"2009-02-13T23:31:30+16:00",                    1234567890 - custom_offset, custom_offset},
-        {"Fri, 13 Feb 2009 23:31:30 GMT+1600",           1234567890 - custom_offset, custom_offset},
+        {"2009-02-13 23:31:30 UTC+16",                   1234567890 - offset1600, offset1600},
+        {"2009-02-13T23:31:30+16:00",                    1234567890 - offset1600, offset1600},
+        {"Fri, 13 Feb 2009 23:31:30 +1600",              1234567890 - offset1600, offset1600},
+        {"Friday, 13-February-2009 23:31:30 UTC +16:00", 1234567890 - offset1600, offset1600},
+        {"2009-02-13T23:31:30+16:00",                    1234567890 - offset1600, offset1600},
+        {"Fri, 13 Feb 2009 23:31:30 GMT+1600",           1234567890 - offset1600, offset1600},
         -- edge cases
         {"00:00:01 UTC", 1, 0},
         {1, 1, 0},
@@ -1111,6 +1185,7 @@ describe("Testing date.", function ()
                     .. dt.time .. " offset " .. dt.offset .. "; info: " .. dump_table(dt.info))
             assert.is.equals(d[3], dt.offset)
         end)
+
     end
     local date1 = "2009-02-13 23:31:30 UTC+00"
     local date2 = "2009-02-13T23:31:35+00:00"
@@ -1149,32 +1224,52 @@ describe("Testing date.", function ()
     local formated = {
         -- zero zone
         {
-            date = "2009-02-13 23:31:30 UTC+00",
+            name = "zero zone",
+            date = "2009-02-13 23:31:30 UTC+0000",
             format = {
                 {"%F %T", os.date("%F %T", 1234567890)},
                 {"!%F %T", "2009-02-13 23:31:30"},
                 {"%F %T UTC%z", os.date("%F %T UTC%z", 1234567890)},
-                {"!%F %T UTC%z", "2009-02-13 23:31:30 UTC+00"},
+                {"!%F %T UTC%z", "2009-02-13 23:31:30 UTC+0000"},
             }
         },
         -- custom zone
         {
+            name = "custom zone",
             date = "2009-02-13 23:31:30 UTC+16",
             format = {
-                {"%F %T", os.date("%F %T", 1234567890 - custom_offset + local_offset)},
-                {"!%F %T", "2009-02-13 23:31:30"},
-                {"%F %T UTC%z", os.date("%F %T UTC%z", 1234567890)},
-                {"!%F %T UTC%z", "2009-02-13 23:31:30 UTC+00"},
+                { "%F %T UTC%Z", "2009-02-13 23:31:30 UTC+16", offset1600 }, -- UTC+16
+                { "!%F %T UTC%Z", "2009-02-13 07:31:30 UTC", offset1600 }, -- UTC+0 time
+                { "%F %T UTC%Z", "2009-02-13 07:31:30 UTC", 0}, -- UTC+0 time
+                { "!%F %T UTC%Z", "2009-02-13 07:31:30 UTC", 0}, -- UTC+0 time
+                { "%F %T UTC%Z", "2009-02-13 11:31:30 UTC+4", offset400 }, -- UTC+4 time
+                { "!%F %T UTC%Z", "2009-02-13 07:31:30 UTC", offset400 }, -- UTC+4 time
+                { "%F %T UTC"..local_offset_name, os.date("!%F %T UTC%z", 1234567890 + local_offset - offset1600), nil},
+                { "!%F %T UTC%Z", os.date("!%F %T UTC", 1234567890 - offset1600), nil},
             }
-        }
+        },
+        -- locale
+        {
+            name = "locale",
+            date = "2009-02-13 23:31:30 UTC+00",
+            format = {
+                {"%a, %d %b", "Пт, 13 Фев", 0, 'ru'},
+                {"%A, %d %B", "Пятница, 13 Февраль", 0, 'ru'},
+                {"%a, %d %b", "Fri, 13 Feb", 0, 'en'},
+                {"%A, %d %B", "Friday, 13 February", 0, 'en'},
+                {"%a, %d %b", "Fri, 13 Feb", 0},
+                {"%A, %d %B", "Friday, 13 February", 0},
+            }
+        },
     }
     for _, v1 in ipairs(formated) do
         for _, v2 in ipairs(v1.format) do
-            --it("Formatting date '" .. v1.date .. "' as '" .. v2[1] .. "'", function ()
-            --    local d = date.new(v1.date)
-            --    print("d.time: " .. d.time)
-            --    assert.is.equals(v2[2], d:format(v2[1]))
-            --end)
+            it("Formatting [" .. v1.name .. "] date '" .. v1.date .. "' as '" .. v2[1]
+                .. "' with offset " .. tostring(v2[2])
+                .. " and locale " ..tostring(v2[4]), function ()
+                local d = date.new(v1.date)
+                assert.is.equals(v2[2], d:format(v2[1], v2[3], v2[4]))
+            end)
         end
     end
 end)

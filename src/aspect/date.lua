@@ -8,8 +8,10 @@ local os = os
 local string = string
 local math = math
 local var_dump = require("aspect.utils").var_dump
-local month = require("aspect.config").date.months
-local current_offset = (os.time() - os.time(os.date("!*t", os.time())))
+local config = require("aspect.config").date
+local utf8 = require("aspect.config").utf8
+local month = config.months
+local current_offset = os.time() - os.time(os.date("!*t", os.time()))
 
 --- Merge table `b` into table `a`
 local function union(a,b)
@@ -20,7 +22,11 @@ local function union(a,b)
 end
 
 local function ctime(d, m, y)
-    m = string.lower(m)
+    if utf8.lower then
+        m = utf8.lower(m)
+    else
+        m = string.lower(m)
+    end
     if not month[m] then
         return nil
     end
@@ -65,28 +71,28 @@ local parsers = {
                 }
             end
         },
-        -- ctime: Jan 14 2020, January 14 2020
+        -- rfc 1123: 14 Jan 2020, 14 January 2020
         {
             pattern = "(%d%d)[%s-]+(%a%a+)[%s-]+(%d%d%d%d)",
             match = function(d, m, y)
                 return ctime(d, m, y)
             end
         },
-        -- ctime: Jan 14, January 14
+        -- rfc 1123: 14 Jan, 14 January
         {
             pattern = "(%d%d)[%s-]+(%a%a+)",
             match = function(d, m)
                 return ctime(d, m)
             end
         },
-        -- rfc 1123: 14 Jan 2020, 14 January 2020
+        -- ctime: Jan 14 2020, January 14 2020
         {
             pattern = "(%a%a+)%s+(%d%d)%s+(%d%d%d%d)",
             match = function(m, d, y)
                 return ctime(d, m, y)
             end
         },
-        -- rfc 1123: 14 Jan, 14 January
+        -- ctime: Jan 14, January 14
         {
             pattern = "(%a%a+)%s+(%d%d)",
             match = function(m, d)
@@ -155,18 +161,30 @@ local parsers = {
     }
 }
 
+--- @class aspect.date
+--- @param time number it is timestamp (UTC)
+--- @param offset number UTC time offset (timezone) is seconds
+local date = {
+    _NAME = "aspect.date",
+
+    parsers      = parsers,
+    local_offset = current_offset,
+}
+
+
 --- Parse about any textual datetime description into a Unix timestamp
 --- @param t string
 --- @return number UTC timestamp
 --- @return table datetime description: year, month, day, hour, min, sec, ...
-local function strtotime(t)
+function date.strtotime(t)
     local from = 1
     local time = {day = 1, month = 1, year = 1970}
+    local find, sub, match = utf8.find or string.find, utf8.sub or string.sub, utf8.match or string.match
     for _, parser in ipairs({parsers.date, parsers.time, parsers.zone}) do
         for _, matcher in ipairs(parser) do
-            local i, j = string.find(t, matcher.pattern, from)
+            local i, j = find(t, matcher.pattern, from)
             if i then
-                local res = matcher.match(string.sub(t, i, j):match("^" .. matcher.pattern .. "$"))
+                local res = matcher.match(match(sub(t, i, j), "^" .. matcher.pattern .. "$"))
                 if res then
                     union(time, res)
                     from = j + 1
@@ -175,7 +193,7 @@ local function strtotime(t)
             end
         end
     end
-    local ts = os.time(time) -- ts
+    local ts = os.time(time) -- time zone ignores
     if not time.offset then -- no offset parsed - use local offset
         time.offset = current_offset
     else
@@ -184,47 +202,89 @@ local function strtotime(t)
     return ts, time
 end
 
---- @class aspect.utils.date
---- @param time number it is timestamp, all dates formats to timestamp
---- @param offset number UTC time offset (timezone) In minutes!
-local date = {
-    _NAME = "aspect.date",
-
-    strtotime    = strtotime,
-    parsers      = parsers,
-    local_offset = current_offset,
-}
-
-function date:format(format)
+--- @param format string date format
+--- @param time_zone number|nil UTC time zone offset in seconds
+--- @param locale string|nil month and week language
+--- @return string
+function date:format(format, time_zone, locale)
+    locale = locale or 'en'
     local utc = false
     local time = self.time
-    local offset = self.offset
+    local offset = time_zone or current_offset
     if format:sub(1, 1) == "!" then
         utc = true
+        offset = 0
+    else
+        format = "!" .. format
+        utc = false
+        time = time + offset
     end
-    if utc and string.find(format, "%%z") then
-        format = string.gsub(format, "%%z", self:getTimezone(""))
-    end
+    --- replace aliases
+    format = string.gsub(format, "%$(%w)", config.aliases)
+    --- replace localizable specs
+    local d = os.date("!*t", time)
+    format = string.gsub(format, "%%([zZaAbB])", function (spec)
+        if spec == "a" or spec == "A" then
+            local i, from = d.wday - 1, nil -- there 1 is sunday, shut up ISO8601[2.2.8]
+            if i == 0 then
+                i = 7
+            end
+            from = config.week_locale[locale] or config.week_locale['en']
+            if spec == "A" then
+                return from[i][2]
+            else
+                return from[i][1]
+            end
+        elseif spec == "b" or spec == "B" then
+            local from = config.months_locale[locale] or config.months_locale['en']
+            if spec == "B" then
+                return from[d.month][2]
+            else
+                return from[d.month][1]
+            end
+        elseif spec == "z" then
+            return self.get_timezone(offset, "")
+        elseif spec == "Z" then
+            return self.get_timezone(offset, ":", true)
+        end
+        return '%' .. spec
+    end)
+    --var_dump({format = format, time = time, offset_h = offset / 60, utc = utc, zone = self.get_timezone(offset, ":")})
     return os.date(format, time)
 end
 
 --- Returns offset as time zone
---- @return string like +03:00
-function date:getTimezone(delim)
+--- @param offset number in seconds
+--- @param delim string hours and minutes delimiter
+--- @param short boolean use short format
+--- @return string like +03:00 or +03
+function date.get_timezone(offset, delim, short)
     delim = delim or ":"
-    local sign = (self.offset < 0) and '-' or '+'
-    if self.offset == 0 then
-        return sign .. "00"
+    local sign = (offset < 0) and '-' or '+'
+    if offset == 0 then
+        if short then
+            return ""
+        else
+            return sign .. "0000"
+        end
     end
-    local m = math.abs((self.offset / 60) % 60)
-    local h = m / 60
-
-    return string.format(sign .. "%02d" .. delim .. "%02d", h, m)
+    offset = math.abs(offset / 60) -- throw away seconds and sign
+    local h = offset / 60
+    local m = offset % 60
+    if short then
+        if m == 0 then
+            return string.format(sign .. "%d", h, m)
+        else
+            return string.format(sign .. "%d" .. delim .. "%02d", h, m)
+        end
+    else
+        return string.format(sign .. "%02d" .. delim .. "%02d", h, m)
+    end
 end
 
 --- @return string
 function date:__tostring()
-    return os.date("%F %T " .. self.offset, self.time + self.offset)
+    return self:format("%F %T UTC%Z")
 end
 
 --- @param b any
@@ -234,19 +294,19 @@ function date:__concat(b)
 end
 
 --- @param b any
---- @return aspect.utils.date
+--- @return aspect.date
 function date:__add(b)
     return date.new(self.time + date.new(b).time, self.offset)
 end
 
 --- @param b any
---- @return aspect.utils.date
+--- @return aspect.date
 function date:__sub(b)
     return date.new(self.time - date.new(b).time, self.offset)
 end
 
 --- @param b number
---- @return aspect.utils.date
+--- @return aspect.date
 function date:__mul(b)
     if type(b) == "number" and b > 0 then
         return date.new(self.time * b, self.offset)
@@ -256,7 +316,7 @@ function date:__mul(b)
 end
 
 --- @param b number
---- @return aspect.utils.date
+--- @return aspect.date
 function date:__div(b)
     if type(b) == "number" and b > 0 then
         return date.new(self.time / b, self.offset)
@@ -340,7 +400,7 @@ function date.new(t, offset)
             time = os.time(_t)
         end
     elseif typ == "string" or typ == "userdata" then
-        time, info = strtotime(tostring(t))
+        time, info = date.strtotime(tostring(t))
         offset = info.offset
     else
         time = os.time()

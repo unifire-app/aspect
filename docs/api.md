@@ -137,42 +137,226 @@ Options
 
 When creating a new `aspect.template` instance, you can pass an table of options as the constructor argument:
 ```lua
+--- main options
 local aspect = require("aspect.template").new({
     cache = true, 
     debug = true
 })
+
+--- render options
+aspect:display("main.view", vars, {
+    time_zone = 3 * 3600 
+})
 ```
 
-<!-- ### Option `debug`
+
+### Option `debug`
+
+```lua
+debug = boolean
+```
+
+When set to `true`, templates generates notices in some obscure situations. Also:
+
+- enables `dump` function.
+- enables compile-time and runtime notices.
+
+Context:
+
+- main options
+- render options
+
 ### Option `loader`
-### Option `autoescape`
-### Option `env`
-### Option `time_zone`
+
+```lua
+debug = func
+```
+where `func` is
+```lua
+--- @param name string the template name
+--- @param tpl aspect.template current aspect instance
+--- @return string aspect template code
+--- @return string error message
+function func(name, tpl)  end
+```
+Loaders are responsible for loading templates from a resource such as the file system or databases.
+
+Return `nil, nil` if no template found.
+
 ### Option `luacode_save`
+
+```lua
+luacode_save = func
+```
+where `func` is
+```lua
+--- @param name string the template name
+--- @param luacode string lua code of template
+--- @param tpl aspect.template current aspect instance
+function func(name, luacode, tpl)  end
+```
+
 ### Option `luacode_load`
+
+```lua
+luacode_load = func
+```
+where `func` is
+```lua
+--- @param name string the template name
+--- @param tpl aspect.template current aspect instance
+--- @return string|nil lua code of template
+function func(name, tpl)  end
+```
+
+Function used for loading compiled lua code of the template.
+
 ### Option `bytecode_save`
+
+```lua
+bytecode_save = func
+```
+where `func` is
+```lua
+--- @param name string the template name
+--- @param bytecode string bytecode of template
+--- @param tpl aspect.template current aspect instance
+function func(name, bytecode, tpl)  end
+```
+
+Function used for saving byte-code of the template.
+
 ### Option `bytecode_load`
+
+```lua
+luacode_load = func
+```
+where `func` is
+```lua
+--- @param name string the template name
+--- @param tpl aspect.template current aspect instance
+--- @return string|nil bytecode of template
+function func(name, tpl)  end
+```
+
+Function used for loading byte-code of the template.
+
+### Option `autoescape`
+
+```lua
+autoescape = boolean
+```
+
+Enables or disables auto-escaping with 'html' strategy. 
+
+Context:
+
+- main options
+- render options
+
+### Option `env`
+
+```lua
+env = table_or_function
+```
+
+sets the environment to be used by all templates (for current Aspect instance).
+
+Context:
+
+- main options
+- render options
+
 ### Option `cache`
--->
-The following options are available:
-* `debug` _boolean_.
-  When set to true, templates generates notices in some obscure situations. Also enables `dump` function.
-* `cache` _table_ or `false` or `true`
-  Enables or disables in-memory cache. If this parameter is a table, then it will be used to store the cache. 
-  If `true` - own table will be used.
-* `loader` _function_ `fun(name: string, tpl: aspect.template):string,string`.
-  Template source code loader with etag (optionally)
-* `luacode_load` _function_ `fun(name: string, tpl: aspect.template):string`
-  Function used for loading compiled lua code of the template.
-* `luacode_save` _function_ `fun(name: string, luacode: string, tpl: aspect.template)`
-  Function used for saving compiled lua code of the template.
-* `bytecode_load` _function_ `fun(name: string, tpl: aspect.template):string`
-  Function used for loading byte-code of the template.
-* `bytecode_save` _function_ `fun(name: string, bytecode: string, tpl: aspect.template)`
-  Function used for saving byte-code of the template.
-* `autoescape` _boolean_
-  Enables or disables auto-escaping with 'html' strategy. 
-* `env` _table_ sets the environment to be used by all templates (for current Aspect instance).
+
+```lua
+cache = table_or_boolean
+```
+
+Enables or disables in-memory cache. If this parameter is a table, then it will be used to store the cache. 
+
+- `true` - enable cache
+- `false` or `nil` — disable cache
+- `table` (using as `table<string,aspect.view>`) with custom view storage or object with `__newindex` and `__index`
+
+Context:
+
+- main options
+
+### Option `cache_version`
+
+```lua
+cache_version = any
+```
+
+Context:
+
+- main options
+
+### Option `time_zone`
+
+```lua
+time_zone = number
+```
+
+UTC offset in seconds. For example Tokyo (+9 UTC) has offset `9 * 60 * 60` or `32400`. See [date](./filters/date.md).
+
+Context:
+
+- main options
+- render options
+
+### Option `locale`
+
+```lua
+locale = string
+```
+
+Locale Identifier. For example `en`, `de`, `ru`
+
+Context:
+
+- main options
+- render options
+
+
+### Option `build_stats`
+
+```lua
+build_stats = boolean
+```
+
+Context:
+
+- render options
+
+Global Config
+-------------
+
+### Configure JSON
+
+Customize JSON encoder and decoder
+
+```lua
+local json = require("aspect.config").json
+json.encode = json_encode_function
+json.decode = json_decode_function
+```
+
+### Configure UTF8
+
+Customize UTF8 binding
+
+```lua
+local utf8 = require("aspect.config").utf8
+utf8.len   = utf8_len_function
+utf8.lower = utf8_lower_function
+utf8.upper = utf8_upper_function
+utf8.sub   = utf8_sub_function
+utf8.match = utf8_match_function
+```
+
+### Configure default environment
 
 Cache
 -----
@@ -418,15 +602,10 @@ table.insert(ops, {
 })
 ```
 
-Don't forget add `bitop` package to template environment using `env` [option](#options):
+Don't forget add `bitop` package to global environment using [config.env](#configure-env):
 
 ```lua
-local aspect = require("aspect.template").new({
-    --- ...
-    env = {
-        bit = bitop or require("bitop")
-    }
-})
+require("aspect.config").env.bit = bitop or require("bitop")
 ```
 
 See [aspect.ast.ops](https://github.com/unifire-app/aspect/tree/master/src/aspect/ast/ops.lua) for more examples.
@@ -521,14 +700,19 @@ Date processing
 Parse about any textual datetime description into a Unix timestamp:
 
 ```lua
-local strtotime = require("aspect.utils.date").strtotime
+local strtotime = require("aspect.date").strtotime
 local ts, info = strtotime("2009-02-13 23:31:30")
 ```
 
+Table `info` contains more information about date (day, month, year, hour, min, sec, time zone offset) 
+
 ### Date localization
 
-Add or change month localizations. For example add localized months for russian and spain languages. 
+Add or change month and day of the week localizations.  
 
+**Month localization** 
+
+For parser (required utf8 module)
 ```lua
 local months = require("aspect.config").date.months
 months["дек"] = 12          -- add short name of december on russian
@@ -537,14 +721,38 @@ months["dic"] = 12          -- add short name of december on spain
 months["diciembre"] = 12    -- add long name of december on spain
 -- ...
 ```
-There 1 - january, 12 - december.
+For formatter
+```lua
+local months_locale = require("aspect.config").date.months_locale
+months_locale["ru"] = {        -- add Russian name of month 
+    [1]  = {"Янв", "Январь"},  -- {"Jan", "January"}
+    [2]  = {"Фев", "Февраль"}, -- {"Feb", "February"}
+    [3]  = {"Мар", "Март"},    -- {"Mar", "March"}
+    --- ...
+}
+```
+There 1 - january, 12 - december. Index 1 — short name of month, index 2 - normal name of month.
+
+**Week localization**
+
+For formatter
+```lua
+local week_locale = require("aspect.config").date.week_locale
+week_locale["ru"] = {  -- add Russian day of the week
+    [1] = {"Пн", "Понедельник"},  -- {"Mon", "Monday"}
+    [2] = {"Вт", "Вторник"},      -- {"Tue", "Tuesday"}
+    [3] = {"Ср", "Среда"},        -- {"Wed", "Wednesday"}
+    --- ...
+}
+```
+There 1 - monday, 7 - sunday (see ISO8601 part 2.2.8)
 
 ### Date parser
 
 Add or change date parsers. For example add parser for date like `2009Y02M13D23h31m30s+0230z` (it is `2009-02-13 23:31:30 UTC+02:30`)
 
 ```lua
-local date = require("aspect.utils.date")
+local date = require("aspect.date")
 table.insert(date.parsers.date, { -- parse date segment
     pattern = "(%d%d%d%d)Y(%d%d)M(%d%d)D",
     match = function(y, m, d)

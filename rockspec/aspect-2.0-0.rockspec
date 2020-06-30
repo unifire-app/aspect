@@ -1,7 +1,8 @@
 package = "aspect"
-version = "git-1"
+version = "2.0-0"
 source = {
-    url = "https://github.com/unifire-app/aspect/-/archive/master/aspect-master.zip"
+    url = "https://github.com/unifire-app/aspect/archive/2.0.zip",
+    dir = "aspect-2.0"
 }
 description = {
     summary = "Aspect is a powerful templating engine for Lua and OpenResty with syntax Twig/Django/Jinja/Liquid.",
@@ -34,7 +35,7 @@ build = {
         ["aspect.utils.batch"] = "src/aspect/utils/batch.lua",
         ["aspect.utils.range"] = "src/aspect/utils/range.lua",
 
-        ["aspect.date"]  = "src/aspect/date.lua",
+        ["aspect.date"]        = "src/aspect/date.lua",
 
         ["aspect.loader.array"]      = "src/aspect/loader/array.lua",
         ["aspect.loader.filesystem"] = "src/aspect/loader/filesystem.lua",

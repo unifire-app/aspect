@@ -23,22 +23,16 @@ local trim = utils.trim
 local split = utils.split
 local output = require("aspect.output")
 local json = require("aspect.config").json
-local date = require("aspect.utils.date")
+local date = require("aspect.date")
 local upper = string.upper
 local lower = string.lower
 local gsub = string.gsub
 local sub = string.sub
 local config = require("aspect.config")
+local utf8 = config.utf8
 local e_pattern = config.escape.pattern
 local e_replaces = config.escape.replaces
 local escapers = config.escapers
-local has_utf8, utf8 = pcall(require, "lua-utf8")
-if has_utf8 then
-    strlen = utf8.len
-    upper = utf8.upper
-    lower = utf8.lower
-    sub   = utf8.sub
-end
 
 --- @class aspect.filters
 local filters = {
@@ -112,10 +106,10 @@ filters.add('date', {
     args = {
         [1] = {name = 'format', type = 'string'}
     }
-}, function (v, fmt)
+}, function (v, fmt, __)
     local dt = date.new(v)
     if dt then
-        return dt:format(fmt)
+        return dt:format(fmt or "%F %T", __.tz, __.loc)
     else
         return ""
     end
@@ -129,7 +123,6 @@ filters.add('date_modify', {
     }
 }, function (v, offset)
     local dt = date.new(v)
-
     if dt then
         local typ = type(offset)
         if typ == "table" then
@@ -338,7 +331,7 @@ filters.add('lower', {
     output = 'string',
     args = {}
 }, function (v)
-    return lower(tostring(v))
+    return lower(v)
 end)
 
 filters.add('upper', {
@@ -346,7 +339,7 @@ filters.add('upper', {
     output = 'string',
     args = {}
 }, function (v)
-    return upper(tostring(v))
+    return upper(v)
 end)
 
 filters.add('merge', {
@@ -464,6 +457,70 @@ filters.add('inthe', {
         return false
     else
         return (find(tostring(v), output.s(vals), nil,true)) ~= nil
+    end
+end)
+
+filters.add('truncate', {
+    input = 'string',
+    output = 'string',
+    args = {
+        [1] = {name = "length", type = "number", default = 32},
+        [2] = {name = "ending", type = "string", default = " ..."}
+    }
+}, function (v, length, ending)
+    if length and strlen(v) > length then
+        return sub(v, 1, length) .. ending
+    else
+        return v
+    end
+end)
+
+filters.add('utf.lower', {
+    input = 'string',
+    output = 'string',
+}, function (v)
+    return utf8.lower and utf8.lower(v) or lower(v)
+end)
+
+filters.add('utf.upper', {
+    input = 'string',
+    output = 'string',
+    args = {}
+}, function (v)
+    return utf8.upper and utf8.upper(v) or upper(v)
+end)
+
+filters.add('utf.length', {
+    input = 'string',
+    output = 'string',
+    args = {}
+}, function (v)
+    local len = utf8.len or strlen
+    local typ = type(v)
+    if typ == "table" then
+        return nkeys(v)
+    elseif typ == "string" then
+        return len(v)
+    elseif typ == "userdata" then
+        return len(tostring(v))
+    else
+        return 0
+    end
+end)
+
+filters.add('utf.truncate', {
+    input = 'string',
+    output = 'string',
+    args = {
+        [1] = {name = "length", type = "number", default = 32},
+        [2] = {name = "ending", type = "string", default = " ..."}
+    }
+}, function (v, length, ending)
+    local len = utf8.len
+    if length and len and len(v) > length then
+        return utf8.sub(v, 1, length) .. ending
+    else
+        return v
     end
 end)
 

@@ -12,7 +12,8 @@ Develop
 - improve template inheritance algorithm
 
 Date:
- 
+
+- Move `aspect.utils.date` to `aspect.date`
 - UTC time offset now in seconds (instead of minutes) 
 - When formatting a date, if a time zone is not specified, then formatting will occur for the local time zone
 

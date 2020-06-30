@@ -161,7 +161,7 @@ local parsers = {
     }
 }
 
---- @class aspect.utils.date
+--- @class aspect.date
 --- @param time number it is timestamp (UTC)
 --- @param offset number UTC time offset (timezone) is seconds
 local date = {
@@ -294,19 +294,19 @@ function date:__concat(b)
 end
 
 --- @param b any
---- @return aspect.utils.date
+--- @return aspect.date
 function date:__add(b)
     return date.new(self.time + date.new(b).time, self.offset)
 end
 
 --- @param b any
---- @return aspect.utils.date
+--- @return aspect.date
 function date:__sub(b)
     return date.new(self.time - date.new(b).time, self.offset)
 end
 
 --- @param b number
---- @return aspect.utils.date
+--- @return aspect.date
 function date:__mul(b)
     if type(b) == "number" and b > 0 then
         return date.new(self.time * b, self.offset)
@@ -316,7 +316,7 @@ function date:__mul(b)
 end
 
 --- @param b number
---- @return aspect.utils.date
+--- @return aspect.date
 function date:__div(b)
     if type(b) == "number" and b > 0 then
         return date.new(self.time / b, self.offset)

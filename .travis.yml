@@ -32,7 +32,7 @@ matrix:
         - LUA="luajit=2.1"
         - LUA_CJSON=""
 
-before_install:
+install:
   - pip install codecov
   - pip install hererocks
   - hererocks lua_install --$LUA -r latest

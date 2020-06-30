@@ -700,7 +700,7 @@ Date processing
 Parse about any textual datetime description into a Unix timestamp:
 
 ```lua
-local strtotime = require("aspect.utils.date").strtotime
+local strtotime = require("aspect.date").strtotime
 local ts, info = strtotime("2009-02-13 23:31:30")
 ```
 
@@ -752,7 +752,7 @@ There 1 - monday, 7 - sunday (see ISO8601 part 2.2.8)
 Add or change date parsers. For example add parser for date like `2009Y02M13D23h31m30s+0230z` (it is `2009-02-13 23:31:30 UTC+02:30`)
 
 ```lua
-local date = require("aspect.utils.date")
+local date = require("aspect.date")
 table.insert(date.parsers.date, { -- parse date segment
     pattern = "(%d%d%d%d)Y(%d%d)M(%d%d)D",
     match = function(y, m, d)

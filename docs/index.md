@@ -119,7 +119,7 @@ package.path = '/path/to/aspect/src/?.lua;' .. package.path
 ## Development
 
 - [Convention](./dev.md#convention)
-- [Code of conduct](#)
+- [Code of conduct](https://github.com/unifire-app/aspect/blob/master/CODE_OF_CONDUCT.md)
 - [Debugging](./dev.md#debug)
 - Reusable components
   - [Tokenizer](./dev/tokenizer.md)

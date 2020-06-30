@@ -122,14 +122,12 @@ end
 
 --- Detect UTF8 module
 do
-    local utf8 = utf8
-    if not utf8 then
-        for _, name in ipairs({"utf8", "lua-utf8"}) do
-            local ok, module = pcall(require, name)
-            if ok then
-                utf8 = module
-                break
-            end
+    local utf8
+    for _, name in ipairs({"lua-utf8", "utf8", "lutf8"}) do
+        local ok, module = pcall(require, name)
+        if ok then
+            utf8 = module
+            break
         end
     end
     if utf8 then

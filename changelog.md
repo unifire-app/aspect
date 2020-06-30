@@ -1,21 +1,28 @@
 ChangeLog
 =========
 
-Develop
--------
+2.0
+---
 
-- `with` with expression
-- extra build information
-- `dump` + nil = friends
-- tokenizer with offset
-- add compiler contexts
-- improve template inheritance algorithm
+- Tag `with` now supports expressions.
+- Extra build information
+- Function `aspect.utils.dump` now works with nil
+- Tokenizer with offset.
+- Add compiler contexts. More information about the template.
+- Improve template inheritance algorithm. The parent template is determined dynamically
+- Add filter `truncate`
+- UTF8 support:
+  - add `require("aspect.config").utf` configuration
+  - add filters `utf.lower`, `utf.upper`, `utf.truncate`
+  - parsing localized dates
+- Internal improvements.
 
 Date:
 
 - Move `aspect.utils.date` to `aspect.date`
 - UTC time offset now in seconds (instead of minutes) 
 - When formatting a date, if a time zone is not specified, then formatting will occur for the local time zone
+- Add date localization.
 
 1.14
 ----

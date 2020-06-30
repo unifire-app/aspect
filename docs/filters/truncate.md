@@ -22,9 +22,9 @@ For UTF8 string use `utf.truncate` filter (requires [utf8 module](./../api.md#co
 ```twig
 {{ long_title }}
 {{ long_title|truncate }}
-{{ long_title|truncate:30 }}
-{{ long_title|truncate:30:"" }}
-{{ long_title|truncate:30:"---" }}
+{{ long_title|truncate(30) }}
+{{ long_title|truncate(30, "") }}
+{{ long_title|truncate(30, "---") }}
 ```
 
 <!-- {% endraw %} -->

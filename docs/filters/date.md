@@ -33,10 +33,10 @@ Otherwise it is the offset in houndred hours e.g. "+75" = "+115" = +1.25 hours.
 
 **Supported Format.**
 
-* YYYY-MM-DD — where YYYY is the year, MM is the month of the year, and DD is the day of the month ("2000-12-31", "20001231").
-* DATE HH:MM:SS — Where DATE is the date format discuss above, HH is the hour, 
+* `YYYY-MM-DD`, `MM/DD/YYYY`, `MMMM DD YYYY`, `DD MMMM YYYY` — where YYYY is the year, MM is the month of the year, MMMM is the month full name or abbr, and DD is the day of the month ("2000-12-31", "20001231").
+* `DATE HH:MM:SS` — Where DATE is the date format discuss above, HH is the hour, 
   MM is the miute, SS is the seconds ("1995-02-04 24:00:51", "1976-W01-1 12:12:12.123").
-* DATE TIME +HH:MM, DATE TIME -HHMM, DATE TIME Z
+* `DATE TIME +HH:MM`, `DATE TIME -HHMM`, `DATE TIME UTC`
 
 [Add your date formats](./../api.md#date-parser).
 
@@ -45,21 +45,6 @@ Otherwise it is the offset in houndred hours e.g. "+75" = "+115" = +1.25 hours.
 If a function needs a month value it must be a string or a number. 
 If the month is a string, it must be the name of the month full or abbreviated. 
 If the month is a number, that number must be 1-12 (January-December).
-
-| Index | Abbreviation | Full Name |
-|-------|--------------|-----------|
-|1      | Jan          | January   |
-|2      | Feb          | February  |
-|3      | Mar          | March     |
-|4      | Apr          | April     |
-|5      | May          | May       |
-|6      | Jun          | June      |
-|7      | Jul          | July      |
-|8      | Aug          | August    |
-|9      | Sep          | September |
-|10     | Oct          | October   |
-|11     | Nov          | November  |
-|12     | Dec          | December  |
 
 [Add localization of months](./../api.md#date-localization).
 

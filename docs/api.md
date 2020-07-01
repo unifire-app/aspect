@@ -793,7 +793,7 @@ See `date.parsers` for more information.
 
 ### Date format aliases
 
-Add symbol `R` (`%R`) witch is `%I:%M:%S %p`
+Add symbol `R` (`$R`) witch is `%I:%M:%S %p`
 
 ```lua
 local aliases = require("aspect.config").date.aliases

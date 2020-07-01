@@ -331,10 +331,31 @@ Arrays and hashes can be nested:
 
 #### Logic operators
 
-* `and`: Returns true if the left and the right operands are both true.
-* `or`: Returns true if the left or the right operand is true.
+* `and`: Returns 'true' value if the left and the right operands are both 'true' value.
+* `or`: Returns 'true' value if the left or the right operand is 'true' value.
 * `not`: Negates a statement.
 * `(expr)`: Groups an expression.
+
+Like control structures, all logical operators consider `false`, `nil` and other [false-values](./spec.md#working-with-booleans) 
+as false and anything else as true. 
+The operator `and` returns its first argument if it is false; otherwise, it returns its second argument. 
+The operator `or` returns its first argument if it is not false; otherwise, it returns its second argument:
+
+```twig
+{{ 4 and 5 }}         --> 5
+{{ nil and 13 }}      --> nil    --> empty string
+{{ false and 13 }}    --> false  --> empty string
+{{ 4 or 5 }}          --> 4
+{{ false or 5 }}      --> 5
+```
+
+Useful for default values:
+
+```twig
+{{ form.text(x or y) }}
+```
+
+it pass to the macro a default value `v` when `x` is not set (provided that `x` is not set to false).
 
 #### Comparisons operators
 

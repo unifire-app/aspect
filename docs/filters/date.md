@@ -26,16 +26,16 @@ Time must be supplied if date is not given, vice versa.
 If the 24-hour clock is used, it is an error to specify "PM" for times later than 12 noon. 
 For example, "23:15 PM" is an error.
 
-**Time Zone Format.**  First character is a sign "+" (east of UTC) or "-" (west of UTC). 
-Hours and minutes offset are separated by colons.
-Another format is `[sign][number]`. If `[number]` is less than 24, it is the offset in hours e.g. "-10" = -10 hours. 
-Otherwise it is the offset in houndred hours e.g. "+75" = "+115" = +1.25 hours.
+**Time Zone Format.**  First character is a sign "+" (to the east) or "-" (to the west). 
+Hours and minutes in the UTC offset can be separated by a colon.
+Another format is `[sign][number]`. If `[number]` is less than 24, it is the offset in hours e.g. "-10" = -10 hours.
 
 **Supported Format.**
 
-* `YYYY-MM-DD`, `MM/DD/YYYY`, `MMMM DD YYYY`, `DD MMMM YYYY` — where YYYY is the year, MM is the month of the year, MMMM is the month full name or abbr, and DD is the day of the month ("2000-12-31", "20001231").
+* `YYYY-MM-DD`, `MM/DD/YYYY`, `MMMM DD YYYY`, `DD MMMM YYYY` — where YYYY is the year, MM is the month of the year, 
+  MMMM is the month full name or abbr, and DD is the day of the month.
 * `DATE HH:MM:SS` — Where DATE is the date format discuss above, HH is the hour, 
-  MM is the miute, SS is the seconds ("1995-02-04 24:00:51", "1976-W01-1 12:12:12.123").
+  MM is the miute, SS is the seconds.
 * `DATE TIME +HH:MM`, `DATE TIME -HHMM`, `DATE TIME UTC`
 
 [Add your date formats](./../api.md#date-parser).
@@ -90,8 +90,9 @@ The `format` string follows the same rules as the `strftime` standard C function
 | `%n` | A newline character (`\n`) |  |
 | `%t` | A Tab character (`\t`) |  |
 
+
 **Aliases**:
- 
+
 | Spec | Description | Format | Example |
 |------|-------------|--------|---------|
 | `$c` | Preferred date | `%a %b %d %H:%m%s %Y` | `Tue Jun 23 15:45:01 2020` |
@@ -101,5 +102,6 @@ The `format` string follows the same rules as the `strftime` standard C function
 | `$D` | month/day/year from 01/01/00 | `%m/%d/%y` | `12/02/79` |
 | `$F` | year-month-day | `%Y-%m-%d` | `1979-12-02` |
 
-[Add more aliases](./dev/date.md#aliases)
+
+[Add more aliases](./../api.md#date-format-aliases)
 <!-- {% endraw %} -->

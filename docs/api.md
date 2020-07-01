@@ -712,7 +712,7 @@ Add or change month and day of the week localizations.
 
 **Month localization** 
 
-For parser (required utf8 module)
+For parser ([required utf8 module](#configure-utf8))
 ```lua
 local months = require("aspect.config").date.months
 months["дек"] = 12          -- add short name of december on russian
@@ -721,7 +721,7 @@ months["dic"] = 12          -- add short name of december on spain
 months["diciembre"] = 12    -- add long name of december on spain
 -- ...
 ```
-For formatter
+For formatter (utf8 module NOT required)
 ```lua
 local months_locale = require("aspect.config").date.months_locale
 months_locale["ru"] = {        -- add Russian name of month 
@@ -731,11 +731,11 @@ months_locale["ru"] = {        -- add Russian name of month
     --- ...
 }
 ```
-There 1 - january, 12 - december. Index 1 — short name of month, index 2 - normal name of month.
+There 1 - january, 12 - december. Index 1 — short name of month, index 2 - full name of month.
 
 **Week localization**
 
-For formatter
+For formatter (utf8 module NOT required)
 ```lua
 local week_locale = require("aspect.config").date.week_locale
 week_locale["ru"] = {  -- add Russian day of the week
@@ -790,6 +790,15 @@ How parsers work:
 - calculate timestamp
 
 See `date.parsers` for more information.
+
+### Date format aliases
+
+Add symbol `R` (`%R`) witch is `%I:%M:%S %p`
+
+```lua
+local aliases = require("aspect.config").date.aliases
+aliases["R"] = "%I:%M:%S %p"
+```
 
 Iterator and countable objects
 -------------------------------

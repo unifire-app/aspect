@@ -23,7 +23,7 @@ ui:
 #      trianglify: true
 
 project:
-  version: 2.1
+  version: 2.2
   download_url: https://github.com/unifire-app/aspect/releases
   download_text: Download
 

@@ -1033,6 +1033,26 @@ templates["error_01"] = {
     "function unknown_function() not found [error_01:7]"
 }
 
+local issue_07 = [[
+    <script>
+        function do_test_1( something )
+        {
+            something = something + 1
+        }
+    </script>
+    ]]
+templates["issue_7"] = {
+    issue_07,
+    spaceless(issue_07)
+}
+
+templates["false_positive_01"] = {
+    [[
+        { - {{ string_1 }}, { {{ string_1 }}, {-{{string_1}}
+    ]],
+    "{ - string value, { string value, {-string value"
+}
+
 
 local function factory(ops)
     local template = aspect.new(ops or {})

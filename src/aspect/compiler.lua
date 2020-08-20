@@ -203,6 +203,8 @@ function compiler:parse(source)
     local l = 1
     local tag_pos = find(source, "{", l, true)
     local strip = false
+    -- found tag delimiter
+    local delim = sub(source, tag_pos, tag_pos + 1)
     local open = {
         ["{{"] = tag_type.EXPRESSION,
         ["{%"] = tag_type.CONTROL,
@@ -211,75 +213,78 @@ function compiler:parse(source)
     self.ctx_stack = {}
     self.macros = {}
     self.blocks = {}
+    -- create global context space
     self:start_context(true, true)
     while tag_pos do
-        if l <= tag_pos - 1 then -- cut text before tag
-            local frag = sub(source, l, tag_pos - 1)
-            self.line = self.line + strcount(frag, "\n")
-            if strip then
-                frag = lstrip(frag, strip)
-                strip = nil
+        if open[delim] then
+            if l <= tag_pos - 1 then -- cut text before tag
+                local frag = sub(source, l, tag_pos - 1)
+                self.line = self.line + strcount(frag, "\n")
+                if strip then
+                    frag = lstrip(frag, strip)
+                    strip = nil
+                end
+                local wcp = strip_pattern[sub(source, tag_pos + 2, tag_pos + 2)]
+                if wcp then -- checks if tag has space control
+                    frag = rstrip(frag, wcp)
+                end
+                if frag ~= "" then
+                    self:append_text(frag)
+                end
             end
-            local wcp = strip_pattern[sub(source, tag_pos + 2, tag_pos + 2)]
-            if wcp then -- checks if tag has space control
-                frag = rstrip(frag, wcp)
+            local t, p = sub(source, tag_pos + 1, tag_pos + 1), tag_pos + 2
+            if strip_pattern[sub(source, tag_pos + 2, tag_pos + 2)] then
+                tag_pos = tag_pos + 1
             end
-            if frag ~= "" then
-                self:append_text(frag)
-            end
-        end
-        local t, p = sub(source, tag_pos + 1, tag_pos + 1), tag_pos + 2
-        if strip_pattern[sub(source, tag_pos + 2, tag_pos + 2)] then
-            tag_pos = tag_pos + 1
-        end
-        if t == "{" then -- '{{'
-            self.tag_type = tag_type.EXPRESSION
-            local tok = tokenizer.new(source, tag_pos + 2)
-            local info = {}
-            local expr = self:parse_expression(tok, info)
-            self:append_expr(expr, info.raw)
-            if tok:is_valid() then
-                compiler_error(tok, "syntax", "expecting end of tag")
-            end
-            local path = tok:get_path_as_string()
-            l = tag_pos + 2 + strlen(path) + strlen(tok.finish_token) -- start tag pos + '{{' +  tag length + '}}'
-            self.line = self.line + strcount(path, "\n")
-            strip = strip_pattern[sub(tok.finish_token, 1, 1)]
-            tok = nil
-        elseif t == "%" then -- '{%'
-            self.tag_type = tag_type.CONTROL
-            local tok = tokenizer.new(source, tag_pos + 2)
-            self.tag_name = tok:get_token()
-            local tag_name = 'tag_' .. tok:get_token()
-            if tags[tag_name] then
-                self:append_code(tags[tag_name](self, tok:next())) -- call tags.tag_{{ name }}(compiler, tok)
+            if t == "{" then -- '{{'
+                self.tag_type = tag_type.EXPRESSION
+                local tok = tokenizer.new(source, tag_pos + 2)
+                local info = {}
+                local expr = self:parse_expression(tok, info)
+                self:append_expr(expr, info.raw)
                 if tok:is_valid() then
                     compiler_error(tok, "syntax", "expecting end of tag")
                 end
-            else
-                compiler_error(nil, "syntax", "unknown tag '" .. tok:get_token() .. "'")
+                local path = tok:get_path_as_string()
+                l = tag_pos + 2 + strlen(path) + strlen(tok.finish_token) -- start tag pos + '{{' +  tag length + '}}'
+                self.line = self.line + strcount(path, "\n")
+                strip = strip_pattern[sub(tok.finish_token, 1, 1)]
+                tok = nil
+            elseif t == "%" then -- '{%'
+                self.tag_type = tag_type.CONTROL
+                local tok = tokenizer.new(source, tag_pos + 2)
+                self.tag_name = tok:get_token()
+                local tag_name = 'tag_' .. tok:get_token()
+                if tags[tag_name] then
+                    self:append_code(tags[tag_name](self, tok:next())) -- call tags.tag_{{ name }}(compiler, tok)
+                    if tok:is_valid() then
+                        compiler_error(tok, "syntax", "expecting end of tag")
+                    end
+                else
+                    compiler_error(nil, "syntax", "unknown tag '" .. tok:get_token() .. "'")
+                end
+                local path = tok:get_path_as_string()
+                l = tag_pos + 2 + strlen(path) + strlen(tok.finish_token) -- start tag pos + '{%' + tag length + '%}'
+                self.line = self.line + strcount(path, "\n")
+                strip = strip_pattern[sub(tok.finish_token, 1, 1)]
+                tok = nil
+                self.tag_name = nil
+            elseif t == "#" then -- '{#'
+                local end_comment = find(source, "#}", p, true)
+                self.line = self.line + strcount(sub(source, tag_pos, end_comment - 1), "\n")
+                tag_pos = end_comment
+                l = tag_pos + 2
             end
-            local path = tok:get_path_as_string()
-            l = tag_pos + 2 + strlen(path) + strlen(tok.finish_token) -- start tag pos + '{%' + tag length + '%}'
-            self.line = self.line + strcount(path, "\n")
-            strip = strip_pattern[sub(tok.finish_token, 1, 1)]
-            tok = nil
-            self.tag_name = nil
-        elseif t == "#" then -- '{#'
-            local end_comment = find(source, "#}", p, true)
-            self.line = self.line + strcount(sub(source, tag_pos, end_comment - 1), "\n")
-            tag_pos = end_comment
-            l = tag_pos + 2
+            self.tag_type = nil
         else
             tag_pos = tag_pos + 2
         end
-        self.tag_type = nil
         while true do
             tag_pos = find(source, "{", tag_pos + 2, true)
             if not tag_pos then
                 break
             end
-            local delim = sub(source, tag_pos, tag_pos + 1)
+            delim = sub(source, tag_pos, tag_pos + 1)
             if open[delim] then
                 break
             end
@@ -993,6 +998,7 @@ function compiler:get_last_tag(name, from)
     return nil
 end
 
+--- Crate new context space for code, variables, refs ...
 --- @param name boolean|string
 --- @param isolate boolean
 --- @return aspect.compiler.context

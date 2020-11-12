@@ -1,6 +1,13 @@
 ChangeLog
 =========
 
+2.2
+---
+
+- Fix bug [#7](https://github.com/unifire-app/aspect/issues/7)
+- Add more tests
+- Add/fix more docs
+
 2.0
 ---
 

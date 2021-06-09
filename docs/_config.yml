@@ -2,7 +2,7 @@ name: "Aspect"
 description: "Aspect is a compiling template engine for Lua and LuaJIT."
 encoding: UTF-8
 markdown: kramdown
-url: "https://aspect.unifire.app"
+url: "https://unifire-app.github.io/"
 exclude:
   - src
   - bin
@@ -37,27 +37,27 @@ license:
 links:
   pages:
     - title: Syntax
-      url: /syntax.html
+      url: /aspect/syntax.html
     - title: Tags
-      url: /tags.html
+      url: /aspect/tags.html
     - title: Filters
-      url: /filters.html
+      url: /aspect/filters.html
     - title: Funcs
-      url: /funcs.html
+      url: /aspect/funcs.html
     - title: Tests
-      url: /tests.html
+      url: /aspect/tests.html
     - title: Spec
-      url: /spec.html
+      url: /aspect/spec.html
     - title: API
-      url: /api.html
+      url: /aspect/api.html
     - title: CLI
-      url: /cli.html
+      url: /aspect/cli.html
   header:
     - title: '<img src="https://travis-ci.org/unifire-app/aspect.svg?branch=master" />'
       url: https://travis-ci.org/unifire-app/aspect
     - title: '<img src="https://codecov.io/gh/unifire-app/aspect/branch/master/graph/badge.svg" />'
       url: https://codecov.io/gh/unifire-app/aspect
-    - title: '<img src="/assets/luarocks.svg" />'
+    - title: '<img src="/aspect/assets/luarocks.svg" />'
       url: https://luarocks.org/modules/unifire/aspect
   footer:
     - title: GitHub
@@ -78,4 +78,4 @@ social:
     repo: aspect
 
 icons:
-  favicon: assets/aspect.png
+  favicon: aspect/assets/aspect.png

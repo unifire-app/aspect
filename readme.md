@@ -15,7 +15,7 @@ inspired the Aspect runtime environment.
 More Information
 ----------------
 
-Read the [documentation](https://aspect.unifire.app/) for more information.
+Read the [documentation](https://unifire-app.github.io/aspect/) for more information.
 
 
 **For template designers:**

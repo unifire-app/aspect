@@ -37,21 +37,21 @@ license:
 links:
   pages:
     - title: Syntax
-      url: /aspect/syntax.html
+      url: ./syntax.html
     - title: Tags
-      url: /aspect/tags.html
+      url: ./tags.html
     - title: Filters
-      url: /aspect/filters.html
+      url: ./filters.html
     - title: Funcs
-      url: /aspect/funcs.html
+      url: ./funcs.html
     - title: Tests
-      url: /aspect/tests.html
+      url: ./tests.html
     - title: Spec
-      url: /aspect/spec.html
+      url: ./spec.html
     - title: API
-      url: /aspect/api.html
+      url: ./api.html
     - title: CLI
-      url: /aspect/cli.html
+      url: ./cli.html
   header:
     - title: '<img src="https://travis-ci.org/unifire-app/aspect.svg?branch=master" />'
       url: https://travis-ci.org/unifire-app/aspect

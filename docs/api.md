@@ -55,8 +55,8 @@ local output, err = aspect:display(template, vars)
   ```
 - `err` is `aspect.error` object and contains error information. `nil` if no errors.
 
-Rendering Templates
--------------------
+Render Templates
+----------------
 
 * To render the template with some variables, call the `render()` method:
   ```lua
@@ -135,7 +135,7 @@ aspect --dump /path/to/launch.view
 Options
 -------
 
-When creating a new `aspect.template` instance, you can pass an table of options as the constructor argument:
+While creating `aspect.template` instance, you can pass an table of options as the constructor argument:
 ```lua
 --- main options
 local aspect = require("aspect.template").new({
@@ -169,7 +169,7 @@ Context:
 ### Option `loader`
 
 ```lua
-debug = func
+loader = func
 ```
 where `func` is
 ```lua
@@ -179,7 +179,7 @@ where `func` is
 --- @return string error message
 function func(name, tpl)  end
 ```
-Loaders are responsible for loading templates from a resource such as the file system or databases.
+`loader` is used for loading templates from any resource such as the file system or databases.
 
 Return `nil, nil` if no template found.
 
@@ -196,6 +196,8 @@ where `func` is
 function func(name, luacode, tpl)  end
 ```
 
+Function is used for saving compiled lua code of the template.
+
 ### Option `luacode_load`
 
 ```lua
@@ -209,7 +211,7 @@ where `func` is
 function func(name, tpl)  end
 ```
 
-Function used for loading compiled lua code of the template.
+Function is used for loading compiled lua code of the template.
 
 ### Option `bytecode_save`
 
@@ -224,7 +226,7 @@ where `func` is
 function func(name, bytecode, tpl)  end
 ```
 
-Function used for saving byte-code of the template.
+Function is used for saving byte-code of the template.
 
 ### Option `bytecode_load`
 
@@ -239,7 +241,7 @@ where `func` is
 function func(name, tpl)  end
 ```
 
-Function used for loading byte-code of the template.
+Function is used for loading byte-code of the template.
 
 ### Option `autoescape`
 
@@ -247,7 +249,7 @@ Function used for loading byte-code of the template.
 autoescape = boolean
 ```
 
-Enables or disables auto-escaping with 'html' strategy. 
+Option enables or disables auto-escaping with 'html' strategy. 
 
 Context:
 
@@ -260,7 +262,7 @@ Context:
 env = table_or_function
 ```
 
-sets the environment to be used by all templates (for current Aspect instance).
+Option sets the environment to be used by all templates (for current Aspect instance).
 
 Context:
 
@@ -273,11 +275,11 @@ Context:
 cache = table_or_boolean
 ```
 
-Enables or disables in-memory cache. If this parameter is a table, then it will be used to store the cache. 
+Option enables or disables in-memory cache of templates objects. If this parameter is a table, then it will be used to store the cache. 
 
 - `true` - enable cache
-- `false` or `nil` — disable cache
-- `table` (using as `table<string,aspect.view>`) with custom view storage or object with `__newindex` and `__index`
+- `false` or `nil` — disable cache, load templates every call.
+- `table` (using as `table<string,aspect.view>`) with custom view storage or object with `__newindex` and `__index` (default)
 
 Context:
 
@@ -289,6 +291,8 @@ Context:
 cache_version = any
 ```
 
+Option set (lua code or byte-code) cache version. If change version all cache will be invalidated.
+
 Context:
 
 - main options
@@ -299,7 +303,7 @@ Context:
 time_zone = number
 ```
 
-UTC offset in seconds. For example Tokyo (+9 UTC) has offset `9 * 60 * 60` or `32400`. See [date](./filters/date.md).
+Option sets UTC offset in seconds. For example Tokyo (+9 UTC) has offset `9 * 60 * 60` or `32400`. See [date](./filters/date.md).
 
 Context:
 
@@ -312,7 +316,7 @@ Context:
 locale = string
 ```
 
-Locale Identifier. For example `en`, `de`, `ru`
+Option set locale ISO identifier. For example `en`, `de`, `ru`
 
 Context:
 
@@ -325,6 +329,8 @@ Context:
 ```lua
 build_stats = boolean
 ```
+
+Option enables runtime statistics aggregator. Statistic stores in `aspect.template` object after compilation of the template. 
 
 Context:
 
@@ -370,10 +376,10 @@ Aspect templating engine has 3 cache levels:
 Cache stages:
 
 0. _Require the template_
-1. Get `aspect.view` from internal (table in the `aspect.template`) cache.
-2. Get bytcode using `bytecode_load` function.
-3. Get lua code using `luacode_load` function.
-4. _Get template source code using `loader` function. Compile it._
+1. Get `aspect.view` from internal (table in the `aspect.template`) cache. If not found ...
+2. ... get bytcode using `bytecode_load` function. If failed ...
+3. ... get lua code using `luacode_load` function. If failed ...
+4. ... _get template source code using `loader` function. Compile it._
 5. Save lua code using `luacode_save` function.
 6. Save bytcode using `bytecode_save` function.
 7. Save `aspect.view` into internal (table in the `aspect.template`) cache.

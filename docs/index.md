@@ -132,17 +132,17 @@ package.path = '/path/to/aspect/src/?.lua;' .. package.path
 
 * _Well known_: Aspect uses the most popular template syntax. 
   [Twig](https://twig.symfony.com/) for PHP (maximum compatibility), [Jinja](https://jinja.palletsprojects.com/) for Python (minor differences), [Liquid](https://shopify.github.io/liquid/) for Ruby (minor syntax differences).
-* _Fast_: Aspect compiles templates down to plain optimized Lua code. 
+* _Fast_: Aspect compiles templates optimized Lua code. 
   Moreover, Lua code compiles into bytecode - the fastest representation of a template.
   Aspect will translate your template sources on first load into Lua bytecode for best runtime performance.
-* _Safe_: Aspect always runs templates in the sandbox (empty environment) from where it is impossible to access the system packages.
+* _Safe_: Aspect always runs templates in the sandbox (isolated environment).
   This allows Aspect to be used as a template language for applications where users may modify the template design.
 * _Flexible_: Aspect is powered by a flexible parser and compiler. 
-  This allows the developer to define their own custom [tags](api.md#add-tags), 
+  It allows developers to define their own custom [tags](api.md#add-tags), 
   [filters](api.md#add-filters), [functions](api.md#add-functions), [tests](api.md#add-tests) and [operators](api.md#add-operators).
-* _Supports_ lua 5.1/5.2/5.3 and luajit 2.0/2.1 (including OpenResty).
+* _Supports_ lua 5.1/5.2/5.3/5.4, luajit 2.0/2.1 (including OpenResty).
 * _Convenient_. Aspect makes it easy for users to work with templates. 
-  It has [automatic type casting](spec.md#working-with-strings), [automatic checking](spec.md#working-with-keys) of a variable and its keys, 
+  Aspect has [automatic type casting](spec.md#working-with-strings), [automatic checking](spec.md#working-with-keys) of a variable and its keys, 
   it changes some [annoying behavior](spec.md) of lua.
 * _CLI_: Aspect has a [console command](./cli.md) for the template engine. 
   Generate configs and other files using popular syntax.
@@ -151,7 +151,7 @@ package.path = '/path/to/aspect/src/?.lua;' .. package.path
 * _Secure_. Aspect has powerful [automatic HTML escaping](./syntax.md#html-escaping) system for cross site scripting prevention.
 * [Template inheritance](./syntax.md#template-inheritance) makes it possible to use the same or a similar layout for all templates.
 * Aspect provides a convenient [debugging](api.md#debug-templates) process.
-* [Iterator supported and countable objects](./api.md#iterator-and-countable-objects).
+* [Iterator and countable objects](./api.md#iterator-and-countable-objects) are supported.
 * [Date is supported](./filters/date.md).
 * [Chain rendering](./api.md#rendering-templates) (renders data chunk by chunk).
 

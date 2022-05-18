@@ -16,12 +16,12 @@ title: Specification
 
 - New (local) variables cannot be called by the following names (by internal limitation): `and`, `break`, `do`, `else`, `elseif`, 
   `end`, `false`, `for`, `function`, `if`, `in`, `local`, `nil`, `not`, `or`, `repeat`, `return`, `then`, 
-  `true`, `until`, `while`.
+  `true`, `until`, `while`. These keywords generate error during compile.
 
 ## Working with keys
 
 Keys sequence `a.b.c` returns `nil` if variable `a` or any other keys (`b` or `c`) doesn't exits.
-The sequence of keys `a.b.c` may be represented as lua code
+The sequence of keys `{{ a.b.c }}` may be represented as lua code
 ```lua
 if a and is_table(a) and a.b and is_table(a.b) and a.b.c then
     return a.b.c
@@ -33,6 +33,10 @@ end
 ## Working with strings
 
 In case the value should be converted to a string.
+
+```twig
+{{ data }}
+```
 
 | Value         | String evaluation  | Info  |
 |---------------|--------------------|-------|
@@ -53,6 +57,10 @@ You may [configure empty-string behavior](./api.md#empty-string-behaviour).
 - for [math operations](./syntax.md#math-operators)
 - in case the value should be converted to a number.
 
+```twig
+{{ data + 2 }}
+```
+
 | Value                    | Number evaluation         | Info                                   |
 |--------------------------|---------------------------|----------------------------------------|
 | empty string             | 0                         |                                        |
@@ -69,6 +77,12 @@ You may [configure number behavior](./api.md#number-behaviour).
 ## Working with booleans
 
 The rules to determine if an expression is `true` or `false` are (edge cases):
+
+```twig
+{% if data %}
+...
+{% endif %}
+```
 
 | Value                       | Boolean evaluation | Info   |
 |-----------------------------|--------------------|--------|
@@ -103,6 +117,12 @@ You may [configure `false` behavior](./api.md#condition-behaviour).
 
 Aspect supports iterators from Lua 5.2+ versions for Lua 5.1 and LuaJIT versions.
 
+```twig
+{% for key, value in data %}
+...
+{% endfor %}
+```
+
 | Value                    | Action               |
 |--------------------------|----------------------|
 | string                   | not iterate          |
@@ -122,6 +142,10 @@ and compatible with basic function `pairs()` (returns `iterator`, `key`, `value`
 
 When it is necessary to count the number of elements (filter `length` or variable `loop.length`).
 
+```twig
+{{ data|length }}
+```
+
 | Value                    | Number evaluation    |
 |--------------------------|----------------------|
 | string                   | `string.len(...)`    |
@@ -135,5 +159,7 @@ When it is necessary to count the number of elements (filter `length` or variabl
 | other tables             | count of keys        |
 | userdata with `__len`    | `__len(...)`         |
 | userdata with `__pairs`  | invoke `__pairs()` and count elements |
+
+
 
 <!-- {% endraw %} -->

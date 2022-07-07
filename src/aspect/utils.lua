@@ -16,6 +16,7 @@ local nkeys = table.nkeys -- luajit 2.1
 local isarray = table.isarray -- luajit 2.1
 local pcall = pcall
 local select = select
+local max = math.max
 
 local utils = {
     starts_with = string.startswith
